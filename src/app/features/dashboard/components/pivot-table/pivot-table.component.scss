@@ -1,0 +1,76 @@
+.table-card {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 20px;
+}
+
+.section-title {
+  margin: 0 0 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.pivot-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+
+  th, td {
+    padding: 8px 12px;
+    border: 0.5px solid #e5e7eb;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #374151;
+    position: sticky;
+    top: 0;
+    text-align: right;
+
+    &:first-child {
+      text-align: left;
+    }
+  }
+
+  .dept-cell {
+    text-align: left;
+    font-weight: 500;
+    color: #111827;
+  }
+
+  .total-cell {
+    font-weight: 700;
+    color: #185fa5;
+  }
+
+  .row-even {
+    background: #fafafa;
+  }
+
+  tr:not(.grand-total-row):hover {
+    background: rgba(24, 95, 165, 0.05);
+  }
+
+  .grand-total-row {
+    background: #f0f4f9;
+    border-top: 2px solid #185fa5;
+
+    td {
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .total-cell {
+      color: #185fa5;
+    }
+  }
+}

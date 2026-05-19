@@ -1,0 +1,16 @@
+.action-spacer { flex: 1; }
+
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 0;
+
+  mat-form-field { width: 100%; }
+
+  .form-row {
+    display: flex;
+    gap: 8px;
+    mat-form-field { flex: 1; }
+  }
+}

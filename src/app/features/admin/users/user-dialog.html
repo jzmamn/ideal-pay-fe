@@ -1,0 +1,108 @@
+<div mat-dialog-title class="dialog-title">
+  <div class="dialog-title-icon">
+    <mat-icon>group</mat-icon>
+  </div>
+  <span class="dialog-title-main">User information</span>
+  <button mat-icon-button mat-dialog-close class="dialog-close-btn" aria-label="Close dialog">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <form [formGroup]="userForm" class="form-grid">
+
+    <div class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>ID</mat-label>
+        <input matInput formControlName="id">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Code</mat-label>
+        <input matInput formControlName="code">
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Username</mat-label>
+      <input matInput formControlName="username">
+      @if (userForm.get('username')?.hasError('required')) {
+        <mat-error>Username is required</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Full Name</mat-label>
+      <input matInput formControlName="fullName">
+      @if (userForm.get('fullName')?.hasError('required')) {
+        <mat-error>Full name is required</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Email</mat-label>
+      <input matInput formControlName="email" type="email">
+      @if (userForm.get('email')?.hasError('required')) {
+        <mat-error>Email is required</mat-error>
+      } @else if (userForm.get('email')?.hasError('email')) {
+        <mat-error>Enter a valid email address</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Password{{ isEdit ? ' (leave blank to keep current)' : '' }}</mat-label>
+      <input matInput formControlName="password" [type]="showPassword ? 'text' : 'password'" autocomplete="new-password">
+      <button mat-icon-button matSuffix type="button" (click)="showPassword = !showPassword"
+              [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
+        <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+      </button>
+      @if (userForm.get('password')?.hasError('required')) {
+        <mat-error>Password is required</mat-error>
+      } @else if (userForm.get('password')?.hasError('minlength')) {
+        <mat-error>Password must be at least 8 characters</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Confirm Password</mat-label>
+      <input matInput formControlName="confirmPassword" [type]="showConfirmPassword ? 'text' : 'password'" autocomplete="new-password">
+      <button mat-icon-button matSuffix type="button" (click)="showConfirmPassword = !showConfirmPassword"
+              [attr.aria-label]="showConfirmPassword ? 'Hide password' : 'Show password'">
+        <mat-icon>{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+      </button>
+      @if (userForm.hasError('passwordsMismatch') && userForm.get('confirmPassword')?.dirty) {
+        <mat-error>Passwords do not match</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Role</mat-label>
+      <mat-select formControlName="role">
+        @for (role of roles; track role) {
+          <mat-option [value]="role">{{ role }}</mat-option>
+        }
+      </mat-select>
+      @if (userForm.get('role')?.hasError('required')) {
+        <mat-error>Role is required</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
+
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  @if (isEdit) {
+  <button mat-flat-button class="btn-error">
+    <mat-icon>delete</mat-icon> Delete
+  </button>
+  }
+  <span class="action-spacer"></span>
+  <button mat-flat-button [disabled]="userForm.invalid" class="btn-warn">
+    <mat-icon>save</mat-icon> {{ isEdit ? 'Update' : 'Save' }}
+  </button>
+  <button mat-flat-button mat-dialog-close class="btn-secondary">
+    <mat-icon>close</mat-icon> Cancel
+  </button>
+</mat-dialog-actions>

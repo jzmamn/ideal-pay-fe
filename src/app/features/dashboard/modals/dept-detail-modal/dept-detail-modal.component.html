@@ -1,0 +1,66 @@
+<div class="modal-shell">
+  <div class="modal-title-bar">
+    <div class="modal-icon-wrap" aria-hidden="true">
+      <mat-icon>corporate_fare</mat-icon>
+    </div>
+    <h2 mat-dialog-title class="modal-title">{{ dept.name }}</h2>
+    <button mat-icon-button mat-dialog-close class="close-btn" aria-label="Close dialog">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content class="modal-content">
+    <div class="kpi-grid" role="list">
+      <div class="kpi-card" role="listitem">
+        <span class="kpi-label">Headcount</span>
+        <span class="kpi-value">{{ dept.hc }}</span>
+      </div>
+      <div class="kpi-card" role="listitem">
+        <span class="kpi-label">Base Salary</span>
+        <span class="kpi-value">{{ dept.base | currency:'USD':'symbol':'1.0-0' }}</span>
+      </div>
+      <div class="kpi-card" role="listitem">
+        <span class="kpi-label">Bonuses</span>
+        <span class="kpi-value">{{ dept.bonus | currency:'USD':'symbol':'1.0-0' }}</span>
+      </div>
+      <div class="kpi-card" role="listitem">
+        <span class="kpi-label">Overtime</span>
+        <span class="kpi-value">{{ dept.ot | currency:'USD':'symbol':'1.0-0' }}</span>
+      </div>
+      <div class="kpi-card" role="listitem">
+        <span class="kpi-label">Benefits</span>
+        <span class="kpi-value">{{ dept.ben | currency:'USD':'symbol':'1.0-0' }}</span>
+      </div>
+      <div class="kpi-card" role="listitem">
+        <span class="kpi-label">Total Cost</span>
+        <span class="kpi-value kpi-value--primary">{{ total() | currency:'USD':'symbol':'1.0-0' }}</span>
+      </div>
+      <div class="kpi-card" role="listitem">
+        <span class="kpi-label">Budget</span>
+        <span class="kpi-value">{{ dept.budget | currency:'USD':'symbol':'1.0-0' }}</span>
+      </div>
+      <div class="kpi-card" role="listitem">
+        <span class="kpi-label">Avg Cost / Head</span>
+        <span class="kpi-value">{{ avgCostPerHead() | currency:'USD':'symbol':'1.0-0' }}</span>
+      </div>
+    </div>
+
+    <div
+      class="variance-alert"
+      [class.variance-alert--over]="isOver()"
+      [class.variance-alert--under]="!isOver()"
+      role="alert"
+    >
+      <mat-icon aria-hidden="true">{{ isOver() ? 'warning' : 'check_circle' }}</mat-icon>
+      <span>
+        {{ isOver() ? 'Over budget by' : 'Under budget by' }}
+        {{ variance() | currency:'USD':'symbol':'1.0-0' }}
+        ({{ variancePct() | number:'1.1-1' }}%)
+      </span>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Close</button>
+  </mat-dialog-actions>
+</div>

@@ -1,0 +1,260 @@
+import { Routes } from '@angular/router';
+import { authGuard } from './guards/auth.guard';
+
+export const routes: Routes = [
+
+    { path: '', redirectTo: 'login', pathMatch: 'full' },
+
+    {
+        path: 'login',
+        loadComponent: () =>
+            import('./login/login.component')
+                .then(m => m.LoginComponent),
+    },
+
+
+    {
+        path: '',
+        canActivate: [authGuard],
+        loadComponent: () =>
+            import('./layout/navigation/navigation.component')
+                .then(m => m.NavigationComponent),
+
+        children: [
+
+            {
+                path: 'data-table',
+                loadComponent: () =>
+                    import('./trial/master-data-table/master-data-table.component')
+                        .then(m => m.MasterDataTableComponent)
+            },
+
+            {
+                path: 'dashboard',
+                loadComponent: () =>
+                    import('./features/dashboard/payroll-dashboard.component')
+                        .then(m => m.PayrollDashboardComponent)
+            },
+
+            {
+                path: 'payroll',
+                loadComponent: () =>
+                    import('./features/payroll/payroll-entry')
+                        .then(m => m.PayrollEntry)
+            },
+
+            {
+                path: 'company',
+                loadComponent: () =>
+                    import('./features/infrastructure/company/companies')
+                        .then(m => m.Companies)
+            },
+
+            {
+                path: 'department',
+                loadComponent: () =>
+                    import('./features/infrastructure/department/department')
+                        .then(m => m.Department)
+            },
+
+            {
+                path: 'allowance',
+                loadComponent: () =>
+                    import('./features/settings/allowances/allowances')
+                        .then(m => m.Allowances)
+            },
+
+            {
+                path: 'allowances/fixed',
+                loadComponent: () =>
+                    import('./features/settings/allowances/fixed/fixed-allowances')
+                        .then(m => m.FixedAllowances)
+            },
+
+            {
+                path: 'allowances/variable',
+                loadComponent: () =>
+                    import('./features/settings/allowances/variable/variable-allowances')
+                        .then(m => m.VariableAllowances)
+            },
+
+            {
+                path: 'deduction',
+                loadComponent: () =>
+                    import('./features/settings/deduction/deduction')
+                        .then(m => m.Deduction)
+            },
+
+            {
+                path: 'deductions/fixed',
+                loadComponent: () =>
+                    import('./features/settings/deduction/fixed/fixed-deductions')
+                        .then(m => m.FixedDeductions)
+            },
+
+            {
+                path: 'deductions/variable',
+                loadComponent: () =>
+                    import('./features/settings/deduction/variable/variable-deductions')
+                        .then(m => m.VariableDeductions)
+            },
+
+            {
+                path: 'overtime',
+                loadComponent: () =>
+                    import('./features/settings/overtime/overtime')
+                        .then(m => m.Overtime)
+            },
+
+            {
+                path: 'loan',
+                loadComponent: () =>
+                    import('./features/settings/loan/loan')
+                        .then(m => m.Loan)
+            },
+
+            {
+                path: 'job-categories',
+                loadComponent: () =>
+                    import('./features/infrastructure/job-categories/job-categories')
+                        .then(m => m.JobCategories)
+            },
+
+            {
+                path: 'branches',
+                loadComponent: () =>
+                    import('./features/infrastructure/branches/branches')
+                        .then(m => m.Branches)
+            },
+
+            {
+                path: 'grades',
+                loadComponent: () =>
+                    import('./features/infrastructure/grades/grades')
+                        .then(m => m.Grades)
+            },
+
+            {
+                path: 'designations',
+                loadComponent: () =>
+                    import('./features/infrastructure/designations/designations')
+                        .then(m => m.Designations)
+            },
+
+            {
+                path: 'nopay-days',
+                loadComponent: () =>
+                    import('./features/infrastructure/nopay-days/nopay-days')
+                        .then(m => m.NopayDays)
+            },
+
+            {
+                path: 'employee-types',
+                loadComponent: () =>
+                    import('./features/infrastructure/employee-type/employee-type')
+                        .then(m => m.EmployeeType)
+            },
+
+            {
+                path: 'users',
+                loadComponent: () =>
+                    import('./features/admin/users/users')
+                        .then(m => m.Users)
+            },
+
+            {
+                path: 'group',
+                loadComponent: () =>
+                    import('./features/admin/group/groups')
+                        .then(m => m.Groups)
+            },
+
+            {
+                path: 'roles',
+                loadComponent: () =>
+                    import('./features/admin/roles/roles')
+                        .then(m => m.Roles)
+            },
+
+            {
+                path: 'permissions',
+                loadComponent: () =>
+                    import('./features/admin/permissions/permissions')
+                        .then(m => m.Permissions)
+            },
+
+            {
+                path: 'employee',
+                loadComponent: () =>
+                    import('./features/settings/employee/employee')
+                        .then(m => m.Employee),
+
+                children: [
+
+                    {
+                        path: '',
+                        data: { animation: 0 },
+                        loadComponent: () =>
+                            import('./features/settings/employee/employee-home/employee-home')
+                                .then(m => m.EmployeeHome)
+                    },
+
+                    {
+                        path: 'info',
+                        data: { animation: 1 },
+                        loadComponent: () =>
+                            import('./features/settings/employee/employee-info/employee-info')
+                                .then(m => m.EmployeeInfo)
+                    },
+
+                    {
+                        path: 'add',
+                        data: { animation: 2 },
+                        loadComponent: () =>
+                            import('./features/settings/employee/employee-form/employee-form')
+                                .then(m => m.EmployeeForm)
+                    },
+                ]
+
+            },
+
+            //test and trials of angular features and concepts
+            {
+                path: 'emp-parent',
+                loadComponent: () =>
+                    import('./trial/employee-parent/employee-parent')
+                        .then(m => m.EmployeeParent),
+
+                children: [
+
+                    {
+                        path: '',
+                        loadComponent: () =>
+                            import('./trial/employee-list/employee-list')
+                                .then(m => m.EmployeeList)
+                    },
+
+                    {
+                        path: 'test-forms',
+                        loadComponent: () =>
+                            import('./trial/test-forms/test-forms')
+                                .then(m => m.TestForms)
+                    },
+
+                    {
+                        path: 'test-tables',
+                        loadComponent: () =>
+                            import('./trial/test-tables/test-tables')
+                                .then(m => m.TestTables)
+                    }
+                ]
+
+            },
+
+        ]
+
+    },
+
+    { path: '**', redirectTo: 'login' },
+
+];

@@ -1,0 +1,45 @@
+.filter-field {
+  width: 100%;
+}
+
+.title {
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.search {
+  width: 100%;
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* Base row */
+.data-row {
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+/* Hover effect (Fiori feel) */
+.data-row:hover {
+  background: #f5f7fa;
+}
+
+/* ✅ SELECTED ROW (SAP Fiori highlight style) */
+.data-row.selected {
+  background: #e6f2ff !important;
+  border-left: 4px solid #0a6ed1;
+}
+
+/* optional subtle cell padding tuning */
+.mat-cell {
+  padding: 12px 8px;
+}
+
+
+.mat-mdc-form-field {
+  line-height: 1.2 !important;
+}
+
+

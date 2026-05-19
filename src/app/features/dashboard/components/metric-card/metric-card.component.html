@@ -1,0 +1,17 @@
+<div class="card-inner">
+  <div class="card-header">
+    <div class="card-icon" [attr.aria-hidden]="true">
+      <mat-icon>{{ metric().icon }}</mat-icon>
+    </div>
+    <span class="card-title">{{ metric().title }}</span>
+  </div>
+  <div class="card-value" aria-live="polite">{{ metric().value }}</div>
+  <div class="card-footer">
+    <span
+      class="badge"
+      [class.badge--positive]="metric().changeSign === 'positive'"
+      [class.badge--negative]="metric().changeSign === 'negative'"
+    >{{ metric().change }}</span>
+    <span class="card-subtitle">{{ metric().subtitle }}</span>
+  </div>
+</div>

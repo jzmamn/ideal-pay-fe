@@ -1,0 +1,69 @@
+<div class="table-card">
+  <h3 class="section-title">Department Summary</h3>
+  <div class="table-wrap" role="region" aria-label="Department payroll summary table" tabindex="0">
+    <table mat-table [dataSource]="rows()" class="dept-table">
+
+      <ng-container matColumnDef="dept">
+        <th mat-header-cell *matHeaderCellDef scope="col">Department</th>
+        <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="hc">
+        <th mat-header-cell *matHeaderCellDef scope="col">HC</th>
+        <td mat-cell *matCellDef="let row">{{ row.hc }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="base">
+        <th mat-header-cell *matHeaderCellDef scope="col">Base Salary</th>
+        <td mat-cell *matCellDef="let row">{{ row.base | currency:'USD':'symbol':'1.0-0' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="bonus">
+        <th mat-header-cell *matHeaderCellDef scope="col">Bonuses</th>
+        <td mat-cell *matCellDef="let row">{{ row.bonus | currency:'USD':'symbol':'1.0-0' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="ot">
+        <th mat-header-cell *matHeaderCellDef scope="col">Overtime</th>
+        <td mat-cell *matCellDef="let row">{{ row.ot | currency:'USD':'symbol':'1.0-0' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="ben">
+        <th mat-header-cell *matHeaderCellDef scope="col">Benefits</th>
+        <td mat-cell *matCellDef="let row">{{ row.ben | currency:'USD':'symbol':'1.0-0' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="total">
+        <th mat-header-cell *matHeaderCellDef scope="col">Total</th>
+        <td mat-cell *matCellDef="let row"><strong>{{ row.total | currency:'USD':'symbol':'1.0-0' }}</strong></td>
+      </ng-container>
+
+      <ng-container matColumnDef="vsBudget">
+        <th mat-header-cell *matHeaderCellDef scope="col">vs Budget</th>
+        <td mat-cell *matCellDef="let row">
+          <span
+            class="budget-badge"
+            [class.budget-badge--under]="row.variance <= 0"
+            [class.budget-badge--over]="row.variance > 0"
+            [attr.aria-label]="row.variance <= 0 ? 'Under budget' : 'Over budget'"
+          >
+            {{ row.variance > 0 ? '+' : '' }}{{ row.variancePct | number:'1.1-1' }}%
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef scope="col">Actions</th>
+        <td mat-cell *matCellDef="let row">
+          <button mat-button color="primary" (click)="openDrill(row)" [attr.aria-label]="'Drill into ' + row.name">
+            <mat-icon>open_in_new</mat-icon>
+            Drill
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="dept-row"></tr>
+    </table>
+  </div>
+</div>

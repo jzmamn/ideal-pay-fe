@@ -1,0 +1,59 @@
+.cdk-overlay-pane.square-dialog .mdc-dialog__surface {
+  border-radius: 0 !important;
+}
+
+// ── Shared dialog title ───────────────────────────────────────────────────────
+.dialog-title {
+  display: flex !important;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e9eef5 100%);
+  border-bottom: 2px solid #dde5f0;
+  padding: 10px 20px !important;
+  margin: 0 !important;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.06);
+}
+
+.dialog-title-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  box-shadow: 0 3px 10px rgba(99, 102, 241, 0.35);
+
+  mat-icon, .mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: #fff;
+  }
+}
+
+.dialog-title-main {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: 0.2px;
+  line-height: 40px;
+}
+
+.dialog-close-btn {
+  margin-left: auto;
+  color: #94a3b8;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #475569;
+  }
+}
+
+// floatLabel="always" keeps the label above the field, but MDC hides
+// ::placeholder until focus by default. Show it unconditionally, faded.
+.mat-mdc-form-field .mat-mdc-input-element::placeholder {
+  color: var(--mat-sys-on-surface-variant);
+  opacity: 0.5;
+}

@@ -1,0 +1,58 @@
+<div class="table-card">
+  <h3 class="section-title">Employee Detail</h3>
+  <div class="table-wrap" role="region" aria-label="Employee detail table" tabindex="0">
+    <table mat-table [dataSource]="employees()" class="emp-table">
+
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef scope="col">Name</th>
+        <td mat-cell *matCellDef="let e">{{ e.name }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="dept">
+        <th mat-header-cell *matHeaderCellDef scope="col">Department</th>
+        <td mat-cell *matCellDef="let e">{{ e.dept }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="role">
+        <th mat-header-cell *matHeaderCellDef scope="col">Role</th>
+        <td mat-cell *matCellDef="let e">{{ e.role }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="base">
+        <th mat-header-cell *matHeaderCellDef scope="col">Base</th>
+        <td mat-cell *matCellDef="let e">{{ e.base | currency:'USD':'symbol':'1.0-0' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="ytdBonus">
+        <th mat-header-cell *matHeaderCellDef scope="col">YTD Bonus</th>
+        <td mat-cell *matCellDef="let e">{{ e.ytdBonus | currency:'USD':'symbol':'1.0-0' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef scope="col">Status</th>
+        <td mat-cell *matCellDef="let e">
+          <span
+            class="status-badge"
+            [class.status-badge--active]="e.status === 'Active'"
+            [class.status-badge--leave]="e.status === 'Leave'"
+            [class.status-badge--terminated]="e.status === 'Terminated'"
+            [attr.aria-label]="'Status: ' + e.status"
+          >{{ e.status }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef scope="col">Actions</th>
+        <td mat-cell *matCellDef="let e">
+          <button mat-button color="primary" (click)="openEmployee(e)" [attr.aria-label]="'View ' + e.name">
+            <mat-icon>visibility</mat-icon>
+            View
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="emp-row"></tr>
+    </table>
+  </div>
+</div>

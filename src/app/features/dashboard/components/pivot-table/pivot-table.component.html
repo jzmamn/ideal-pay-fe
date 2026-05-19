@@ -1,0 +1,39 @@
+<div class="table-card">
+  <h3 class="section-title">Payroll Pivot</h3>
+  <div class="table-wrap" role="region" aria-label="Payroll pivot table" tabindex="0">
+    <table class="pivot-table">
+      <thead>
+        <tr>
+          <th scope="col">Department</th>
+          <th scope="col">Base Salary</th>
+          <th scope="col">Bonuses</th>
+          <th scope="col">Overtime</th>
+          <th scope="col">Benefits</th>
+          <th scope="col">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.name; let even = $even) {
+          <tr [class.row-even]="even">
+            <td class="dept-cell">{{ row.name }}</td>
+            <td>{{ row.base  | currency:'USD':'symbol':'1.0-0' }}</td>
+            <td>{{ row.bonus | currency:'USD':'symbol':'1.0-0' }}</td>
+            <td>{{ row.ot   | currency:'USD':'symbol':'1.0-0' }}</td>
+            <td>{{ row.ben  | currency:'USD':'symbol':'1.0-0' }}</td>
+            <td class="total-cell">{{ row.total | currency:'USD':'symbol':'1.0-0' }}</td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr class="grand-total-row">
+          <td class="dept-cell">{{ grandTotal().name }}</td>
+          <td>{{ grandTotal().base  | currency:'USD':'symbol':'1.0-0' }}</td>
+          <td>{{ grandTotal().bonus | currency:'USD':'symbol':'1.0-0' }}</td>
+          <td>{{ grandTotal().ot   | currency:'USD':'symbol':'1.0-0' }}</td>
+          <td>{{ grandTotal().ben  | currency:'USD':'symbol':'1.0-0' }}</td>
+          <td class="total-cell">{{ grandTotal().total | currency:'USD':'symbol':'1.0-0' }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>

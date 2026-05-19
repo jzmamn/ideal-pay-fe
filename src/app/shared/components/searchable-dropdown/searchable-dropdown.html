@@ -1,0 +1,20 @@
+<mat-form-field appearance="outline" style="width:100%">
+  <mat-label>{{ label() }}</mat-label>
+  <input
+    matInput
+    [formControl]="searchCtrl"
+    [placeholder]="placeholder()"
+    [matAutocomplete]="auto"
+    (blur)="onBlur()"
+    aria-autocomplete="list"
+  >
+  <mat-autocomplete #auto (optionSelected)="onOptionSelected($event)">
+    @if (filteredOptions().length === 0) {
+      <mat-option disabled>No results</mat-option>
+    } @else {
+      @for (opt of filteredOptions(); track opt.id) {
+        <mat-option [value]="opt.id">{{ opt.name }}</mat-option>
+      }
+    }
+  </mat-autocomplete>
+</mat-form-field>

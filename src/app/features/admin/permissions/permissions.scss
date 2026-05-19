@@ -1,0 +1,148 @@
+.action-spacer { flex: 1; }
+
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 0;
+
+  mat-form-field { width: 100%; }
+}
+
+// ── Page layout ───────────────────────────────────────────────────────────────
+.perm-page {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+// ── Page header ───────────────────────────────────────────────────────────────
+.perm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.perm-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+// ── Controls bar ──────────────────────────────────────────────────────────────
+.perm-controls {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+}
+
+.controls-save {
+  position: absolute;
+  right: 0;
+}
+
+.filter-field {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.target-lookup {
+  width: 220px;
+  flex-shrink: 0;
+}
+
+
+// ── Table container ───────────────────────────────────────────────────────────
+.perm-table-wrap {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  overflow: hidden;
+
+  table { width: 100%; }
+}
+
+// ── Column widths ─────────────────────────────────────────────────────────────
+.col-select { width: 56px; }
+.col-expand { width: 48px; text-align: right; }
+
+.menu-item-cell {
+  font-weight: 500;
+  color: #1e293b;
+}
+
+// ── Data rows ─────────────────────────────────────────────────────────────────
+.perm-row {
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover          { background: rgba(99, 102, 241, 0.04); }
+  &.expanded-row   { background: #f0f4ff; }
+}
+
+// ── Detail row ────────────────────────────────────────────────────────────────
+.detail-row {
+  height: 0;
+
+  td { border-bottom: none; }
+}
+
+.detail-cell { padding: 0 !important; }
+
+.detail-panel {
+  display: flex;
+  gap: 40px;
+  padding: 16px 72px;
+  background: #f8faff;
+  border-bottom: 1px solid rgba(99, 102, 241, 0.12);
+  flex-wrap: wrap;
+}
+
+.perm-check-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.perm-check-desc {
+  font-size: 11px;
+  color: #94a3b8;
+  padding-left: 28px;
+}
+
+// ── Expand icon ───────────────────────────────────────────────────────────────
+.expand-icon {
+  color: #94a3b8;
+  transition: transform 0.2s ease;
+  display: block;
+  margin-left: auto;
+
+  &.rotated { transform: rotate(180deg); }
+}
+
+// ── Empty state ───────────────────────────────────────────────────────────────
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 24px;
+  color: #94a3b8;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 15px;
+  }
+}

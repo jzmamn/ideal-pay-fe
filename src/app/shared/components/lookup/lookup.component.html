@@ -1,0 +1,7 @@
+<mat-form-field [appearance]="appearance()" class="filter-field">
+  <mat-label>{{ label() }}</mat-label>
+  <input matInput [ngModel]="name()" (ngModelChange)="name.set($event)" readonly />
+  <button mat-icon-button matSuffix (click)="openDialog()" type="button">
+    <mat-icon>search</mat-icon>
+  </button>
+</mat-form-field>

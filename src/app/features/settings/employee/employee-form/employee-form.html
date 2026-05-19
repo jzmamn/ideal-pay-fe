@@ -1,0 +1,288 @@
+<div class="form-page">
+
+  <div class="page-header">
+    <button mat-icon-button (click)="discard()" aria-label="Go back">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h2 class="page-title">{{ isEditMode() ? 'Edit Employee' : 'New Employee' }}</h2>
+    <span class="header-spacer"></span>
+    <button mat-button (click)="discard()">Discard</button>
+    <button mat-flat-button (click)="save()">
+      <mat-icon>save</mat-icon>
+      Save Changes
+    </button>
+  </div>
+
+  <form [formGroup]="form" class="form-body">
+
+    <mat-tab-group
+      [selectedIndex]="selectedTabIndex()"
+      (selectedIndexChange)="selectedTabIndex.set($event)"
+      animationDuration="200ms"
+    >
+
+      <!-- ── Tab 1: Personal Details ──────────────────────────── -->
+      <mat-tab label="Personal Details">
+        <div class="tab-content">
+
+          <div class="form-grid">
+
+            <mat-form-field appearance="outline">
+              <mat-label>First Name</mat-label>
+              <input matInput formControlName="firstName">
+              @if (form.get('firstName')?.invalid && form.get('firstName')?.touched) {
+                <mat-error>Required</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Last Name</mat-label>
+              <input matInput formControlName="lastName">
+              @if (form.get('lastName')?.invalid && form.get('lastName')?.touched) {
+                <mat-error>Required</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Date of Birth</mat-label>
+              <input matInput [matDatepicker]="dobPicker" formControlName="dateOfBirth">
+              <mat-datepicker-toggle matIconSuffix [for]="dobPicker" />
+              <mat-datepicker #dobPicker />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>NIC</mat-label>
+              <input matInput formControlName="nic">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="col-full">
+              <mat-label>Remarks</mat-label>
+              <textarea matInput formControlName="remarks" rows="2"></textarea>
+            </mat-form-field>
+
+          </div>
+
+          <!-- Contact Detail sub-section -->
+          <div class="section-header">
+            <mat-icon>contact_phone</mat-icon>
+            <span>Contact Detail</span>
+          </div>
+
+          <div class="form-grid">
+
+            <mat-form-field appearance="outline">
+              <mat-label>Email</mat-label>
+              <input matInput formControlName="email" type="email">
+              @if (form.get('email')?.hasError('required') && form.get('email')?.touched) {
+                <mat-error>Required</mat-error>
+              }
+              @if (form.get('email')?.hasError('email') && form.get('email')?.touched) {
+                <mat-error>Invalid email address</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Phone</mat-label>
+              <input matInput formControlName="phone">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Address Line 1</mat-label>
+              <input matInput formControlName="adrsLine1">
+              @if (form.get('adrsLine1')?.invalid && form.get('adrsLine1')?.touched) {
+                <mat-error>Required</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Address Line 2</mat-label>
+              <input matInput formControlName="adrsLine2">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>City</mat-label>
+              <input matInput formControlName="city">
+            </mat-form-field>
+
+            <app-district-select formControlName="district" />
+
+            <app-country-select formControlName="country" />
+
+          </div>
+
+          <!-- Emergency Contact sub-section -->
+          <div class="section-header">
+            <mat-icon>emergency</mat-icon>
+            <span>Emergency Contact</span>
+          </div>
+
+          <div class="form-grid">
+
+            <mat-form-field appearance="outline">
+              <mat-label>Contact Person</mat-label>
+              <input matInput formControlName="contactPerson">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Contact Number</mat-label>
+              <input matInput formControlName="cpContactNumber">
+              @if (form.get('cpContactNumber')?.hasError('pattern') && form.get('cpContactNumber')?.touched) {
+                <mat-error>Invalid phone number</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Email</mat-label>
+              <input matInput formControlName="cpEmail" type="email">
+              @if (form.get('cpEmail')?.hasError('email') && form.get('cpEmail')?.touched) {
+                <mat-error>Invalid email</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Address</mat-label>
+              <input matInput formControlName="cpAddress">
+            </mat-form-field>
+
+          </div>
+
+        </div>
+      </mat-tab>
+
+      <!-- ── Tab 2: Employment Info ────────────────────────────── -->
+      <mat-tab label="Employment Info">
+        <div class="tab-content">
+          <div class="form-grid">
+
+            <mat-form-field appearance="outline">
+              <mat-label>Employee No</mat-label>
+              <input matInput formControlName="employeeNo">
+              @if (form.get('employeeNo')?.invalid && form.get('employeeNo')?.touched) {
+                <mat-error>Required</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="col-half">
+              <mat-label>Payroll Name</mat-label>
+              <input matInput formControlName="payrollName">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Joined Date</mat-label>
+              <input matInput [matDatepicker]="joinedDatePicker" formControlName="joinedDate">
+              <mat-datepicker-toggle matIconSuffix [for]="joinedDatePicker" />
+              <mat-datepicker #joinedDatePicker />
+              @if (form.get('joinedDate')?.invalid && form.get('joinedDate')?.touched) {
+                <mat-error>Required</mat-error>
+              }
+            </mat-form-field>
+
+            <app-searchable-dropdown
+              formControlName="jobCategoryId"
+              label="Job Category"
+              [options]="masterSvc.activeJobCategories()" />
+
+            <app-searchable-dropdown
+              formControlName="branchId"
+              label="Branch"
+              [options]="masterSvc.activeBranches()" />
+
+            <app-searchable-dropdown
+              formControlName="designationId"
+              label="Designation"
+              [options]="masterSvc.activeDesignations()" />
+
+            <mat-form-field appearance="outline">
+              <mat-label>EPF No</mat-label>
+              <input matInput formControlName="epfNo">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>ETF No</mat-label>
+              <input matInput formControlName="etfNo">
+            </mat-form-field>
+
+            <app-searchable-dropdown
+              formControlName="noPayDaysId"
+              label="Nopay Days Rule"
+              [options]="nopayDaysOptions()" />
+
+            <app-searchable-dropdown
+              formControlName="employeeTypeId"
+              label="Employee Type"
+              [options]="masterSvc.activeEmployeeTypes()" />
+
+            <div class="toggle-row col-full">
+              <mat-slide-toggle formControlName="isActive" color="primary">
+                Active employee
+              </mat-slide-toggle>
+            </div>
+
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- ── Tab 3: Salary ─────────────────────────────────────── -->
+      <mat-tab label="Salary">
+        <div class="tab-content salary-section">
+
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Basic Salary</mat-label>
+              <input matInput formControlName="basicSalary" type="number" min="0">
+              @if (form.get('basicSalary')?.hasError('required') && form.get('basicSalary')?.touched) {
+                <mat-error>Required</mat-error>
+              }
+              @if (form.get('basicSalary')?.hasError('min') && form.get('basicSalary')?.touched) {
+                <mat-error>Must be 0 or greater</mat-error>
+              }
+            </mat-form-field>
+
+            <app-lookup [config]="gradeLookupConfig()" label="Grade" (selected)="onGradeSelected($event)" />
+
+          </div>
+
+          <mat-divider />
+
+          <mat-tab-group
+            [selectedIndex]="selectedSalaryTabIndex()"
+            (selectedIndexChange)="selectedSalaryTabIndex.set($event)"
+            animationDuration="200ms"
+          >
+
+            <!-- Sub-tab: Fixed Allowances -->
+            <mat-tab>
+              <ng-template mat-tab-label>
+                Fixed Allowances
+                @if (fixedAllowancesCount()) {
+                  <span class="tab-badge">{{ fixedAllowancesCount() }}</span>
+                }
+              </ng-template>
+              <div class="tab-content">
+                <app-employee-allowances (allowancesChange)="onAllowancesChange($event)" />
+              </div>
+            </mat-tab>
+
+            <!-- Sub-tab: Fixed Deductions -->
+            <mat-tab>
+              <ng-template mat-tab-label>
+                Fixed Deductions
+                @if (fixedDeductionsCount()) {
+                  <span class="tab-badge">{{ fixedDeductionsCount() }}</span>
+                }
+              </ng-template>
+              <div class="tab-content">
+                <app-employee-deductions (deductionsChange)="onDeductionsChange($event)" />
+              </div>
+            </mat-tab>
+
+          </mat-tab-group>
+
+
+        </div>
+      </mat-tab>
+
+    </mat-tab-group>
+
+  </form>
+</div>

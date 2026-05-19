@@ -1,0 +1,65 @@
+<div class="login-bg">
+  <div class="card" [class.shake]="isShaking()">
+    <div class="brand">
+      <mat-icon aria-hidden="true">payments</mat-icon>
+      <span class="brand-name">PayrollIQ</span>
+    </div>
+    <p class="subheading">Sign in to your account</p>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Username</mat-label>
+        <input
+          matInput
+          formControlName="username"
+          placeholder="Username"
+          autocomplete="username"
+        />
+        <mat-error>Username is required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Password</mat-label>
+        <input
+          matInput
+          formControlName="password"
+          [type]="showPassword() ? 'text' : 'password'"
+          placeholder="Password"
+          autocomplete="current-password"
+        />
+        <button
+          type="button"
+          mat-icon-button
+          matSuffix
+          (click)="togglePassword()"
+          [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+        >
+          <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        <mat-error>
+          @if (form.get('password')?.hasError('required')) {
+            Password is required
+          } @else {
+            Password must be at least 6 characters
+          }
+        </mat-error>
+      </mat-form-field>
+
+      @if (loginError()) {
+        <div class="error-banner" role="alert" aria-live="assertive">
+          Invalid username or password. Please try again.
+        </div>
+      }
+
+      <button
+        type="submit"
+        mat-raised-button
+        class="submit-btn"
+        [disabled]="isLoading()"
+        aria-label="Sign in"
+      >
+        {{ isLoading() ? 'Signing in…' : 'Sign in' }}
+      </button>
+    </form>
+  </div>
+</div>

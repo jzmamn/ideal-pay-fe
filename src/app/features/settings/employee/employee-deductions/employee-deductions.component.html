@@ -1,0 +1,99 @@
+<section class="deductions-section" aria-labelledby="deductions-heading">
+
+  <!-- ── Header ────────────────────────────────────────────────── -->
+  <div class="panel-header">
+    <div class="panel-heading">
+      <mat-icon aria-hidden="true">remove_circle_outline</mat-icon>
+      <span id="deductions-heading" class="panel-title">Fixed Deductions</span>
+    </div>
+  </div>
+
+  @if (selectedDeductions().length > 0) {
+    <div class="table-wrapper">
+      <table aria-label="Fixed deductions">
+        <thead>
+          <tr>
+            <th scope="col">Code</th>
+            <th scope="col">Name</th>
+            <th scope="col" class="amount-col">Amount</th>
+            <th scope="col" class="action-col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (deduction of selectedDeductions(); track deduction.id; let i = $index) {
+            <tr [class.editing-row]="editingIndex() === i">
+              <td class="code-cell">{{ deduction.code }}</td>
+              <td>{{ deduction.name }}</td>
+              <td class="amount-cell">
+                @if (editingIndex() === i) {
+                  <mat-form-field appearance="outline" class="amount-field">
+                    <input
+                      matInput
+                      type="number"
+                      min="0"
+                      [formControl]="editAmountCtrl"
+                      [attr.aria-label]="'Edit amount for ' + deduction.name"
+                    >
+                    @if (editAmountCtrl.hasError('required') && editAmountCtrl.touched) {
+                      <mat-error>Amount is required</mat-error>
+                    }
+                    @if (editAmountCtrl.hasError('min') && editAmountCtrl.touched) {
+                      <mat-error>Cannot be negative</mat-error>
+                    }
+                  </mat-form-field>
+                } @else {
+                  <span class="amount-value">{{ deduction.amount | number:'1.2-2' }}</span>
+                }
+              </td>
+              <td class="action-col">
+                @if (editingIndex() === i) {
+                  <button
+                    mat-icon-button
+                    type="button"
+                    color="primary"
+                    (click)="saveEdit(i)"
+                    [attr.aria-label]="'Save changes for ' + deduction.name"
+                    matTooltip="Save"
+                  >
+                    <mat-icon>check</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    (click)="cancelEdit()"
+                    [attr.aria-label]="'Cancel editing ' + deduction.name"
+                    matTooltip="Cancel"
+                  >
+                    <mat-icon>close</mat-icon>
+                  </button>
+                } @else {
+                  <button
+                    mat-icon-button
+                    type="button"
+                    class="btn-edit"
+                    [disabled]="editingIndex() !== null"
+                    (click)="startEdit(i)"
+                    [attr.aria-label]="'Edit amount for ' + deduction.name"
+                    matTooltip="Edit amount"
+                  >
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+        <tfoot aria-live="polite" aria-atomic="true">
+          <tr class="total-row">
+            <td colspan="2" class="total-label">Total Fixed Deduction</td>
+            <td class="total-amount">{{ totalFixedDeduction() | number:'1.2-2' }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  } @else {
+    <p class="empty-note">No active fixed deductions found.</p>
+  }
+
+</section>

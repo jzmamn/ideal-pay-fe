@@ -1,0 +1,71 @@
+<div mat-dialog-title class="dialog-title">
+  <div class="dialog-title-icon">
+    <mat-icon>{{ data.icon ?? 'category' }}</mat-icon>
+  </div>
+  <span class="dialog-title-main">{{ isEdit ? 'Edit' : 'New' }} {{ data.title ?? (data.entity | titlecase) }}</span>
+  <button mat-icon-button mat-dialog-close class="dialog-close-btn" aria-label="Close dialog">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="form-grid">
+
+    @if (isEdit) {
+      <mat-form-field appearance="outline">
+        <mat-label>ID</mat-label>
+        <input matInput formControlName="id">
+      </mat-form-field>
+    }
+
+    <mat-form-field appearance="outline">
+      <mat-label>Code</mat-label>
+      <input matInput formControlName="code">
+      @if (form.get('code')?.hasError('required') && form.get('code')?.touched) {
+        <mat-error>Code is required</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Name</mat-label>
+      <input matInput formControlName="name">
+      @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
+        <mat-error>Name is required</mat-error>
+      }
+    </mat-form-field>
+
+    @for (field of data.extraFields; track field.key) {
+      <mat-form-field appearance="outline" [class.col-full]="field.type === 'textarea'">
+        <mat-label>{{ field.label }}</mat-label>
+        @if (field.type === 'number') {
+          <input matInput type="number" [formControlName]="field.key">
+        } @else if (field.type === 'textarea') {
+          <textarea matInput rows="3" [formControlName]="field.key"></textarea>
+        } @else {
+          <input matInput [formControlName]="field.key">
+        }
+        @if (form.get(field.key)?.hasError('required') && form.get(field.key)?.touched) {
+          <mat-error>{{ field.label }} is required</mat-error>
+        }
+      </mat-form-field>
+    }
+
+    <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
+
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  @if (isEdit) {
+    <button mat-flat-button class="btn-error" (click)="delete()">
+      <mat-icon>delete</mat-icon> Delete
+    </button>
+  }
+  <span class="action-spacer"></span>
+  <button mat-flat-button [disabled]="form.invalid" class="btn-warn" (click)="save()">
+    <mat-icon>save</mat-icon> {{ isEdit ? 'Update' : 'Save' }}
+  </button>
+  <button mat-flat-button mat-dialog-close class="btn-secondary">
+    <mat-icon>close</mat-icon> Cancel
+  </button>
+</mat-dialog-actions>

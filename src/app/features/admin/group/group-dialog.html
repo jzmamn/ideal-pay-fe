@@ -1,0 +1,53 @@
+<div mat-dialog-title class="dialog-title">
+  <div class="dialog-title-icon">
+    <mat-icon>workspaces</mat-icon>
+  </div>
+  <span class="dialog-title-main">Group information</span>
+  <button mat-icon-button mat-dialog-close class="dialog-close-btn" aria-label="Close dialog">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <form [formGroup]="groupForm" class="form-grid">
+
+    <mat-form-field appearance="outline">
+      <mat-label>ID</mat-label>
+      <input matInput formControlName="id">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Code</mat-label>
+      <input matInput formControlName="code">
+      @if (groupForm.get('code')?.hasError('required')) {
+        <mat-error>Code is required</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Name</mat-label>
+      <input matInput formControlName="name">
+      @if (groupForm.get('name')?.hasError('required')) {
+        <mat-error>Name is required</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
+
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  @if (isEdit) {
+  <button mat-flat-button class="btn-error">
+    <mat-icon>delete</mat-icon> Delete
+  </button>
+  }
+  <span class="action-spacer"></span>
+  <button mat-flat-button [disabled]="groupForm.invalid" class="btn-warn">
+    <mat-icon>save</mat-icon> {{ isEdit ? 'Update' : 'Save' }}
+  </button>
+  <button mat-flat-button mat-dialog-close class="btn-secondary">
+    <mat-icon>close</mat-icon> Cancel
+  </button>
+</mat-dialog-actions>

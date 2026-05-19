@@ -1,0 +1,101 @@
+<mat-card>
+  <mat-card-content>
+
+    <div class="table-header">
+      <h2>{{ config().title }}</h2>
+    </div>
+
+    <div class="filter-bar">
+      @if (config().showNewButton) {
+        <button mat-flat-button (click)="newClicked.emit()" matTooltip="Add new record">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      }
+      @if (config().showActiveFilter) {
+        <mat-button-toggle-group
+          [value]="activeFilter()"
+          (change)="activeFilter.set($event.value)"
+          aria-label="Filter by status"
+          class="status-toggle"
+        >
+          <mat-button-toggle value="all">All</mat-button-toggle>
+          <mat-button-toggle value="active">Active</mat-button-toggle>
+          <mat-button-toggle value="inactive">Inactive</mat-button-toggle>
+        </mat-button-toggle-group>
+      }
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Search</mat-label>
+        <input matInput (keyup)="applyFilter($event)" placeholder="Search..." #filterInput>
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+    </div>
+
+    <div class="table-container" role="region" [attr.aria-label]="config().title + ' data table'">
+      <table mat-table [dataSource]="dataSource" matSort (matSortChange)="announceSortChange($event)"
+             [attr.aria-label]="config().title">
+
+        @for (col of config().columns; track col.key) {
+          <ng-container [matColumnDef]="col.key">
+
+            <th mat-header-cell *matHeaderCellDef
+                [mat-sort-header]="col.key"
+                [disabled]="col.sortable === false">
+              {{ col.label }}
+            </th>
+
+            <td mat-cell *matCellDef="let row">
+              @switch (getColumnType(col)) {
+                @case ('boolean') {
+                  <mat-icon
+                    [class.active-icon]="getCellValue(row, col.key)"
+                    [attr.aria-label]="getCellValue(row, col.key) ? 'Yes' : 'No'">
+                    {{ getCellValue(row, col.key) ? 'check_circle' : 'cancel' }}
+                  </mat-icon>
+                }
+                @default {
+                  {{ formatCellValue(row, col) }}
+                }
+              }
+            </td>
+
+          </ng-container>
+        }
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+
+        <tr mat-row
+            *matRowDef="let row; columns: displayedColumns()"
+            class="data-row"
+            [class.selected]="isSelected(row)"
+            [attr.aria-selected]="isSelected(row)"
+            tabindex="0"
+            (click)="onRowClick(row)"
+            (keydown.enter)="onRowClick(row)"
+            (keydown.space)="$event.preventDefault(); onRowClick(row)">
+        </tr>
+
+        <tr class="mat-mdc-row" *matNoDataRow>
+          <td class="mat-mdc-cell no-data-cell" [attr.colspan]="displayedColumns().length">
+            @if (filterInput.value) {
+              No records match "{{ filterInput.value }}"
+            } @else if (activeFilter() !== 'all') {
+              No {{ activeFilter() }} records found
+            } @else {
+              No records found
+            }
+          </td>
+        </tr>
+
+      </table>
+    </div>
+
+    <mat-paginator
+      [pageSize]="config().pageSize ?? 10"
+      [pageSizeOptions]="config().pageSizeOptions ?? [5, 10, 20, 50]"
+      showFirstLastButtons
+      aria-label="Select page">
+    </mat-paginator>
+
+  </mat-card-content>
+</mat-card>

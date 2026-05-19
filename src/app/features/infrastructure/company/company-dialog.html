@@ -1,0 +1,160 @@
+<div mat-dialog-title class="dialog-title">
+  <div class="dialog-title-icon">
+    <mat-icon>business</mat-icon>
+  </div>
+  <span class="dialog-title-main">Company information</span>
+  <button mat-icon-button mat-dialog-close class="dialog-close-btn" aria-label="Close dialog">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <form [formGroup]="companyForm" class="form-grid">
+
+    <mat-form-field appearance="outline">
+      <mat-label>ID</mat-label>
+      <input matInput formControlName="id">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Code</mat-label>
+      <input matInput formControlName="code">
+      @if (companyForm.get('code')?.hasError('required')) {
+        <mat-error>Code is required</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
+
+    <div class="two-col-group">
+      <mat-form-field appearance="outline">
+        <mat-label>Company Name</mat-label>
+        <input matInput formControlName="name">
+        @if (companyForm.get('name')?.hasError('required')) {
+          <mat-error>Company name is required</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Contact Person</mat-label>
+        <input matInput formControlName="contactPerson">
+        @if (companyForm.get('contactPerson')?.hasError('required')) {
+          <mat-error>Contact person is required</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="address-group">
+      <div class="address-header">
+        <mat-icon>contacts</mat-icon>
+        <span>Contact Details</span>
+      </div>
+
+      <div formGroupName="address">
+        <div class="two-col-group">
+          <mat-form-field appearance="outline">
+            <mat-label>Address Line 1</mat-label>
+            <input matInput formControlName="line1">
+            @if (addressGroup.get('line1')?.hasError('required')) {
+              <mat-error>Address line 1 is required</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Address Line 2</mat-label>
+            <input matInput formControlName="line2">
+          </mat-form-field>
+        </div>
+
+        <div class="two-col-group">
+          <mat-form-field appearance="outline">
+            <mat-label>City</mat-label>
+            <input matInput formControlName="city">
+            @if (addressGroup.get('city')?.hasError('required')) {
+              <mat-error>City is required</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <input matInput formControlName="email" type="email">
+            @if (addressGroup.get('email')?.hasError('email')) {
+              <mat-error>Enter a valid email address</mat-error>
+            }
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="two-col-group">
+        <mat-form-field appearance="outline">
+          <mat-label>Telephone</mat-label>
+          <input matInput formControlName="telephone" type="tel">
+          @if (companyForm.get('telephone')?.hasError('required')) {
+            <mat-error>Telephone is required</mat-error>
+          } @else if (companyForm.get('telephone')?.hasError('pattern')) {
+            <mat-error>Enter a valid phone number</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fax</mat-label>
+          <input matInput formControlName="fax">
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Logo upload -->
+    <div class="logo-upload">
+      <input
+        #fileInput
+        type="file"
+        accept="image/*"
+        class="hidden-file-input"
+        (change)="onFileSelected($event)"
+        aria-hidden="true"
+        tabindex="-1">
+
+      <div class="logo-upload-row">
+        <button mat-raised-button type="button" (click)="browseFile()" aria-label="Browse for logo image">
+          <mat-icon>upload</mat-icon>
+          Browse
+        </button>
+
+        <mat-form-field appearance="outline" class="logo-name-field">
+          <mat-label>Logo</mat-label>
+          <input matInput [value]="logoFileName()" readonly placeholder="No file selected">
+          @if (logoPreview()) {
+            <button matSuffix mat-icon-button type="button" (click)="removeLogo()" aria-label="Remove logo">
+              <mat-icon>clear</mat-icon>
+            </button>
+          }
+          @if (logoTypeError()) {
+            <mat-error>Only image files are allowed (JPEG, PNG, GIF, WebP)</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      @if (logoPreview()) {
+        <div class="logo-preview">
+          <img [src]="logoPreview()" alt="Company logo preview" class="logo-thumbnail">
+        </div>
+      }
+    </div>
+
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  @if (isEdit) {
+    <button mat-flat-button class="btn-error" (click)="delete()">
+      <mat-icon>delete</mat-icon> Delete
+    </button>
+  }
+  <span class="action-spacer"></span>
+  <button mat-flat-button [disabled]="companyForm.invalid" class="btn-warn" (click)="save()">
+    <mat-icon>save</mat-icon> {{ isEdit ? 'Update' : 'Save' }}
+  </button>
+  <button mat-flat-button mat-dialog-close class="btn-secondary">
+    <mat-icon>close</mat-icon> Cancel
+  </button>
+</mat-dialog-actions>

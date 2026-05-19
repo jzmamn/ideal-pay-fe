@@ -1,0 +1,74 @@
+<div mat-dialog-title class="dialog-title">
+  <div class="dialog-title-icon">
+    <mat-icon>money_off</mat-icon>
+  </div>
+  <span class="dialog-title-main">{{ dialogTitle }} information</span>
+  <button mat-icon-button mat-dialog-close class="dialog-close-btn" aria-label="Close dialog">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <form [formGroup]="deductionForm" class="form-grid">
+
+    <mat-form-field appearance="outline">
+      <mat-label>ID</mat-label>
+      <input matInput formControlName="id">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Code</mat-label>
+      <input matInput formControlName="code">
+      @if (deductionForm.get('code')?.hasError('required')) {
+        <mat-error>Code is required</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Name</mat-label>
+      <input matInput formControlName="name">
+      @if (deductionForm.get('name')?.hasError('required')) {
+        <mat-error>Name is required</mat-error>
+      }
+    </mat-form-field>
+
+    @if (isFixed) {
+      <mat-form-field appearance="outline">
+        <mat-label>Amount</mat-label>
+        <input matInput type="number" min="0" formControlName="amount">
+        @if (deductionForm.get('amount')?.hasError('required')) {
+          <mat-error>Amount is required</mat-error>
+        }
+        @if (deductionForm.get('amount')?.hasError('min')) {
+          <mat-error>Amount must be 0 or greater</mat-error>
+        }
+      </mat-form-field>
+    }
+
+    <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
+
+    <mat-divider />
+
+    <div class="checkbox-group">
+      <mat-checkbox formControlName="liableForEPF">Liable for EPF</mat-checkbox>
+      <mat-checkbox formControlName="liableForETF">Liable for ETF</mat-checkbox>
+      <mat-checkbox formControlName="liableForNopay">Liable for Nopay</mat-checkbox>
+    </div>
+
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  @if (isEdit) {
+  <button mat-flat-button class="btn-error" (click)="onDelete()">
+    <mat-icon>delete</mat-icon> Delete
+  </button>
+  }
+  <span class="action-spacer"></span>
+  <button mat-flat-button [disabled]="deductionForm.invalid" class="btn-warn" (click)="onSave()">
+    <mat-icon>save</mat-icon> {{ isEdit ? 'Update' : 'Save' }}
+  </button>
+  <button mat-flat-button mat-dialog-close class="btn-secondary">
+    <mat-icon>close</mat-icon> Cancel
+  </button>
+</mat-dialog-actions>

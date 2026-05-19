@@ -1,0 +1,95 @@
+.login-bg {
+  min-height: 100vh;
+  background: #0c2340;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.card {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 400px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+
+  mat-icon {
+    color: #185fa5;
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+.brand-name {
+  font-size: 22px;
+  font-weight: 600;
+  color: #185fa5;
+}
+
+.subheading {
+  color: #555;
+  margin: 0 0 1.5rem;
+  font-size: 14px;
+}
+
+.full-width {
+  width: 100%;
+  display: block;
+}
+
+.error-banner {
+  background: #fcebeb;
+  border-left: 4px solid #a32d2d;
+  color: #a32d2d;
+  padding: 10px 14px;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 14px;
+}
+
+.submit-btn {
+  width: 100%;
+  background-color: #185fa5 !important;
+  color: #fff !important;
+  margin-top: 0.5rem;
+  height: 44px;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  15% {
+    transform: translateX(-8px);
+  }
+  30% {
+    transform: translateX(8px);
+  }
+  45% {
+    transform: translateX(-6px);
+  }
+  60% {
+    transform: translateX(6px);
+  }
+  75% {
+    transform: translateX(-4px);
+  }
+  90% {
+    transform: translateX(4px);
+  }
+}
+
+.shake {
+  animation: shake 0.6s ease-in-out;
+}

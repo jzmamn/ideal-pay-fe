@@ -1,0 +1,137 @@
+.pd-root {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1600px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+// ── Top bar ─────────────────────────────────────────────
+.pd-topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+
+  &__left {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  &__icon {
+    font-size: 2rem;
+    width: 2rem;
+    height: 2rem;
+    color: #185fa5;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1.2;
+  }
+
+  &__sub {
+    margin: 4px 0 0;
+    font-size: 0.82rem;
+    color: #6b7280;
+  }
+
+  &__right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+}
+
+.export-btn {
+  color: #185fa5;
+  border-color: #185fa5;
+}
+
+// ── KPI cards ────────────────────────────────────────────
+.pd-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ── Charts ────────────────────────────────────────────────
+.pd-charts-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pd-chart-cell {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+
+  app-payroll-trend-chart,
+  app-dept-donut-chart,
+  app-headcount-bar-chart,
+  app-benefits-ot-line-chart {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &--wide {
+    // already handled by grid 2fr
+  }
+}
+
+// When both cols in row 2 are equal width
+.pd-charts-row:nth-of-type(2) {
+  grid-template-columns: 1fr 1fr;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ── Tables row ────────────────────────────────────────────
+.pd-tables-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ── Chart placeholder ─────────────────────────────────────
+.chart-placeholder {
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  min-height: 300px;
+}

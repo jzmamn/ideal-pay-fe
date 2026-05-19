@@ -1,0 +1,95 @@
+:host {
+  display: block;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+
+  &:hover {
+    border-color: #185fa5;
+    box-shadow: 0 2px 8px rgba(24, 95, 165, 0.15);
+  }
+
+  &:focus-visible {
+    border-color: #185fa5;
+    box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.3);
+  }
+}
+
+.card-inner {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(24, 95, 165, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  mat-icon {
+    color: #185fa5;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.card-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.card-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.1;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &--positive {
+    background: rgba(59, 109, 17, 0.12);
+    color: #3b6d11;
+  }
+
+  &--negative {
+    background: rgba(163, 45, 45, 0.12);
+    color: #a32d2d;
+  }
+}
+
+.card-subtitle {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}

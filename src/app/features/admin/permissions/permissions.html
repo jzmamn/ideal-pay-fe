@@ -1,0 +1,129 @@
+<div class="perm-page">
+
+  <!-- Page header -->
+  <div class="perm-header">
+    <h2 class="perm-title">Permissions</h2>
+  </div>
+
+  <!-- Controls bar -->
+  <div class="perm-controls">
+
+    <app-lookup
+      class="target-lookup"
+      [config]="userLookupConfig"
+      (selected)="selectUser($event.id)">
+    </app-lookup>
+
+    @if (selectedUserId() !== null && permissions().length) {
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field">
+        <mat-label>Filter</mat-label>
+        <input matInput [value]="filterValue()"
+               (input)="filterValue.set($any($event.target).value)"
+               placeholder="Search menu items…">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+    }
+
+    <button mat-flat-button class="btn-save controls-save" (click)="save()">
+      <mat-icon>save</mat-icon> Save
+    </button>
+
+  </div>
+
+  <!-- Permissions table -->
+  @if (selectedUserId() !== null) {
+    <div class="perm-table-wrap">
+      <table mat-table [dataSource]="filteredPermissions()" multiTemplateDataRows>
+
+        <!-- Checkbox column -->
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="col-select"></th>
+          <td mat-cell *matCellDef="let row" class="col-select" (click)="$event.stopPropagation()">
+            <mat-checkbox
+              [checked]="isAllChecked(row)"
+              [indeterminate]="isIndeterminate(row)"
+              (change)="toggleAll(row, $event.checked)">
+            </mat-checkbox>
+          </td>
+        </ng-container>
+
+        <!-- Menu item column -->
+        <ng-container matColumnDef="menuItem">
+          <th mat-header-cell *matHeaderCellDef>Menu Item</th>
+          <td mat-cell *matCellDef="let row" class="menu-item-cell">{{ row.menuItem }}</td>
+        </ng-container>
+
+        <!-- Expand toggle column -->
+        <ng-container matColumnDef="expand">
+          <th mat-header-cell *matHeaderCellDef class="col-expand"></th>
+          <td mat-cell *matCellDef="let row" class="col-expand">
+            <mat-icon class="expand-icon" [class.rotated]="expandedRowId() === row.id">
+              expand_more
+            </mat-icon>
+          </td>
+        </ng-container>
+
+        <!-- Expanded detail column -->
+        <ng-container matColumnDef="expandedDetail">
+          <td mat-cell *matCellDef="let row" [attr.colspan]="displayedColumns.length" class="detail-cell">
+            @if (expandedRowId() === row.id) {
+              <div class="detail-panel">
+
+                <div class="perm-check-item" (click)="$event.stopPropagation()">
+                  <mat-checkbox [checked]="row.read"
+                                (change)="togglePerm(row, 'read', $event.checked)">
+                    Read
+                  </mat-checkbox>
+                  <span class="perm-check-desc">Can view the section</span>
+                </div>
+
+                <div class="perm-check-item" (click)="$event.stopPropagation()">
+                  <mat-checkbox [checked]="row.create"
+                                (change)="togglePerm(row, 'create', $event.checked)">
+                    Create
+                  </mat-checkbox>
+                  <span class="perm-check-desc">Can add new records</span>
+                </div>
+
+                <div class="perm-check-item" (click)="$event.stopPropagation()">
+                  <mat-checkbox [checked]="row.update"
+                                (change)="togglePerm(row, 'update', $event.checked)">
+                    Update
+                  </mat-checkbox>
+                  <span class="perm-check-desc">Can edit existing records</span>
+                </div>
+
+                <div class="perm-check-item" (click)="$event.stopPropagation()">
+                  <mat-checkbox [checked]="row.visible"
+                                (change)="togglePerm(row, 'visible', $event.checked)">
+                    Visible
+                  </mat-checkbox>
+                  <span class="perm-check-desc">Menu item is visible in sidebar</span>
+                </div>
+
+              </div>
+            }
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"
+            class="perm-row"
+            [class.expanded-row]="expandedRowId() === row.id"
+            (click)="toggleExpand(row)">
+        </tr>
+        <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="detail-row"></tr>
+
+      </table>
+    </div>
+
+  } @else {
+
+    <div class="empty-state">
+      <mat-icon>security</mat-icon>
+      <p>Select a user to manage permissions</p>
+    </div>
+
+  }
+
+</div>

@@ -1,0 +1,17 @@
+<h1 mat-dialog-title>Employees</h1>
+<mat-toolbar style="display: flex; gap: 2px;">
+   
+    <a [routerLink]="['/employee/']" matButton="filled" class="btn-info">
+        <mat-icon>home</mat-icon>
+        <span>Employees</span>
+    </a>
+     <a [routerLink]="['/employee/add']" matButton="filled" class="btn-add">
+        <mat-icon>add</mat-icon>
+        <span>Add </span>
+    </a>
+     <a [routerLink]="['/add']" matButton="filled" class="btn-success">
+        <mat-icon>edit</mat-icon>
+        <span>Edit</span>  
+    </a>
+</mat-toolbar>
+<router-outlet/>

@@ -1,0 +1,64 @@
+<div class="modal-shell">
+  <div class="modal-title-bar">
+    <div class="modal-avatar" aria-hidden="true">{{ emp.name.charAt(0) }}</div>
+    <h2 mat-dialog-title class="modal-title">{{ emp.name }}</h2>
+    <button mat-icon-button mat-dialog-close class="close-btn" aria-label="Close dialog">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content class="modal-content">
+    <div class="emp-meta">
+      <span class="meta-item">
+        <mat-icon aria-hidden="true">work</mat-icon>{{ emp.role }}
+      </span>
+      <span class="meta-item">
+        <mat-icon aria-hidden="true">corporate_fare</mat-icon>{{ emp.dept }}
+      </span>
+      <span
+        class="status-badge"
+        [class.status-badge--active]="emp.status === 'Active'"
+        [class.status-badge--leave]="emp.status === 'Leave'"
+        [class.status-badge--terminated]="emp.status === 'Terminated'"
+        [attr.aria-label]="'Status: ' + emp.status"
+      >{{ emp.status }}</span>
+    </div>
+
+    <div class="kpi-grid" role="list">
+      <div class="kpi-card" role="listitem">
+        <span class="kpi-label">Base Salary</span>
+        <span class="kpi-value">{{ emp.base | currency:'USD':'symbol':'1.0-0' }}</span>
+      </div>
+      <div class="kpi-card" role="listitem">
+        <span class="kpi-label">YTD Bonus</span>
+        <span class="kpi-value">{{ emp.ytdBonus | currency:'USD':'symbol':'1.0-0' }}</span>
+      </div>
+      <div class="kpi-card" role="listitem">
+        <span class="kpi-label">Benefits</span>
+        <span class="kpi-value">{{ emp.ben | currency:'USD':'symbol':'1.0-0' }}</span>
+      </div>
+      <div class="kpi-card" role="listitem">
+        <span class="kpi-label">Total Comp</span>
+        <span class="kpi-value kpi-value--primary">{{ (emp.base + emp.ytdBonus + emp.ben) | currency:'USD':'symbol':'1.0-0' }}</span>
+      </div>
+      <div class="kpi-card" role="listitem">
+        <span class="kpi-label">Pay Review Date</span>
+        <span class="kpi-value kpi-value--sm">{{ emp.payReviewDate }}</span>
+      </div>
+      <div class="kpi-card" role="listitem">
+        <span class="kpi-label">Last Increase</span>
+        <span class="kpi-value">
+          @if (emp.lastIncrease > 0) {
+            +{{ emp.lastIncrease }}%
+          } @else {
+            —
+          }
+        </span>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Close</button>
+  </mat-dialog-actions>
+</div>

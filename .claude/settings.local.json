@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e ' *)",
+      "PowerShell(Get-ChildItem -Path \"D:\\\\ideal\\\\payroll\\\\ideal-pay-fe\\\\src\" -Recurse -Directory | Select-Object -First 30 | ForEach-Object { $_.FullName })",
+      "Bash(npx ng *)"
+    ]
+  }
+}

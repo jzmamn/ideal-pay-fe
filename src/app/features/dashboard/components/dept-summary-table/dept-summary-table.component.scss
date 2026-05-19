@@ -1,0 +1,63 @@
+.table-card {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 20px;
+}
+
+.section-title {
+  margin: 0 0 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.dept-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th, td {
+    border: 0.5px solid #e5e7eb;
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #374151;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  .dept-row:nth-child(even) {
+    background: #fafafa;
+  }
+
+  .dept-row:hover {
+    background: rgba(24, 95, 165, 0.05);
+  }
+}
+
+.budget-badge {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &--under {
+    background: rgba(59, 109, 17, 0.12);
+    color: #3b6d11;
+  }
+
+  &--over {
+    background: rgba(163, 45, 45, 0.12);
+    color: #a32d2d;
+  }
+}

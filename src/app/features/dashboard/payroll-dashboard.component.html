@@ -1,0 +1,102 @@
+<div class="pd-root">
+
+  <!-- Top bar -->
+  <header class="pd-topbar">
+    <div class="pd-topbar__left">
+      <mat-icon class="pd-topbar__icon" aria-hidden="true">bar_chart</mat-icon>
+      <div>
+        <h1 class="pd-topbar__title">Payroll Executive Dashboard</h1>
+        <p class="pd-topbar__sub">Jan – May 2025 &nbsp;·&nbsp; YTD Summary</p>
+      </div>
+    </div>
+    <div class="pd-topbar__right">
+      <mat-button-toggle-group
+        [value]="period()"
+        (change)="period.set($event.value)"
+        aria-label="Select reporting period"
+      >
+        <mat-button-toggle value="month">Month</mat-button-toggle>
+        <mat-button-toggle value="quarter">Quarter</mat-button-toggle>
+        <mat-button-toggle value="year">Year</mat-button-toggle>
+      </mat-button-toggle-group>
+
+      <button
+        mat-stroked-button
+        class="export-btn"
+        (click)="exportData()"
+        aria-label="Export payroll data"
+      >
+        <mat-icon>download</mat-icon>
+        Export
+      </button>
+    </div>
+  </header>
+
+  <!-- KPI cards -->
+  <section class="pd-kpi-grid" aria-label="Key performance indicators">
+    @for (metric of metrics(); track metric.id) {
+      <app-metric-card
+        [metric]="metric"
+        (cardClick)="openMetricModal($event)"
+      ></app-metric-card>
+    }
+  </section>
+
+  <!-- Charts row 1 -->
+  <section class="pd-charts-row" aria-label="Payroll charts">
+    <div class="pd-chart-cell pd-chart-cell--wide">
+      @defer (on idle) {
+        <app-payroll-trend-chart></app-payroll-trend-chart>
+      } @placeholder {
+        <div class="chart-placeholder" aria-busy="true">Loading chart…</div>
+      }
+    </div>
+    <div class="pd-chart-cell">
+      @defer (on idle) {
+        <app-dept-donut-chart
+          (deptClick)="openDeptModal($event)"
+        ></app-dept-donut-chart>
+      } @placeholder {
+        <div class="chart-placeholder" aria-busy="true">Loading chart…</div>
+      }
+    </div>
+  </section>
+
+  <!-- Charts row 2 -->
+  <section class="pd-charts-row" aria-label="Headcount and trend charts">
+    <div class="pd-chart-cell">
+      @defer (on idle) {
+        <app-headcount-bar-chart></app-headcount-bar-chart>
+      } @placeholder {
+        <div class="chart-placeholder" aria-busy="true">Loading chart…</div>
+      }
+    </div>
+    <div class="pd-chart-cell">
+      @defer (on idle) {
+        <app-benefits-ot-line-chart></app-benefits-ot-line-chart>
+      } @placeholder {
+        <div class="chart-placeholder" aria-busy="true">Loading chart…</div>
+      }
+    </div>
+  </section>
+
+  <!-- Dept summary table -->
+  <section aria-label="Department summary">
+    <app-dept-summary-table
+      (drillClick)="openDeptModal($event)"
+    ></app-dept-summary-table>
+  </section>
+
+  <!-- Tables row: pivot + employee -->
+  <section class="pd-tables-row">
+    <div class="pd-table-cell">
+      <app-pivot-table></app-pivot-table>
+    </div>
+    <div class="pd-table-cell">
+      <app-employee-table
+        (viewClick)="openEmployeeModal($event)"
+      ></app-employee-table>
+    </div>
+  </section>
+
+</div>

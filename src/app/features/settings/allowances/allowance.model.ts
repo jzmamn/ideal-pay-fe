@@ -1,0 +1,44 @@
+import { AllowanceType } from './allowance.types';
+
+export class AllowanceModel {
+  id: number;
+  code: string;
+  name: string;
+  description: string | null;
+  amount: number | undefined;
+  isActive: boolean;
+  isTaxable: boolean;
+  liableForEpf: boolean;
+  liableForEtf: boolean;
+  liableForPaye: boolean;
+  liableNoPay: boolean;
+  type: AllowanceType;
+
+  constructor(
+    id: number,
+    code: string,
+    name: string,
+    description: string | null,
+    amount: number | undefined,
+    isActive: boolean,
+    isTaxable: boolean,
+    liableForEpf: boolean,
+    liableForEtf: boolean,
+    liableForPaye: boolean,
+    liableNoPay: boolean,
+    type = AllowanceType.FIXED,
+  ) {
+    this.id = id;
+    this.code = code;
+    this.name = name;
+    this.description = description;
+    this.amount = amount;
+    this.isActive = isActive;
+    this.isTaxable = isTaxable;
+    this.liableForEpf = liableForEpf;
+    this.liableForEtf = liableForEtf;
+    this.liableForPaye = liableForPaye;
+    this.liableNoPay = liableNoPay;
+    this.type = type;
+  }
+}

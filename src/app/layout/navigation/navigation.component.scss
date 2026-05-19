@@ -1,0 +1,307 @@
+// ── Sidebar palette ──────────────────────────────────────────
+$sidebar-bg:     #0f172a;
+$sidebar-text:   #94a3b8;
+$sidebar-active: #f1f5f9;
+$accent:         #3b82f6;
+$accent-soft:    rgba(59, 130, 246, 0.14);
+$hover-bg:       rgba(255, 255, 255, 0.06);
+$divider:        rgba(255, 255, 255, 0.07);
+// ─────────────────────────────────────────────────────────────
+
+.sidenav-container {
+  height: 100vh;
+}
+
+// ── Sidebar shell ─────────────────────────────────────────────
+.sidenav {
+  width: 268px;
+  background: $sidebar-bg;
+  border-right: none;
+  border-radius: 0 !important;
+  --mat-sidenav-container-shape: 0;
+
+  // Target Material's inner wrapper so our flex column applies to projected content
+  ::ng-deep .mat-drawer-inner-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+}
+
+// ── Brand header ──────────────────────────────────────────────
+.brand-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 16px;
+  border-bottom: 1px solid $divider;
+  flex-shrink: 0;
+}
+
+.brand-logo {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, $accent, #6366f1);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  mat-icon {
+    color: #fff;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: $sidebar-active;
+  line-height: 1.2;
+  letter-spacing: 0.2px;
+}
+
+.brand-tagline {
+  font-size: 10.5px;
+  color: $sidebar-text;
+  letter-spacing: 0.3px;
+}
+
+// ── Nav list ──────────────────────────────────────────────────
+.nav-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 8px;
+
+  // hide scrollbar but allow scroll
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+// ── Shared icon + text token ──────────────────────────────────
+$nav-icon-size: 20px;
+$nav-item-font-size: 14px;
+$nav-item-font-weight: 500;
+$nav-item-gap: 12px;
+
+// top-level nav items
+.nav-list > a.mat-mdc-list-item,
+.sub-menu a.mat-mdc-list-item,
+.sub-sub-menu a.mat-mdc-list-item {
+  height: 40px;
+  border-radius: 8px;
+  margin-bottom: 2px;
+  color: $sidebar-text !important;
+  transition: background 0.15s, color 0.15s;
+
+  // Align icon + text
+  ::ng-deep .mdc-list-item__primary-text {
+    display: flex;
+    align-items: center;
+    gap: $nav-item-gap;
+  }
+
+  span {
+    color: $sidebar-text;
+    font-size: $nav-item-font-size;
+    font-weight: $nav-item-font-weight;
+    transition: color 0.15s;
+  }
+
+  mat-icon {
+    color: $sidebar-text;
+    font-size: $nav-icon-size;
+    width: $nav-icon-size;
+    height: $nav-icon-size;
+    flex-shrink: 0;
+    transition: color 0.15s;
+  }
+
+  &:hover {
+    background: $hover-bg;
+    span { color: $sidebar-active; }
+    mat-icon { color: $sidebar-active; }
+  }
+
+  &.nav-active {
+    background: $accent-soft;
+    span { color: $sidebar-active; }
+    mat-icon { color: $accent; }
+  }
+}
+
+// top-level Dashboard link is slightly taller for visual hierarchy
+.nav-list > a.mat-mdc-list-item { height: 44px; }
+
+// ── Expansion panels ──────────────────────────────────────────
+.menu-panel {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 8px !important;
+  margin-bottom: 2px;
+
+  // header row
+  .mat-expansion-panel-header {
+    padding: 0 12px;
+    height: 44px;
+    border-radius: 8px;
+    color: $sidebar-text;
+    background: transparent;
+    transition: background 0.15s, color 0.15s;
+
+    &:hover {
+      background: $hover-bg !important;
+      color: $sidebar-active;
+      .panel-title mat-icon { color: $sidebar-active; }
+    }
+  }
+
+  &.mat-expanded .mat-expansion-panel-header {
+    color: $sidebar-active;
+    .panel-title mat-icon { color: $sidebar-active; }
+  }
+
+  // remove default body padding
+  ::ng-deep .mat-expansion-panel-body { padding: 0; }
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: $nav-item-gap;
+  color: inherit;
+
+  mat-icon {
+    color: $sidebar-text;
+    font-size: $nav-icon-size;
+    width: $nav-icon-size;
+    height: $nav-icon-size;
+    flex-shrink: 0;
+    transition: color 0.15s;
+  }
+
+  span { font-size: $nav-item-font-size; font-weight: $nav-item-font-weight; }
+}
+
+.sub-menu {
+  padding: 4px 0 4px 8px;
+}
+
+// ── Nested expansion panel (inside .sub-menu) ─────────────────
+.sub-menu-panel {
+  margin-bottom: 0;
+
+  .mat-expansion-panel-header {
+    height: 40px !important;
+    padding: 0 8px;
+  }
+}
+
+.sub-sub-menu {
+  padding: 2px 0 2px 16px;
+}
+
+// ── Sidebar footer / user ─────────────────────────────────────
+.sidebar-footer {
+  padding: 10px 8px;
+  border-top: 1px solid $divider;
+  flex-shrink: 0;
+}
+
+.user-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.15s;
+  cursor: default;
+
+  &:hover { background: $hover-bg; }
+}
+
+.user-avatar,
+.toolbar-avatar {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, $accent, #6366f1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.user-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: $sidebar-active;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-role {
+  font-size: 11px;
+  color: $sidebar-text;
+}
+
+.logout-btn {
+  color: $sidebar-text;
+  flex-shrink: 0;
+  &:hover { color: $sidebar-active; }
+}
+
+// ── Top toolbar ───────────────────────────────────────────────
+.top-toolbar {
+  background: #ffffff;
+  color: #334155;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0 12px;
+  height: 60px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.toolbar-spacer { flex: 1; }
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  mat-icon { color: #64748b; }
+}
+
+.toolbar-avatar {
+  margin-left: 6px;
+  cursor: pointer;
+}
+
+// ── Page content ──────────────────────────────────────────────
+.page-content {
+  background: #f8fafc;
+  min-height: calc(100vh - 60px);
+  padding: 24px;
+}

@@ -1,0 +1,15 @@
+@use '@angular/material' as mat;
+
+// Apply to all form fields
+.form-field-sm {
+    @include mat.form-field-density(-6);
+
+    // mat-icon,
+    // .mat-icon {
+    //     font-size: 16px;
+    //     width: 16px;
+    //     height: 16px;
+    //     line-height: 16px;
+    // }
+
+}

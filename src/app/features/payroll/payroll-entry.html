@@ -1,0 +1,239 @@
+<div class="payroll-entry" [formGroup]="form">
+
+  <!-- ── Left: editor panel ── -->
+  <div class="entry-panel">
+
+    <h2 class="page-title">Payroll Entry</h2>
+
+    <!-- Employee selector -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Employee</mat-label>
+      <mat-select formControlName="employeeId"
+                  (selectionChange)="onEmployeeChange($event.value)">
+        @for (emp of employees(); track emp.id) {
+          <mat-option [value]="emp.id">
+            {{ emp.firstName }} {{ emp.lastName }} &mdash; {{ emp.employeeNo }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    @if (selectedEmployee(); as emp) {
+
+      <!-- Basic salary -->
+      <mat-form-field appearance="outline" class="basic-salary-field">
+        <mat-label>Basic Salary</mat-label>
+        <span matTextPrefix>LKR&nbsp;</span>
+        <input matInput type="number" min="0" [value]="basicSalary()" readonly tabindex="-1" />
+      </mat-form-field>
+
+      <mat-divider />
+
+      <!-- ── Allowances ── -->
+      <div class="allowances-header">
+        <span class="allowances-title">Allowances</span>
+        <button mat-button type="button" (click)="addAllowance()">
+          <mat-icon>add</mat-icon> Add Allowance
+        </button>
+      </div>
+
+      <div class="allowances-grid" formArrayName="allowances">
+        @for (ctrl of allowancesArray.controls; track $index; let i = $index) {
+          <div class="allowance-row" [formGroupName]="i">
+            <mat-form-field appearance="outline" class="allowance-name">
+              <mat-label>Name</mat-label>
+              <input matInput formControlName="name" placeholder="e.g. Housing" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="allowance-type">
+              <mat-label>Type</mat-label>
+              <mat-select formControlName="type">
+                <mat-option value="fixed">Fixed</mat-option>
+                <mat-option value="percent">% of basic</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="allowance-amount">
+              <mat-label>
+                {{ ctrl.value.type === 'percent' ? 'Percent (%)' : 'Amount (LKR)' }}
+              </mat-label>
+              <input matInput type="number" min="0" formControlName="value" />
+            </mat-form-field>
+
+            <button mat-icon-button type="button" class="btn-error"
+                    (click)="removeAllowance(i)"
+                    aria-label="Remove allowance"
+                    matTooltip="Remove">
+              <mat-icon>delete_outline</mat-icon>
+            </button>
+          </div>
+        }
+      </div>
+
+      @if (allowancesArray.length === 0) {
+        <p class="no-items">No allowances added.</p>
+      }
+
+      <mat-divider />
+
+      <!-- ── Deductions ── -->
+      <div class="allowances-header">
+        <span class="allowances-title">Deductions</span>
+        <button mat-button type="button" (click)="addDeduction()">
+          <mat-icon>add</mat-icon> Add Deduction
+        </button>
+      </div>
+
+      <div class="allowances-grid" formArrayName="deductions">
+        @for (ctrl of deductionsArray.controls; track $index; let i = $index) {
+          <div class="allowance-row" [formGroupName]="i">
+            <mat-form-field appearance="outline" class="allowance-name">
+              <mat-label>Name</mat-label>
+              <input matInput formControlName="name" placeholder="e.g. Loan" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="allowance-type">
+              <mat-label>Type</mat-label>
+              <mat-select formControlName="type">
+                <mat-option value="fixed">Fixed</mat-option>
+                <mat-option value="percent">% of basic</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="allowance-amount">
+              <mat-label>
+                {{ ctrl.value.type === 'percent' ? 'Percent (%)' : 'Amount (LKR)' }}
+              </mat-label>
+              <input matInput type="number" min="0" formControlName="value" />
+            </mat-form-field>
+
+            <button mat-icon-button type="button" class="btn-error"
+                    (click)="removeDeduction(i)"
+                    aria-label="Remove deduction"
+                    matTooltip="Remove">
+              <mat-icon>delete_outline</mat-icon>
+            </button>
+          </div>
+        }
+      </div>
+
+      @if (deductionsArray.length === 0) {
+        <p class="no-items">No deductions added.</p>
+      }
+
+      <mat-divider />
+
+      <!-- ── Action buttons ── -->
+      <div class="actions">
+        <button mat-stroked-button type="button" (click)="discardChanges()">
+          Discard changes
+        </button>
+        <button mat-flat-button type="button" (click)="saveEntry()">
+          Save entry
+        </button>
+      </div>
+    }
+
+    @if (!selectedEmployee()) {
+      <div class="empty-state" role="status">
+        <mat-icon aria-hidden="true">person_search</mat-icon>
+        <p>Select an employee to begin.</p>
+      </div>
+    }
+
+  </div>
+
+  <!-- ── Right: summary panel ── -->
+  @if (selectedEmployee()) {
+    <aside class="summary-panel" aria-label="Pay summary">
+
+      <!-- Pay summary card -->
+      <div class="summary-card">
+        <h3 class="card-title">Pay Summary</h3>
+
+        <div class="summary-row">
+          <span>Basic Salary</span>
+          <span>{{ basicSalary() | number:'1.2-2' }}</span>
+        </div>
+
+        @if (allowanceAmounts().length > 0) {
+          @for (row of allowanceAmounts(); track $index) {
+            <div class="summary-row sub">
+              <span>{{ row.name || 'Allowance' }}</span>
+              <span>{{ row.amount | number:'1.2-2' }}</span>
+            </div>
+          }
+        }
+
+        <div class="summary-row total-line">
+          <span>Total Allowances</span>
+          <span>{{ totalAllowances() | number:'1.2-2' }}</span>
+        </div>
+
+        <mat-divider />
+
+        <div class="summary-row gross-row">
+          <span>Gross Pay</span>
+          <strong>LKR {{ grossPay() | number:'1.2-2' }}</strong>
+        </div>
+
+        <mat-divider />
+
+        <div class="summary-row deduction-row">
+          <span>EPF — Employee (11%)</span>
+          <span class="neg">− {{ epfEmployee() | number:'1.2-2' }}</span>
+        </div>
+
+        <div class="summary-row deduction-row">
+          <span>Income Tax (PAYE)</span>
+          <span class="neg">− {{ incomeTax() | number:'1.2-2' }}</span>
+        </div>
+
+        @if (deductionAmounts().length > 0) {
+          @for (row of deductionAmounts(); track $index) {
+            <div class="summary-row sub deduction-row">
+              <span>{{ row.name || 'Deduction' }}</span>
+              <span class="neg">− {{ row.amount | number:'1.2-2' }}</span>
+            </div>
+          }
+        }
+
+        <div class="summary-row deduction-row total-line">
+          <span>Other Deductions</span>
+          <span class="neg">− {{ otherDeductions() | number:'1.2-2' }}</span>
+        </div>
+
+        <mat-divider />
+
+        <div class="summary-row net-row">
+          <span>Net Pay</span>
+          <strong>LKR {{ netPay() | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+
+      <!-- Employer contributions card -->
+      <div class="summary-card employer-card">
+        <h3 class="card-title">Employer Contributions</h3>
+
+        <div class="summary-row">
+          <span>EPF — Employer (13%)</span>
+          <span>{{ epfEmployer() | number:'1.2-2' }}</span>
+        </div>
+
+        <div class="summary-row">
+          <span>ETF (3%)</span>
+          <span>{{ etfEmployer() | number:'1.2-2' }}</span>
+        </div>
+
+        <mat-divider />
+
+        <div class="summary-row employer-total">
+          <span>Total Employer Cost</span>
+          <strong>LKR {{ totalEmployerCost() | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+
+    </aside>
+  }
+
+</div>

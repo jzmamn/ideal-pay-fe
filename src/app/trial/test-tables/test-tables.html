@@ -1,0 +1,54 @@
+<form [formGroup]="employeeForm" (ngSubmit)="onSubmit()">
+  <mat-grid-list cols="6" rowHeight="80px" gutterSize="10px">
+
+    <!-- Spans 2 columns -->
+    <mat-grid-tile colspan="2">
+      <mat-form-field appearance="fill" style="width: 100%;">
+        <mat-label>First Name</mat-label>
+        <input matInput formControlName="firstName">
+      </mat-form-field>
+    </mat-grid-tile>
+
+    <!-- Spans 2 columns -->
+    <mat-grid-tile colspan="2">
+      <app-lookup [config]="lookupConfig"  appearance="fill" style="width: 100%;">
+      </app-lookup>
+    </mat-grid-tile>
+
+    <!-- Spans 2 columns -->
+    <mat-grid-tile colspan="2">
+      <mat-form-field appearance="fill" style="width: 100%;">
+        <mat-label>Last Name</mat-label>
+        <input matInput formControlName="lastName">
+      </mat-form-field>
+    </mat-grid-tile>
+
+    <!-- Spans all 4 columns -->
+    <mat-grid-tile colspan="4">
+      <mat-form-field appearance="fill" style="width: 100%;">
+        <mat-label>Email Address</mat-label>
+        <input matInput type="email" formControlName="email">
+      </mat-form-field>
+    </mat-grid-tile>
+
+    <!-- Spans 2 columns -->
+    <mat-grid-tile colspan="1">
+      <mat-form-field appearance="fill" style="width: 100%;">
+        <mat-label>First Name</mat-label>
+        <input matInput formControlName="firstName">
+      </mat-form-field>
+    </mat-grid-tile>
+
+    <!-- Spans 2 columns -->
+    <mat-grid-tile colspan="1">
+      <mat-form-field appearance="fill" style="width: 100%;">
+        <mat-label>Last Name</mat-label>
+        <input matInput formControlName="lastName">
+      </mat-form-field>
+    </mat-grid-tile>
+
+
+  </mat-grid-list>
+
+  <button mat-raised-button color="primary" type="submit">Submit</button>
+</form>

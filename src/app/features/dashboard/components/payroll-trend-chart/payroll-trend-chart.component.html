@@ -1,0 +1,23 @@
+<div class="chart-card">
+  <div class="chart-header">
+    <h3 class="chart-title">Monthly Payroll Trend</h3>
+    <div class="chart-legend" role="list" aria-label="Chart legend">
+      @for (item of legendItems; track item.label) {
+        <div class="legend-item" role="listitem">
+          <span class="legend-dot" [style.background]="item.color" aria-hidden="true"></span>
+          <span>{{ item.label }}</span>
+        </div>
+      }
+    </div>
+  </div>
+  <div class="chart-body">
+    <canvas
+      baseChart
+      [data]="chartData()"
+      [options]="chartOptions"
+      type="bar"
+      aria-label="Stacked bar chart showing monthly payroll by type"
+      role="img"
+    ></canvas>
+  </div>
+</div>

@@ -1,0 +1,134 @@
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import {
+  Branch,
+  Company,
+  Department,
+  Designation,
+  EmployeeType,
+  Grade,
+  JobCategory,
+  MasterEntity,
+  NoPayDays,
+} from '../models/master-data.models';
+import { BranchService } from '../../features/infrastructure/branches/branch.service';
+import { CompanyService } from '../../features/infrastructure/company/company.service';
+import { DepartmentService } from '../../features/infrastructure/department/department.service';
+import { GradeService } from '../../features/infrastructure/grades/grade.service';
+import { DesignationService } from '../../features/infrastructure/designations/designation.service';
+import { EmployeeTypeService } from '../../features/infrastructure/employee-type/employee-type.service';
+import { JobCategoryService } from '../../features/infrastructure/job-categories/job-category.service';
+import { NoPayDaysService } from '../../features/infrastructure/nopay-days/nopay-days.service';
+
+export type EntitySlug =
+  | 'companies'
+  | 'departments'
+  | 'job-categories'
+  | 'branches'
+  | 'grades'
+  | 'designations'
+  | 'nopay-days'
+  | 'employee-types';
+
+@Injectable({ providedIn: 'root' })
+export class MasterDataService {
+  private readonly http            = inject(HttpClient);
+  private readonly companySvc      = inject(CompanyService);
+  private readonly departmentSvc   = inject(DepartmentService);
+  private readonly branchSvc       = inject(BranchService);
+  private readonly gradeSvc        = inject(GradeService);
+  private readonly designationSvc  = inject(DesignationService);
+  private readonly employeeTypeSvc = inject(EmployeeTypeService);
+  private readonly jobCategorySvc  = inject(JobCategoryService);
+  private readonly noPayDaysSvc    = inject(NoPayDaysService);
+
+  private readonly _companies     = signal<Company[]>([]);
+  private readonly _departments   = signal<Department[]>([]);
+  private readonly _jobCategories = signal<JobCategory[]>([]);
+  private readonly _branches      = signal<Branch[]>([]);
+  private readonly _grades        = signal<Grade[]>([]);
+  private readonly _designations  = signal<Designation[]>([]);
+  private readonly _nopayDays     = signal<NoPayDays[]>([]);
+  private readonly _employeeTypes = signal<EmployeeType[]>([]);
+
+  readonly companies     = this._companies.asReadonly();
+  readonly departments   = this._departments.asReadonly();
+  readonly jobCategories = this._jobCategories.asReadonly();
+  readonly branches      = this._branches.asReadonly();
+  readonly grades        = this._grades.asReadonly();
+  readonly designations  = this._designations.asReadonly();
+  readonly nopayDays     = this._nopayDays.asReadonly();
+  readonly employeeTypes = this._employeeTypes.asReadonly();
+
+  readonly activeCompanies     = computed(() => this._companies().filter(x => x.isActive));
+  readonly activeDepartments   = computed(() => this._departments().filter(x => x.isActive));
+  readonly activeJobCategories = computed(() => this._jobCategories().filter(x => x.isActive));
+  readonly activeBranches      = computed(() => this._branches().filter(x => x.isActive));
+  readonly activeGrades        = computed(() => this._grades().filter(x => x.isActive));
+  readonly activeDesignations  = computed(() => this._designations().filter(x => x.isActive));
+  readonly activeNopayDays     = computed(() => this._nopayDays().filter(x => x.isActive));
+  readonly activeEmployeeTypes = computed(() => this._employeeTypes().filter(x => x.isActive));
+
+  private readonly reloadFns: Record<EntitySlug, () => void> = {
+    'companies':      () => this.companySvc.getAll().subscribe({ next: d => this._companies.set(d), error: () => {} }),
+    'departments':    () => this.departmentSvc.getAll().subscribe({ next: d => this._departments.set(d), error: () => {} }),
+    'job-categories': () => this.jobCategorySvc.getAll().subscribe({ next: d => this._jobCategories.set(d), error: () => {} }),
+    'branches':       () => this.branchSvc.getAll().subscribe({ next: d => this._branches.set(d), error: () => {} }),
+    'grades':         () => this.gradeSvc.getAll().subscribe({ next: d => this._grades.set(d), error: () => {} }),
+    'designations':   () => this.designationSvc.getAll().subscribe({ next: d => this._designations.set(d), error: () => {} }),
+    'nopay-days':     () => this.noPayDaysSvc.getAll().subscribe({ next: d => this._nopayDays.set(d), error: () => {} }),
+    'employee-types': () => this.employeeTypeSvc.getAll().subscribe({ next: d => this._employeeTypes.set(d), error: () => {} }),
+  };
+
+  loadAll(): void {
+    Object.values(this.reloadFns).forEach(fn => fn());
+  }
+
+  reload(entity: EntitySlug): void {
+    this.reloadFns[entity]();
+  }
+
+  createMaster<T extends MasterEntity>(entity: string, dto: Partial<T>): Observable<T> {
+    switch (entity as EntitySlug) {
+      case 'companies':      return this.companySvc.create(dto as unknown as Omit<Company, 'id'>) as unknown as Observable<T>;
+      case 'departments':    return this.departmentSvc.create(dto as Omit<Department, 'id'>) as Observable<T>;
+      case 'branches':       return this.branchSvc.create(dto as Omit<Branch, 'id'>) as Observable<T>;
+      case 'grades':         return this.gradeSvc.create(dto as Omit<Grade, 'id'>) as Observable<T>;
+      case 'designations':   return this.designationSvc.create(dto as Omit<Designation, 'id'>) as Observable<T>;
+      case 'employee-types': return this.employeeTypeSvc.create(dto as Omit<EmployeeType, 'id'>) as Observable<T>;
+      case 'job-categories': return this.jobCategorySvc.create(dto as Omit<JobCategory, 'id'>) as Observable<T>;
+      case 'nopay-days':     return this.noPayDaysSvc.create(dto as unknown as Omit<NoPayDays, 'id'>) as unknown as Observable<T>;
+      default:               return this.http.post<T>(`/api/master/${entity}`, dto);
+    }
+  }
+
+  updateMaster<T extends MasterEntity>(entity: string, id: number, dto: Partial<T>): Observable<T> {
+    switch (entity as EntitySlug) {
+      case 'companies':      return this.companySvc.update(id, dto as unknown as Company).pipe(map(() => dto as T));
+      case 'departments':    return this.departmentSvc.update(id, dto as Department).pipe(map(() => dto as T));
+      case 'branches':       return this.branchSvc.update(id, dto as Branch).pipe(map(() => dto as T));
+      case 'grades':         return this.gradeSvc.update(id, dto as Grade).pipe(map(() => dto as T));
+      case 'designations':   return this.designationSvc.update(id, dto as Designation).pipe(map(() => dto as T));
+      case 'employee-types': return this.employeeTypeSvc.update(id, dto as EmployeeType).pipe(map(() => dto as T));
+      case 'job-categories': return this.jobCategorySvc.update(id, dto as JobCategory).pipe(map(() => dto as T));
+      case 'nopay-days':     return this.noPayDaysSvc.update(id, dto as unknown as NoPayDays).pipe(map(() => dto as T));
+      default:               return this.http.put<T>(`/api/master/${entity}/${id}`, dto);
+    }
+  }
+
+  deleteMaster(entity: string, id: number): Observable<void> {
+    switch (entity as EntitySlug) {
+      case 'companies':      return this.companySvc.delete(id);
+      case 'departments':    return this.departmentSvc.delete(id);
+      case 'branches':       return this.branchSvc.delete(id);
+      case 'grades':         return this.gradeSvc.delete(id);
+      case 'designations':   return this.designationSvc.delete(id);
+      case 'employee-types': return this.employeeTypeSvc.delete(id);
+      case 'job-categories': return this.jobCategorySvc.delete(id);
+      case 'nopay-days':     return this.noPayDaysSvc.delete(id);
+      default:               return this.http.delete<void>(`/api/master/${entity}/${id}`);
+    }
+  }
+}

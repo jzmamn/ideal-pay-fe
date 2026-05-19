@@ -1,0 +1,42 @@
+<div class="modal-shell">
+  <div class="modal-title-bar">
+    <div class="modal-icon-wrap" aria-hidden="true">
+      <mat-icon>{{ data.metric.icon }}</mat-icon>
+    </div>
+    <h2 mat-dialog-title class="modal-title">{{ data.metric.title }}</h2>
+    <button mat-icon-button mat-dialog-close class="close-btn" aria-label="Close dialog">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content class="modal-content">
+    <div class="hero-value">{{ data.metric.value }}</div>
+    <div class="hero-sub">
+      <span
+        class="badge"
+        [class.badge--positive]="data.metric.changeSign === 'positive'"
+        [class.badge--negative]="data.metric.changeSign === 'negative'"
+      >{{ data.metric.change }}</span>
+      <span class="hero-label">{{ data.metric.subtitle }}</span>
+    </div>
+
+    <h3 class="breakdown-heading">Monthly Breakdown</h3>
+    <div class="mini-cards" role="list">
+      @for (item of data.breakdown; track item.month) {
+        <div class="mini-card" role="listitem">
+          <span class="mini-month">{{ item.month }}</span>
+          <span class="mini-val">{{ formatValue(data.metric.id, item.value) }}</span>
+        </div>
+      }
+    </div>
+
+    <div class="narrative">
+      <mat-icon class="narrative-icon" aria-hidden="true">info_outline</mat-icon>
+      <p>{{ data.narrative }}</p>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Close</button>
+  </mat-dialog-actions>
+</div>

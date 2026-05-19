@@ -1,0 +1,44 @@
+src/
+ └── app/
+     ├── core/                  # singleton/global stuff
+     │    ├── services/
+     │    ├── guards/
+     │    ├── interceptors/
+     │    └── core.config.ts
+     │
+     ├── shared/                # reusable UI + utils
+     │    ├── components/
+     │    ├── directives/
+     │    ├── pipes/
+     │    ├── models/
+     │    └── material/
+     │         └── material.imports.ts
+     │
+     ├── layout/                # app shell (sidebar, header)
+     │    ├── sidebar/
+     │    ├── header/
+     │    └── layout.component.ts
+     │
+     ├── features/              # 💥 main business features
+     │    ├── dashboard/
+     │    │     ├── pages/
+     │    │     ├── components/
+     │    │     ├── services/
+     │    │     ├── state/
+     │    │     └── dashboard.routes.ts
+     │    │
+     │    ├── users/
+     │    │     ├── pages/
+     │    │     ├── components/
+     │    │     ├── services/
+     │    │     ├── state/
+     │    │     └── users.routes.ts
+     │    │
+     │    └── auth/
+     │          ├── pages/
+     │          ├── services/
+     │          └── auth.routes.ts
+     │
+     ├── app.routes.ts          # root routing
+     ├── app.config.ts          # providers (no AppModule)
+     └── main.ts

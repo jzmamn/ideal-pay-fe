@@ -1,0 +1,211 @@
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav #drawer class="sidenav" fixedInViewport
+    [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
+    [mode]="(isHandset$ | async) ? 'over' : 'side'"
+    [opened]="(isHandset$ | async) === false">
+
+    <!-- Brand -->
+    <div class="brand-header">
+      <div class="brand-logo">
+        <mat-icon>account_balance</mat-icon>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">Ideal Pay</span>
+        <span class="brand-tagline">Payroll Management</span>
+      </div>
+    </div>
+
+    <mat-nav-list class="nav-list">
+
+      <a mat-list-item routerLink="dashboard" routerLinkActive="nav-active">
+        <mat-icon>dashboard</mat-icon>
+        <span>Dashboard</span>
+      </a>
+
+      <mat-expansion-panel class="menu-panel">
+        <mat-expansion-panel-header>
+          <mat-panel-title class="panel-title">
+            <mat-icon>payments</mat-icon>
+            <span>Payroll</span>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div class="sub-menu">
+          <a mat-list-item routerLink="/payroll" routerLinkActive="nav-active">
+            <mat-icon>edit_note</mat-icon>
+            <span>Payroll Entry</span>
+          </a>
+        </div>
+      </mat-expansion-panel>
+
+      <mat-expansion-panel class="menu-panel">
+        <mat-expansion-panel-header>
+          <mat-panel-title class="panel-title">
+            <mat-icon>settings</mat-icon>
+            <span>Settings</span>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div class="sub-menu">
+          <a mat-list-item routerLink="/employee" routerLinkActive="nav-active">
+            <mat-icon>person</mat-icon>
+            <span>Employee</span>
+          </a>
+          <mat-expansion-panel class="menu-panel sub-menu-panel">
+            <mat-expansion-panel-header>
+              <mat-panel-title class="panel-title">
+                <mat-icon>add_circle_outline</mat-icon>
+                <span>Allowances</span>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <div class="sub-sub-menu">
+              <a mat-list-item routerLink="/allowances/fixed" routerLinkActive="nav-active">
+                <mat-icon>lock_outline</mat-icon>
+                <span>Fixed Allowances</span>
+              </a>
+              <a mat-list-item routerLink="/allowances/variable" routerLinkActive="nav-active">
+                <mat-icon>tune</mat-icon>
+                <span>Variable Allowances</span>
+              </a>
+            </div>
+          </mat-expansion-panel>
+          <mat-expansion-panel class="menu-panel sub-menu-panel">
+            <mat-expansion-panel-header>
+              <mat-panel-title class="panel-title">
+                <mat-icon>remove_circle_outline</mat-icon>
+                <span>Deductions</span>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <div class="sub-sub-menu">
+              <a mat-list-item routerLink="/deductions/fixed" routerLinkActive="nav-active">
+                <mat-icon>lock_outline</mat-icon>
+                <span>Fixed Deductions</span>
+              </a>
+              <a mat-list-item routerLink="/deductions/variable" routerLinkActive="nav-active">
+                <mat-icon>tune</mat-icon>
+                <span>Variable Deductions</span>
+              </a>
+            </div>
+          </mat-expansion-panel>
+          <a mat-list-item routerLink="/overtime" routerLinkActive="nav-active">
+            <mat-icon>schedule</mat-icon>
+            <span>Overtime</span>
+          </a>
+          <a mat-list-item routerLink="/loan" routerLinkActive="nav-active">
+            <mat-icon>account_balance</mat-icon>
+            <span>Loan</span>
+          </a>
+        </div>
+      </mat-expansion-panel>
+
+      <mat-expansion-panel class="menu-panel">
+        <mat-expansion-panel-header>
+          <mat-panel-title class="panel-title">
+            <mat-icon>domain</mat-icon>
+            <span>Infrastructure</span>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div class="sub-menu">
+          <a mat-list-item routerLink="/company" routerLinkActive="nav-active">
+            <mat-icon>business</mat-icon>
+            <span>Company Setup</span>
+          </a>
+          <a mat-list-item routerLink="/department" routerLinkActive="nav-active">
+            <mat-icon>corporate_fare</mat-icon>
+            <span>Department</span>
+          </a>
+          <a mat-list-item routerLink="/job-categories" routerLinkActive="nav-active">
+            <mat-icon>work_outline</mat-icon>
+            <span>Job Categories</span>
+          </a>
+          <a mat-list-item routerLink="/branches" routerLinkActive="nav-active">
+            <mat-icon>store</mat-icon>
+            <span>Branches</span>
+          </a>
+          <a mat-list-item routerLink="/grades" routerLinkActive="nav-active">
+            <mat-icon>grade</mat-icon>
+            <span>Grades</span>
+          </a>
+          <a mat-list-item routerLink="/designations" routerLinkActive="nav-active">
+            <mat-icon>badge</mat-icon>
+            <span>Designations</span>
+          </a>
+          <a mat-list-item routerLink="/nopay-days" routerLinkActive="nav-active">
+            <mat-icon>event_busy</mat-icon>
+            <span>Nopay Days</span>
+          </a>
+          <a mat-list-item routerLink="/employee-types" routerLinkActive="nav-active">
+            <mat-icon>badge</mat-icon>
+            <span>Employee Types</span>
+          </a>
+        </div>
+      </mat-expansion-panel>
+
+      <mat-expansion-panel class="menu-panel">
+        <mat-expansion-panel-header>
+          <mat-panel-title class="panel-title">
+            <mat-icon>admin_panel_settings</mat-icon>
+            <span>Admin</span>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div class="sub-menu">
+          <a mat-list-item routerLink="/users" routerLinkActive="nav-active">
+            <mat-icon>group</mat-icon>
+            <span>Users</span>
+          </a>
+          <a mat-list-item routerLink="/group" routerLinkActive="nav-active">
+            <mat-icon>workspaces</mat-icon>
+            <span>Group</span>
+          </a>
+          <a mat-list-item routerLink="/roles" routerLinkActive="nav-active">
+            <mat-icon>badge</mat-icon>
+            <span>Roles</span>
+          </a>
+          <a mat-list-item routerLink="/permissions" routerLinkActive="nav-active">
+            <mat-icon>security</mat-icon>
+            <span>Permissions</span>
+          </a>
+        </div>
+      </mat-expansion-panel>
+
+    </mat-nav-list>
+
+    <!-- User footer -->
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="user-avatar" aria-hidden="true">JP</div>
+        <div class="user-details">
+          <span class="user-name">Admin User</span>
+          <span class="user-role">Administrator</span>
+        </div>
+        <button mat-icon-button class="logout-btn" aria-label="Logout" (click)="logout()">
+          <mat-icon>logout</mat-icon>
+        </button>
+      </div>
+    </div>
+
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <mat-toolbar class="top-toolbar">
+      <button type="button" aria-label="Toggle sidenav" mat-icon-button (click)="drawer.toggle()">
+        <mat-icon>menu</mat-icon>
+      </button>
+
+      <span class="toolbar-spacer"></span>
+
+      <div class="toolbar-actions">
+        <button mat-icon-button aria-label="Notifications">
+          <mat-icon>notifications_none</mat-icon>
+        </button>
+        <div class="toolbar-avatar" aria-label="User profile" role="img">JP</div>
+      </div>
+    </mat-toolbar>
+
+    <div class="page-content">
+      <router-outlet />
+    </div>
+  </mat-sidenav-content>
+
+</mat-sidenav-container>

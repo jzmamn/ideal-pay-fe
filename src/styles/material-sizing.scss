@@ -1,0 +1,244 @@
+// ================================================================
+//  src/styles/material-sizing.scss
+//  Bootstrap-style sm / md / lg sizing utility for
+//  Angular Material v21+ (Material 3 / MDC-based components)
+//
+//  Usage — wrapper class (cascades via CSS custom properties):
+//    <div class="mat-size-sm"> ... </div>
+//    <mat-form-field class="mat-size-lg"> ... </mat-form-field>
+//
+//  Usage — Sass mixin (in any component or global stylesheet):
+//    @use 'src/styles/material-sizing' as sizing;
+//    .my-dense-form { @include sizing.mat-size(sm); }
+//
+//  Select panel (lives in CDK overlay; outside wrapper scope):
+//    <mat-select [panelClass]="'mat-select-panel-sm'">
+// ================================================================
+
+@use 'sass:map';
+
+// ── 1. Design tokens ─────────────────────────────────────────
+//  All sizing decisions flow from this single map.
+//  Override $mat-sizes before importing this file to customise.
+
+$mat-sizes: (
+  xs: (
+    font-size:            10px,
+    option-font-size:     13px,
+    line-height:          1.2,
+    container-height:     32px,
+    v-padding:            7px,
+    filled-pt:            16px,
+    filled-pb:            4px,
+    button-height:        24px,
+    button-font:          10px,
+    icon-btn-size:        24px,
+    icon-size:            14px,
+    touch-size:           24px,
+    radius:               2px,
+  ),
+  sm: (
+    font-size:            12px,
+    option-font-size:     16px,
+    line-height:          1.3,
+    container-height:     40px,
+    v-padding:            11px,
+    filled-pt:            22px,
+    filled-pb:            6px,
+    button-height:        28px,
+    button-font:          12px,
+    icon-btn-size:        32px,
+    icon-size:            18px,
+    touch-size:           32px,
+    radius:               4px,
+  ),
+  md: (
+    // Mirrors Angular Material's density(0) defaults — applying
+    // mat-size-md is a no-op on a freshly themed application.
+    font-size:            16px,
+    option-font-size:     18px,
+    line-height:          1.5,
+    container-height:     56px,
+    v-padding:            16px,
+    filled-pt:            24px,
+    filled-pb:            8px,
+    button-height:        40px,
+    button-font:          14px,
+    icon-btn-size:        40px,
+    icon-size:            24px,
+    touch-size:           40px,
+    radius:               4px,
+  ),
+  lg: (
+    font-size:            18px,
+    option-font-size:     20px,
+    line-height:          1.6,
+    container-height:     64px,
+    v-padding:            20px,
+    filled-pt:            28px,
+    filled-pb:            12px,
+    button-height:        48px,
+    button-font:          16px,
+    icon-btn-size:        48px,
+    icon-size:            28px,
+    touch-size:           48px,
+    radius:               6px,
+  ),
+) !default;
+
+
+// ── 2. Core mixin ─────────────────────────────────────────────
+//  Emits Angular Material's MDC / MAT CSS custom-property
+//  overrides for the chosen tier.  Include it inside any
+//  selector — the variables cascade to all child components.
+
+@mixin mat-size($size) {
+  $t: map.get($mat-sizes, $size);
+
+  @if not $t {
+    @error "mat-size(): unknown size '#{$size}'. Valid: xs, sm, md, lg.";
+  }
+
+  // ── Outlined text-field ─────────────────────────────────────
+  --mdc-outlined-text-field-input-text-size:           #{map.get($t, font-size)};
+  --mdc-outlined-text-field-label-text-size:           #{map.get($t, font-size)};
+  --mdc-outlined-text-field-container-shape:           #{map.get($t, radius)};
+  --mat-form-field-outlined-label-text-populated-size: 18px;
+  --mat-form-field-filled-label-text-populated-size:   18px;
+
+  // ── Filled text-field ───────────────────────────────────────
+  --mdc-filled-text-field-input-text-size: #{map.get($t, font-size)};
+  --mdc-filled-text-field-label-text-size: #{map.get($t, font-size)};
+  // Top-left / top-right rounded, bottom flush (Material convention)
+  --mdc-filled-text-field-container-shape:
+    #{map.get($t, radius)} #{map.get($t, radius)} 0 0;
+  --mat-form-field-filled-with-label-container-padding-top:
+    #{map.get($t, filled-pt)};
+  --mat-form-field-filled-with-label-container-padding-bottom:
+    #{map.get($t, filled-pb)};
+
+  // ── Shared form-field geometry ──────────────────────────────
+  --mat-form-field-container-height:           #{map.get($t, container-height)};
+  --mat-form-field-container-vertical-padding: #{map.get($t, v-padding)};
+  --mat-form-field-filled-container-height:    #{map.get($t, container-height)};
+
+  // ── mat-select ──────────────────────────────────────────────
+  --mat-select-trigger-text-size:         #{map.get($t, font-size)};
+  --mat-option-label-text-size:           #{map.get($t, option-font-size)};
+  // Private tokens consumed by the global select rules (section 4).
+  --mat-sizing-select-font-size:          #{map.get($t, font-size)};
+  --mat-sizing-select-option-font-size:   #{map.get($t, option-font-size)};
+
+  // ── Buttons ─────────────────────────────────────────────────
+
+  // mat-button  (text / basic)
+  --mdc-text-button-container-height: #{map.get($t, button-height)};
+  --mdc-text-button-label-text-size:  #{map.get($t, button-font)};
+
+  // mat-flat-button  (filled / unelevated)
+  --mdc-filled-button-container-height: #{map.get($t, button-height)};
+  --mdc-filled-button-label-text-size:  #{map.get($t, button-font)};
+
+  // mat-stroked-button  (outlined)
+  --mdc-outlined-button-container-height: #{map.get($t, button-height)};
+  --mdc-outlined-button-label-text-size:  #{map.get($t, button-font)};
+
+  // mat-raised-button  (protected / elevated)
+  --mdc-protected-button-container-height: #{map.get($t, button-height)};
+  --mdc-protected-button-label-text-size:  #{map.get($t, button-font)};
+
+  // ── mat-icon-button ─────────────────────────────────────────
+  --mdc-icon-button-icon-size:        #{map.get($t, icon-size)};
+  --mdc-icon-button-state-layer-size: #{map.get($t, icon-btn-size)};
+  --mat-icon-button-state-layer-size: #{map.get($t, icon-btn-size)};
+  // Keep the clickable area square
+  --mat-icon-button-touch-target-display: block;
+
+  // ── mat-checkbox ────────────────────────────────────────────
+  --mdc-checkbox-state-layer-size: #{map.get($t, touch-size)};
+  --mat-checkbox-label-text-size:  #{map.get($t, font-size)};
+  --mat-checkbox-label-text-line-height: #{map.get($t, line-height)};
+
+  // ── mat-radio-button ────────────────────────────────────────
+  --mdc-radio-state-layer-size: #{map.get($t, touch-size)};
+  --mat-radio-label-text-size:  #{map.get($t, font-size)};
+  --mat-radio-label-text-line-height: #{map.get($t, line-height)};
+
+  // ── textarea (matInput inside mat-form-field) ───────────────
+  // Font size is inherited from the text-field variables above.
+  // Min-height adjusts so the textarea doesn't collapse to
+  // shorter than the container in sm mode.
+  .mat-mdc-form-field textarea.mat-mdc-input-element {
+    line-height: #{map.get($t, line-height)};
+    min-height: calc(#{map.get($t, container-height)} - #{map.get($t, v-padding)} * 2);
+  }
+}
+
+
+// ── 3. Utility classes ────────────────────────────────────────
+//  Apply to a wrapper div or directly on any Material element.
+//  CSS custom properties cascade automatically to all children.
+
+.mat-size-xs { @include mat-size(xs); }
+.mat-size-sm { @include mat-size(sm); }
+.mat-size-md { @include mat-size(md); }
+.mat-size-lg { @include mat-size(lg); }
+
+
+// ── 4. Select global overrides ───────────────────────────────
+//  Angular Material's internal `font` shorthand resets font-size
+//  on select elements even when CSS variables are set correctly.
+//  These rules use !important + the --mat-sizing-select-font-size
+//  custom property so every size tier is handled automatically.
+//
+//  Trigger text (inside the DOM tree — inherits cascaded value
+//  from the nearest ancestor that defines the variable):
+.mat-mdc-select .mat-mdc-select-trigger,
+.mat-mdc-select .mat-mdc-select-value,
+.mat-mdc-select .mat-mdc-select-placeholder {
+  font-size: var(--mat-sizing-select-font-size) !important;
+}
+
+//  Dropdown options (teleported into CDK overlay — reads the
+//  html-level variable value, i.e. whatever size is global):
+.mdc-list-item__primary-text {
+  font-size: var(--mat-sizing-select-option-font-size) !important;
+}
+
+// ── 5. Select panel size classes ─────────────────────────────
+//  The mat-select dropdown panel teleports into the CDK overlay
+//  container and is unreachable via wrapper-class inheritance.
+//  Pass one of these strings to [panelClass] on mat-select:
+//
+//    <mat-select panelClass="mat-select-panel-sm">
+//    <mat-select [panelClass]="'mat-select-panel-lg'">
+
+.mat-select-panel-xs {
+  --mat-option-label-text-size:        13px;
+  --mat-option-container-shape:        2px;
+  --mat-option-label-text-line-height: 1.2;
+}
+
+.mat-select-panel-sm {
+  --mat-option-label-text-size:        16px;
+  --mat-option-container-shape:        4px;
+  --mat-option-label-text-line-height: 1.3;
+}
+
+.mat-select-panel-md {
+  --mat-option-label-text-size:        18px;
+  --mat-option-container-shape:        4px;
+  --mat-option-label-text-line-height: 1.5;
+}
+
+.mat-select-panel-lg {
+  --mat-option-label-text-size:        20px;
+  --mat-option-container-shape:        6px;
+  --mat-option-label-text-line-height: 1.6;
+}
+
+// ── 6. Layout utilities ───────────────────────────────────────
+.filter-field {
+  width: 220px;
+  flex-shrink: 0;
+}

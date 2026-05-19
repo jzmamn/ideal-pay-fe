@@ -1,0 +1,6 @@
+<app-master-data-table
+  [config]="tableConfig"
+  [data]="loans()"
+  (rowSelected)="onRowSelected($event)"
+  (newClicked)="onNewClicked()">
+</app-master-data-table>

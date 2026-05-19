@@ -1,0 +1,129 @@
+@use '@angular/material' as mat;
+
+:root {
+  // Use 0px for a sharp rectangle or a small value like 4px for slightly rounded corners
+  @include mat.button-overrides((
+    filled-container-shape: 0px,
+    outlined-container-shape: 0px,
+    protected-container-shape: 0px
+  ));
+}
+
+.mat-mdc-button,
+.mat-mdc-unelevated-button,
+.mat-mdc-raised-button,
+.mat-mdc-outlined-button,
+.mat-mdc-icon-button {
+  transition: opacity 0.15s ease, transform 0.15s ease !important;
+
+  &:active {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+}
+
+.mat-mdc-unelevated-button,
+.mat-mdc-icon-button {
+  &.btn-primary,
+  &.btn-secondary,
+  &.btn-success,
+  &.btn-error,
+  &.btn-purple,
+  &.btn-info,
+  &.btn-warn {
+    opacity: 0.85;
+
+    &:hover { opacity: 1; }
+  }
+}
+
+.mat-mdc-unelevated-button.btn-primary {
+  --mat-button-filled-container-color: var(--md-sys-color-primary);
+  --mat-button-filled-label-text-color: var(--md-sys-color-on-primary);
+  --mat-button-filled-state-layer-color: var(--md-sys-color-on-primary);
+  --mat-button-filled-ripple-color: color-mix(in srgb, var(--md-sys-color-on-primary) 12%, transparent);
+}
+
+.mat-mdc-unelevated-button.btn-secondary {
+  --mat-button-filled-container-color: var(--md-sys-color-secondary);
+  --mat-button-filled-label-text-color: var(--md-sys-color-on-secondary);
+  --mat-button-filled-state-layer-color: var(--md-sys-color-on-secondary);
+  --mat-button-filled-ripple-color: color-mix(in srgb, var(--md-sys-color-on-secondary) 12%, transparent);
+}
+
+.mat-mdc-unelevated-button.btn-success {
+  --mat-button-filled-container-color: var(--md-extended-color-success-color);
+  --mat-button-filled-label-text-color: var(--md-extended-color-success-on-color);
+  --mat-button-filled-state-layer-color: var(--md-extended-color-success-on-color);
+  --mat-button-filled-ripple-color: color-mix(in srgb, var(--md-extended-color-success-on-color) 12%, transparent);
+}
+
+.mat-mdc-unelevated-button.btn-error {
+  --mat-button-filled-container-color: var(--md-sys-color-error);
+  --mat-button-filled-label-text-color: var(--md-sys-color-on-error);
+  --mat-button-filled-state-layer-color: var(--md-sys-color-on-error);
+  --mat-button-filled-ripple-color: color-mix(in srgb, var(--md-sys-color-on-error) 12%, transparent);
+}
+
+.mat-mdc-unelevated-button.btn-purple {
+  --mat-button-filled-container-color: var(--md-extended-color-purple-color);
+  --mat-button-filled-label-text-color: var(--md-extended-color-purple-on-color);
+  --mat-button-filled-state-layer-color: var(--md-extended-color-purple-on-color);
+  --mat-button-filled-ripple-color: color-mix(in srgb, var(--md-extended-color-purple-on-color) 12%, transparent);
+}
+
+.mat-mdc-unelevated-button.btn-info {
+  --mat-button-filled-container-color: var(--md-extended-color-info-color);
+  --mat-button-filled-label-text-color: var(--md-extended-color-info-on-color);
+  --mat-button-filled-state-layer-color: var(--md-extended-color-info-on-color);
+  --mat-button-filled-ripple-color: color-mix(in srgb, var(--md-extended-color-info-on-color) 12%, transparent);
+}
+
+.mat-mdc-unelevated-button.btn-warn {
+  --mat-button-filled-container-color: var(--md-extended-color-warning-color);
+  --mat-button-filled-label-text-color: var(--md-extended-color-warning-on-color);
+  --mat-button-filled-state-layer-color: var(--md-extended-color-warning-on-color);
+  --mat-button-filled-ripple-color: color-mix(in srgb, var(--md-extended-color-warning-on-color) 12%, transparent);
+}
+
+.mat-mdc-icon-button.btn-primary {
+  --mat-icon-button-icon-color: var(--md-sys-color-primary);
+  --mat-icon-button-state-layer-color: var(--md-sys-color-primary);
+  --mat-icon-button-ripple-color: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+}
+
+.mat-mdc-icon-button.btn-secondary {
+  --mat-icon-button-icon-color: var(--md-sys-color-secondary);
+  --mat-icon-button-state-layer-color: var(--md-sys-color-secondary);
+  --mat-icon-button-ripple-color: color-mix(in srgb, var(--md-sys-color-secondary) 12%, transparent);
+}
+
+.mat-mdc-icon-button.btn-success {
+  --mat-icon-button-icon-color: var(--md-extended-color-success-color);
+  --mat-icon-button-state-layer-color: var(--md-extended-color-success-color);
+  --mat-icon-button-ripple-color: color-mix(in srgb, var(--md-extended-color-success-color) 12%, transparent);
+}
+
+.mat-mdc-icon-button.btn-error {
+  --mat-icon-button-icon-color: var(--md-sys-color-error);
+  --mat-icon-button-state-layer-color: var(--md-sys-color-error);
+  --mat-icon-button-ripple-color: color-mix(in srgb, var(--md-sys-color-error) 12%, transparent);
+}
+
+.mat-mdc-icon-button.btn-purple {
+  --mat-icon-button-icon-color: var(--md-extended-color-purple-color);
+  --mat-icon-button-state-layer-color: var(--md-extended-color-purple-color);
+  --mat-icon-button-ripple-color: color-mix(in srgb, var(--md-extended-color-purple-color) 12%, transparent);
+}
+
+.mat-mdc-icon-button.btn-info {
+  --mat-icon-button-icon-color: var(--md-extended-color-info-color);
+  --mat-icon-button-state-layer-color: var(--md-extended-color-info-color);
+  --mat-icon-button-ripple-color: color-mix(in srgb, var(--md-extended-color-info-color) 12%, transparent);
+}
+
+.mat-mdc-icon-button.btn-warn {
+  --mat-icon-button-icon-color: var(--md-extended-color-warning-color);
+  --mat-icon-button-state-layer-color: var(--md-extended-color-warning-color);
+  --mat-icon-button-ripple-color: color-mix(in srgb, var(--md-extended-color-warning-color) 12%, transparent);
+}

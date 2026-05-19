@@ -1,0 +1,187 @@
+@if (employee(); as emp) {
+  <div class="info-page">
+
+    <div class="page-header">
+      <button mat-icon-button (click)="goBack()" aria-label="Back to employee list">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-content">
+        <h2 class="emp-name">{{ emp.firstName }} {{ emp.lastName }}</h2>
+        <span class="emp-meta">{{ emp.employeeNo }} &middot; {{ employeeTypeName() }}</span>
+      </div>
+      <span class="status-badge" [class.active]="emp.isActive">
+        {{ emp.isActive ? 'Active' : 'Inactive' }}
+      </span>
+      <button mat-flat-button (click)="goEdit()" aria-label="Edit employee" class="btn-warn">
+        <mat-icon>edit</mat-icon>
+        Edit
+      </button>
+    </div>
+
+    <div class="info-grid">
+
+      <!-- Personal Details -->
+      <mat-card>
+        <mat-card-header>
+          <mat-icon mat-card-avatar>person</mat-icon>
+          <mat-card-title>Personal Details</mat-card-title>
+        </mat-card-header>
+        <mat-divider />
+        <mat-card-content>
+          <div class="detail-list">
+            <div class="detail-item">
+              <span class="detail-label">First Name</span>
+              <span class="detail-value">{{ emp.firstName }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Last Name</span>
+              <span class="detail-value">{{ emp.lastName }}</span>
+            </div>
+            @if (emp.payrollName) {
+              <div class="detail-item">
+                <span class="detail-label">Payroll Name</span>
+                <span class="detail-value">{{ emp.payrollName }}</span>
+              </div>
+            }
+            <div class="detail-item">
+              <span class="detail-label">Email</span>
+              <span class="detail-value">{{ emp.email }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Phone</span>
+              <span class="detail-value">{{ emp.phone || '—' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Joined Date</span>
+              <span class="detail-value">{{ emp.joinedDate }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Employee Type</span>
+              <span class="detail-value">{{ employeeTypeName() }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Basic Salary</span>
+              <span class="detail-value">LKR {{ emp.basicSalary | number:'1.2-2' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">EPF No</span>
+              <span class="detail-value">{{ emp.epfNo || '—' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">ETF No</span>
+              <span class="detail-value">{{ emp.etfNo || '—' }}</span>
+            </div>
+            @if (emp.notes) {
+              <div class="detail-item">
+                <span class="detail-label">Notes</span>
+                <span class="detail-value">{{ emp.notes }}</span>
+              </div>
+            }
+            @if (emp.remarks) {
+              <div class="detail-item">
+                <span class="detail-label">Remarks</span>
+                <span class="detail-value">{{ emp.remarks }}</span>
+              </div>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Job Information -->
+      <mat-card>
+        <mat-card-header>
+          <mat-icon mat-card-avatar>work</mat-icon>
+          <mat-card-title>Job Information</mat-card-title>
+        </mat-card-header>
+        <mat-divider />
+        <mat-card-content>
+          <div class="detail-list">
+            <div class="detail-item">
+              <span class="detail-label">Job Category</span>
+              <span class="detail-value">{{ jobCategoryName() }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Designation</span>
+              <span class="detail-value">{{ designationName() }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Branch</span>
+              <span class="detail-value">{{ branchName() }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Grade</span>
+              <span class="detail-value">{{ gradeName() }}</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Address -->
+      <mat-card>
+        <mat-card-header>
+          <mat-icon mat-card-avatar>location_on</mat-icon>
+          <mat-card-title>Address</mat-card-title>
+        </mat-card-header>
+        <mat-divider />
+        <mat-card-content>
+          <div class="detail-list">
+            <div class="detail-item">
+              <span class="detail-label">Line 1</span>
+              <span class="detail-value">{{ emp.adrsLine1 || '—' }}</span>
+            </div>
+            @if (emp.adrsLine2) {
+              <div class="detail-item">
+                <span class="detail-label">Line 2</span>
+                <span class="detail-value">{{ emp.adrsLine2 }}</span>
+              </div>
+            }
+            <div class="detail-item">
+              <span class="detail-label">City</span>
+              <span class="detail-value">{{ emp.city || '—' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">District</span>
+              <span class="detail-value">{{ emp.district || '—' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Country</span>
+              <span class="detail-value">{{ emp.country || '—' }}</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Emergency Contact -->
+      @if (emp.contactPerson) {
+        <mat-card>
+          <mat-card-header>
+            <mat-icon mat-card-avatar>emergency</mat-icon>
+            <mat-card-title>Emergency Contact</mat-card-title>
+          </mat-card-header>
+          <mat-divider />
+          <mat-card-content>
+            <div class="detail-list">
+              <div class="detail-item">
+                <span class="detail-label">Contact Person</span>
+                <span class="detail-value">{{ emp.contactPerson }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Phone</span>
+                <span class="detail-value">{{ emp.cpContactNumber || '—' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Email</span>
+                <span class="detail-value">{{ emp.cpEmail || '—' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Address</span>
+                <span class="detail-value">{{ emp.cpAddress || '—' }}</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+
+    </div>
+  </div>
+}
