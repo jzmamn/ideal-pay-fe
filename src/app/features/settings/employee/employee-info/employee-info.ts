@@ -2,8 +2,6 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { EmployeeService } from '../employee.service';
 import { MasterDataService } from '../../../../shared/services/master-data.service';
@@ -11,7 +9,7 @@ import { MasterDataService } from '../../../../shared/services/master-data.servi
 @Component({
   selector: 'app-employee-info',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DecimalPipe, MatButtonModule, MatCardModule, MatDividerModule, MatIconModule],
+  imports: [DecimalPipe, MatButtonModule, MatIconModule],
   templateUrl: './employee-info.html',
   styleUrl: './employee-info.scss',
 })
@@ -20,6 +18,11 @@ export class EmployeeInfo {
   readonly service = inject(EmployeeService);
   readonly masterSvc = inject(MasterDataService);
   readonly employee = this.service.selected;
+
+  readonly initials = computed(() => {
+    const emp = this.service.selected();
+    return (emp?.firstName?.[0] ?? '') + (emp?.lastName?.[0] ?? '');
+  });
 
   readonly employeeTypeName = computed(() => {
     const id = this.service.selected()?.employeeTypeId;
