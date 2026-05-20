@@ -156,6 +156,13 @@ export const routes: Routes = [
             },
 
             {
+                path: 'countries',
+                loadComponent: () =>
+                    import('./features/infrastructure/country/countries')
+                        .then(m => m.Countries)
+            },
+
+            {
                 path: 'users',
                 loadComponent: () =>
                     import('./features/admin/users/users')

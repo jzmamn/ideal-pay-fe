@@ -12,11 +12,6 @@
   <form [formGroup]="loanForm" class="form-grid">
 
     <mat-form-field appearance="outline">
-      <mat-label>ID</mat-label>
-      <input matInput formControlName="id">
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
       <mat-label>Code</mat-label>
       <input matInput formControlName="code">
       @if (loanForm.get('code')?.hasError('required')) {

@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import {
   Branch,
   Company,
+  Country,
   Department,
   Designation,
   EmployeeType,
@@ -21,9 +22,11 @@ import { DesignationService } from '../../features/infrastructure/designations/d
 import { EmployeeTypeService } from '../../features/infrastructure/employee-type/employee-type.service';
 import { JobCategoryService } from '../../features/infrastructure/job-categories/job-category.service';
 import { NoPayDaysService } from '../../features/infrastructure/nopay-days/nopay-days.service';
+import { CountryService } from '../../features/infrastructure/country/country.service';
 
 export type EntitySlug =
   | 'companies'
+  | 'countries'
   | 'departments'
   | 'job-categories'
   | 'branches'
@@ -43,7 +46,9 @@ export class MasterDataService {
   private readonly employeeTypeSvc = inject(EmployeeTypeService);
   private readonly jobCategorySvc  = inject(JobCategoryService);
   private readonly noPayDaysSvc    = inject(NoPayDaysService);
+  private readonly countrySvc      = inject(CountryService);
 
+  private readonly _countries     = signal<Country[]>([]);
   private readonly _companies     = signal<Company[]>([]);
   private readonly _departments   = signal<Department[]>([]);
   private readonly _jobCategories = signal<JobCategory[]>([]);
@@ -53,6 +58,7 @@ export class MasterDataService {
   private readonly _nopayDays     = signal<NoPayDays[]>([]);
   private readonly _employeeTypes = signal<EmployeeType[]>([]);
 
+  readonly countries     = this._countries.asReadonly();
   readonly companies     = this._companies.asReadonly();
   readonly departments   = this._departments.asReadonly();
   readonly jobCategories = this._jobCategories.asReadonly();
@@ -62,6 +68,7 @@ export class MasterDataService {
   readonly nopayDays     = this._nopayDays.asReadonly();
   readonly employeeTypes = this._employeeTypes.asReadonly();
 
+  readonly activeCountries     = computed(() => this._countries().filter(x => x.isActive));
   readonly activeCompanies     = computed(() => this._companies().filter(x => x.isActive));
   readonly activeDepartments   = computed(() => this._departments().filter(x => x.isActive));
   readonly activeJobCategories = computed(() => this._jobCategories().filter(x => x.isActive));
@@ -72,6 +79,7 @@ export class MasterDataService {
   readonly activeEmployeeTypes = computed(() => this._employeeTypes().filter(x => x.isActive));
 
   private readonly reloadFns: Record<EntitySlug, () => void> = {
+    'countries':      () => this.countrySvc.getAll().subscribe({ next: d => this._countries.set(d), error: () => {} }),
     'companies':      () => this.companySvc.getAll().subscribe({ next: d => this._companies.set(d), error: () => {} }),
     'departments':    () => this.departmentSvc.getAll().subscribe({ next: d => this._departments.set(d), error: () => {} }),
     'job-categories': () => this.jobCategorySvc.getAll().subscribe({ next: d => this._jobCategories.set(d), error: () => {} }),
@@ -92,6 +100,7 @@ export class MasterDataService {
 
   createMaster<T extends MasterEntity>(entity: string, dto: Partial<T>): Observable<T> {
     switch (entity as EntitySlug) {
+      case 'countries':      return this.countrySvc.create(dto as Omit<Country, 'id'>) as Observable<T>;
       case 'companies':      return this.companySvc.create(dto as unknown as Omit<Company, 'id'>) as unknown as Observable<T>;
       case 'departments':    return this.departmentSvc.create(dto as Omit<Department, 'id'>) as Observable<T>;
       case 'branches':       return this.branchSvc.create(dto as Omit<Branch, 'id'>) as Observable<T>;
@@ -106,6 +115,7 @@ export class MasterDataService {
 
   updateMaster<T extends MasterEntity>(entity: string, id: number, dto: Partial<T>): Observable<T> {
     switch (entity as EntitySlug) {
+      case 'countries':      return this.countrySvc.update(id, dto as Country).pipe(map(() => dto as T));
       case 'companies':      return this.companySvc.update(id, dto as unknown as Company).pipe(map(() => dto as T));
       case 'departments':    return this.departmentSvc.update(id, dto as Department).pipe(map(() => dto as T));
       case 'branches':       return this.branchSvc.update(id, dto as Branch).pipe(map(() => dto as T));
@@ -120,6 +130,7 @@ export class MasterDataService {
 
   deleteMaster(entity: string, id: number): Observable<void> {
     switch (entity as EntitySlug) {
+      case 'countries':      return this.countrySvc.delete(id);
       case 'companies':      return this.companySvc.delete(id);
       case 'departments':    return this.departmentSvc.delete(id);
       case 'branches':       return this.branchSvc.delete(id);

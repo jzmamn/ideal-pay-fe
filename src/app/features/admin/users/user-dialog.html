@@ -11,17 +11,10 @@
 <mat-dialog-content>
   <form [formGroup]="userForm" class="form-grid">
 
-    <div class="form-row">
-      <mat-form-field appearance="outline">
-        <mat-label>ID</mat-label>
-        <input matInput formControlName="id">
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Code</mat-label>
-        <input matInput formControlName="code">
-      </mat-form-field>
-    </div>
+    <mat-form-field appearance="outline">
+      <mat-label>Code</mat-label>
+      <input matInput formControlName="code">
+    </mat-form-field>
 
     <mat-form-field appearance="outline">
       <mat-label>Username</mat-label>
@@ -94,12 +87,12 @@
 
 <mat-dialog-actions>
   @if (isEdit) {
-  <button mat-flat-button class="btn-error">
+  <button mat-flat-button class="btn-error" (click)="delete()">
     <mat-icon>delete</mat-icon> Delete
   </button>
   }
   <span class="action-spacer"></span>
-  <button mat-flat-button [disabled]="userForm.invalid" class="btn-warn">
+  <button mat-flat-button [disabled]="userForm.invalid" class="btn-warn" (click)="save()">
     <mat-icon>save</mat-icon> {{ isEdit ? 'Update' : 'Save' }}
   </button>
   <button mat-flat-button mat-dialog-close class="btn-secondary">

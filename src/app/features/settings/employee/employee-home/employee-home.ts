@@ -18,6 +18,10 @@ export class EmployeeHome {
 
   readonly employees = this.service.employees;
 
+  constructor() {
+    this.service.reload();
+  }
+
   readonly tableConfig: MasterDataTableConfig<EmployeeModel> = {
     title: 'Employees',
     showNewButton: true,

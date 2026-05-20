@@ -5,7 +5,6 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -19,7 +18,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTabsModule } from '@angular/material/tabs';
 import { EmployeeModel } from '../employee.model';
 import { EmployeeSalaryModel } from '../employee-salary.model';
-import { EmployeeService } from '../employee.service';
+import { EmployeeService, EmployeePayload } from '../employee.service';
 import { EmployeeSalaryService } from '../employee-salary.service';
 import { MasterDataService } from '../../../../shared/services/master-data.service';
 import { Grade } from '../../../../shared/models/master-data.models';
@@ -64,7 +63,6 @@ function formatDate(d: Date | null): string {
     { provide: MAT_DATE_FORMATS, useValue: DATE_FORMATS },
   ],
   imports: [
-    DecimalPipe,
     ReactiveFormsModule,
     MatButtonModule,
     MatDatepickerModule,
@@ -116,7 +114,7 @@ export class EmployeeForm {
     adrsLine2:       [''],
     city:            [''],
     district:        [''],
-    country:         ['LK'],
+    country:         [null as number | null],
     contactPerson:   [''],
     cpAddress:       [''],
     cpContactNumber: ['', [Validators.pattern(/^\+?[0-9\s\-]{7,15}$/)]],
@@ -182,7 +180,7 @@ export class EmployeeForm {
         adrsLine2:       emp.adrsLine2,
         city:            emp.city,
         district:        emp.district,
-        country:         emp.country,
+        country:         emp.countryId,
         contactPerson:   emp.contactPerson,
         cpAddress:       emp.cpAddress,
         cpContactNumber: emp.cpContactNumber,
@@ -220,10 +218,8 @@ export class EmployeeForm {
     }
     const v = this.form.getRawValue();
     const existing = this.service.selected();
-    const empId = existing?.id ?? Date.now();
 
-    const emp: EmployeeModel = {
-      id:              empId,
+    const payload: EmployeePayload = {
       employeeNo:      v.employeeNo!,
       firstName:       v.firstName!,
       lastName:        v.lastName!,
@@ -248,28 +244,51 @@ export class EmployeeForm {
       adrsLine2:       v.adrsLine2 ?? '',
       city:            v.city ?? '',
       district:        v.district ?? '',
-      country:         v.country ?? 'LK',
+      countryId:       v.country ?? null,
       contactPerson:   v.contactPerson ?? '',
       cpAddress:       v.cpAddress ?? '',
       cpContactNumber: v.cpContactNumber ?? '',
       cpEmail:         v.cpEmail ?? '',
       basicSalary:     v.basicSalary ?? 0,
-      createdBy:    existing?.createdBy ?? '',
-      createdDate:  existing?.createdDate ?? '',
-      modifiedBy:   existing?.modifiedBy ?? '',
-      modifiedDate: existing?.modifiedDate ?? '',
     };
 
-    const salary: EmployeeSalaryModel = {
-      employeeId:      empId,
-      basicSalary:     v.basicSalary ?? 0,
-      fixedAllowances: this._fixedAllowances().map(a => ({ name: a.name, amount: a.amount })),
-      fixedDeductions: this._fixedDeductions().map(d => ({ name: d.name, amount: d.amount })),
-    };
-
-    existing ? this.service.update(emp) : this.service.add(emp);
-    this.salaryService.save(salary);
-    this.router.navigate(['/employee/info']);
+    if (existing) {
+      this.service.update(existing.id, payload).subscribe({
+        next: () => {
+          const updated: EmployeeModel = {
+            ...payload,
+            id:           existing.id,
+            createdBy:    existing.createdBy,
+            createdDate:  existing.createdDate,
+            modifiedBy:   existing.modifiedBy,
+            modifiedDate: existing.modifiedDate,
+          };
+          this.service.select(updated);
+          this.salaryService.save({
+            employeeId:      existing.id,
+            basicSalary:     payload.basicSalary,
+            fixedAllowances: this._fixedAllowances().map(a => ({ name: a.name, amount: a.amount })),
+            fixedDeductions: this._fixedDeductions().map(d => ({ name: d.name, amount: d.amount })),
+          });
+          this.service.reload();
+          this.router.navigate(['/employee/info']);
+        },
+      });
+    } else {
+      this.service.create(payload).subscribe({
+        next: (created) => {
+          this.service.select(created);
+          this.salaryService.save({
+            employeeId:      created.id,
+            basicSalary:     payload.basicSalary,
+            fixedAllowances: this._fixedAllowances().map(a => ({ name: a.name, amount: a.amount })),
+            fixedDeductions: this._fixedDeductions().map(d => ({ name: d.name, amount: d.amount })),
+          });
+          this.service.reload();
+          this.router.navigate(['/employee/info']);
+        },
+      });
+    }
   }
 
   discard(): void {

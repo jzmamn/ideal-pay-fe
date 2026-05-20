@@ -34,7 +34,7 @@ export class GroupDialog {
 
   readonly groupForm = this.fb.group({
     id:       [{ value: this.row?.id ?? null, disabled: true }],
-    code:     [this.row?.code     ?? '', Validators.required],
+    code:     [{ value: this.row?.code ?? '', disabled: this.isEdit }, Validators.required],
     name:     [this.row?.name     ?? '', Validators.required],
     isActive: [this.row?.isActive ?? true],
   });

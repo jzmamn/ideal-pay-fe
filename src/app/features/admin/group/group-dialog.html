@@ -12,14 +12,9 @@
   <form [formGroup]="groupForm" class="form-grid">
 
     <mat-form-field appearance="outline">
-      <mat-label>ID</mat-label>
-      <input matInput formControlName="id">
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
       <mat-label>Code</mat-label>
       <input matInput formControlName="code">
-      @if (groupForm.get('code')?.hasError('required')) {
+      @if (groupForm.get('code')?.hasError('required') && groupForm.get('code')?.touched) {
         <mat-error>Code is required</mat-error>
       }
     </mat-form-field>
