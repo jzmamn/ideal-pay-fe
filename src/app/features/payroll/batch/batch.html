@@ -321,10 +321,11 @@
               (click)="save()"
               aria-label="Save all batch allowance values">
         @if (saving()) {
-          <mat-spinner diameter="18" class="btn-spinner" /> Saving…
+          <mat-spinner diameter="18" class="btn-spinner" />
         } @else {
-          <mat-icon>save</mat-icon> Save All
+          <mat-icon>save</mat-icon>
         }
+        {{ saving() ? 'Saving…' : 'Save All' }}
       </button>
     </div>
 
