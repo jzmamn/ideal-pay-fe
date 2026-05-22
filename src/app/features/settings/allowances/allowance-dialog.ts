@@ -52,7 +52,7 @@ export class AllowanceDialog {
 
   readonly allowanceForm = this.fb.group({
     id:           [{ value: this.row?.id   ?? null, disabled: true }],
-    code:         [this.row?.code          ?? '', Validators.required],
+    code:         [{ value: this.row?.code ?? '', disabled: this.isEdit }, Validators.required],
     name:         [this.row?.name          ?? '', Validators.required],
     description:  [this.row?.description   ?? null as string | null],
     amount:       [this.row?.amount        ?? null as number | null, this.isFixed ? [Validators.required, Validators.min(0)] : []],

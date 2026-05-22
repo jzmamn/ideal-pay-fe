@@ -1,0 +1,98 @@
+<div class="pay-slip-page" [formGroup]="form">
+
+  <div class="controls-bar">
+    <h2 class="page-title">Pay Slip</h2>
+    <div class="controls-row">
+      <app-table-autocomplete
+        formControlName="employeeId"
+        label="Employee"
+        placeholder="Search by name or employee #…"
+        src="/employee?isActive=true"
+        [columns]="employeeCols"
+        [displayFn]="empDisplayFn"
+        (itemSelected)="onItemSelected($event)"
+      />
+      <button mat-flat-button type="button" [disabled]="!selectedEmployee()" (click)="printSlip()">
+        <mat-icon>print</mat-icon>
+        Print Slip
+      </button>
+    </div>
+  </div>
+
+  @if (selectedEmployee(); as emp) {
+    <div class="slip-card" aria-label="Pay slip document">
+
+      <div class="slip-header">
+        <div class="company-info">
+          <span class="company-name">Ideal Pay</span>
+          <span class="slip-label">Pay Slip</span>
+        </div>
+        <mat-divider />
+        <div class="employee-info">
+          <div class="info-row">
+            <span class="info-label">Employee</span>
+            <span class="info-value">{{ emp.firstName }} {{ emp.lastName }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Emp #</span>
+            <span class="info-value">{{ emp.employeeNo }}</span>
+          </div>
+        </div>
+      </div>
+
+      <mat-divider />
+
+      <div class="slip-body">
+        <div class="slip-section">
+          <h3 class="section-title">Earnings</h3>
+          <div class="slip-row">
+            <span>Basic Salary</span>
+            <span>0.00</span>
+          </div>
+          <div class="slip-row sub">
+            <span>Total Allowances</span>
+            <span>0.00</span>
+          </div>
+          <div class="slip-row total">
+            <span>Gross Pay</span>
+            <span>LKR 0.00</span>
+          </div>
+        </div>
+
+        <mat-divider />
+
+        <div class="slip-section">
+          <h3 class="section-title">Deductions</h3>
+          <div class="slip-row">
+            <span>EPF — Employee (11%)</span>
+            <span>0.00</span>
+          </div>
+          <div class="slip-row">
+            <span>Income Tax (PAYE)</span>
+            <span>0.00</span>
+          </div>
+          <div class="slip-row total">
+            <span>Total Deductions</span>
+            <span>LKR 0.00</span>
+          </div>
+        </div>
+
+        <mat-divider />
+
+        <div class="slip-row net">
+          <span>Net Pay</span>
+          <strong>LKR 0.00</strong>
+        </div>
+      </div>
+
+    </div>
+  }
+
+  @if (!selectedEmployee()) {
+    <div class="empty-state" role="status">
+      <mat-icon aria-hidden="true">receipt_long</mat-icon>
+      <p>Select an employee to view their pay slip.</p>
+    </div>
+  }
+
+</div>

@@ -5,6 +5,8 @@ export interface MasterEntity {
   isActive: boolean;
 }
 
+export interface Country extends MasterEntity {}
+
 export interface JobCategory extends MasterEntity {
   description?: string;
 }

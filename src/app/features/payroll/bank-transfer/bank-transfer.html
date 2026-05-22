@@ -1,0 +1,101 @@
+<div class="bank-transfer-page" [formGroup]="form">
+
+  <div class="page-header">
+    <h2 class="page-title">Bank Transfer</h2>
+
+    <div class="add-row">
+      <app-table-autocomplete
+        formControlName="employeeId"
+        label="Employee"
+        placeholder="Search by name or employee #…"
+        src="/employee?isActive=true"
+        [columns]="employeeCols"
+        [displayFn]="empDisplayFn"
+        (itemSelected)="onItemSelected($event)"
+      />
+      <button mat-flat-button type="button" [disabled]="!selectedEmployee()" (click)="addToTransfer()">
+        <mat-icon>add</mat-icon>
+        Add to Transfer
+      </button>
+    </div>
+  </div>
+
+  @if (transfers().length > 0) {
+
+    <div class="transfer-table-wrap">
+      <table mat-table [dataSource]="transfers()" aria-label="Bank transfer list">
+
+        <ng-container matColumnDef="employeeNo">
+          <th mat-header-cell *matHeaderCellDef>Emp #</th>
+          <td mat-cell *matCellDef="let row">{{ row.employeeNo }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="bank">
+          <th mat-header-cell *matHeaderCellDef>Bank</th>
+          <td mat-cell *matCellDef="let row">{{ row.bank || '—' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="accountNo">
+          <th mat-header-cell *matHeaderCellDef>Account No.</th>
+          <td mat-cell *matCellDef="let row">{{ row.accountNo || '—' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="netPay">
+          <th mat-header-cell *matHeaderCellDef class="amount-col">Net Pay (LKR)</th>
+          <td mat-cell *matCellDef="let row" class="amount-col">{{ row.netPay | number:'1.2-2' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let row">
+            <mat-chip-set aria-label="Transfer status">
+              <mat-chip [class]="'status-chip status-' + row.status" [disableRipple]="true">
+                {{ row.status }}
+              </mat-chip>
+            </mat-chip-set>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let row">
+            <button mat-icon-button type="button" class="btn-remove"
+                    aria-label="Remove from transfer"
+                    [disabled]="row.status === 'processed'"
+                    (click)="removeTransfer(row.employeeNo)">
+              <mat-icon>remove_circle_outline</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+      </table>
+    </div>
+
+    <mat-divider />
+
+    <div class="footer-actions">
+      <span class="transfer-count">{{ transfers().length }} employee(s) queued</span>
+      <button mat-flat-button type="button" color="primary" (click)="processAll()">
+        <mat-icon>send</mat-icon>
+        Process All Transfers
+      </button>
+    </div>
+
+  }
+
+  @if (transfers().length === 0) {
+    <div class="empty-state" role="status">
+      <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
+      <p>Add employees to queue bank transfers.</p>
+    </div>
+  }
+
+</div>

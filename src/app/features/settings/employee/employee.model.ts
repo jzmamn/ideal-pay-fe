@@ -23,7 +23,7 @@ export interface EmployeeModel {
   adrsLine2: string;
   city: string;
   district: string;
-  country: string;
+  countryId: number | null;
   contactPerson: string;
   cpAddress: string;
   cpContactNumber: string;
@@ -62,7 +62,7 @@ export function emptyEmployee(): EmployeeModel {
     adrsLine2: '',
     city: '',
     district: '',
-    country: 'LK',
+    countryId: null,
     contactPerson: '',
     cpAddress: '',
     cpContactNumber: '',

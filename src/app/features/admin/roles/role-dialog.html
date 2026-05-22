@@ -12,14 +12,9 @@
   <form [formGroup]="roleForm" class="form-grid">
 
     <mat-form-field appearance="outline">
-      <mat-label>ID</mat-label>
-      <input matInput formControlName="id">
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
       <mat-label>Code</mat-label>
       <input matInput formControlName="code">
-      @if (roleForm.get('code')?.hasError('required')) {
+      @if (roleForm.get('code')?.hasError('required') && roleForm.get('code')?.touched) {
         <mat-error>Code is required</mat-error>
       }
     </mat-form-field>

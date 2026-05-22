@@ -1,0 +1,67 @@
+<div class="tac-wrapper">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tac-field">
+    <mat-label>{{ label() }}</mat-label>
+    <input
+      matInput
+      [placeholder]="placeholder()"
+      [value]="panelOpen() ? searchText() : selectedDisplay()"
+      [disabled]="isDisabled()"
+      (focus)="onFocus()"
+      (input)="onInput($event)"
+      (keydown)="onKeydown($event)"
+      autocomplete="off"
+      role="combobox"
+      aria-autocomplete="list"
+      [attr.aria-expanded]="panelOpen()"
+      aria-haspopup="listbox"
+      [attr.aria-controls]="panelOpen() ? uid + '-listbox' : null"
+      [attr.aria-activedescendant]="activeIndex() >= 0 ? uid + '-opt-' + activeIndex() : null"
+    />
+    <mat-icon matSuffix aria-hidden="true">
+      {{ panelOpen() ? 'arrow_drop_up' : 'arrow_drop_down' }}
+    </mat-icon>
+  </mat-form-field>
+
+  @if (panelOpen()) {
+    <div
+      [id]="uid + '-listbox'"
+      class="tac-panel"
+      role="listbox"
+      [attr.aria-label]="label()"
+    >
+      @if (loading()) {
+        <p class="tac-empty" role="status">Loading…</p>
+      } @else if (filteredItems().length === 0) {
+        <p class="tac-empty" role="status">No results found</p>
+      } @else {
+        <table class="tac-table">
+          <thead>
+            <tr>
+              @for (col of columns(); track col.key) {
+                <th scope="col">{{ col.label }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of filteredItems(); track trackItem(item); let i = $index) {
+              <tr
+                role="option"
+                [id]="uid + '-opt-' + i"
+                [attr.aria-selected]="isSelected(item)"
+                [class.tac-row-active]="activeIndex() === i"
+                [class.tac-row-selected]="isSelected(item)"
+                (click)="selectItem(item)"
+                (mouseenter)="activeIndex.set(i)"
+                tabindex="-1"
+              >
+                @for (col of columns(); track col.key) {
+                  <td>{{ getCellValue(item, col) }}</td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  }
+</div>

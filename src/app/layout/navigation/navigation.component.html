@@ -31,9 +31,21 @@
         </mat-expansion-panel-header>
 
         <div class="sub-menu">
-          <a mat-list-item routerLink="/payroll" routerLinkActive="nav-active">
+          <a mat-list-item routerLink="/payroll/entry" routerLinkActive="nav-active">
             <mat-icon>edit_note</mat-icon>
-            <span>Payroll Entry</span>
+            <span>Individual</span>
+          </a>
+          <a mat-list-item routerLink="/payroll/batch" routerLinkActive="nav-active">
+            <mat-icon>grid_on</mat-icon>
+            <span>Batch</span>
+          </a>
+          <a mat-list-item routerLink="/payroll/pay-slip" routerLinkActive="nav-active">
+            <mat-icon>receipt_long</mat-icon>
+            <span>Pay Slip</span>
+          </a>
+          <a mat-list-item routerLink="/payroll/bank-transfer" routerLinkActive="nav-active">
+            <mat-icon>account_balance_wallet</mat-icon>
+            <span>Bank Transfer</span>
           </a>
         </div>
       </mat-expansion-panel>
@@ -138,6 +150,10 @@
           <a mat-list-item routerLink="/employee-types" routerLinkActive="nav-active">
             <mat-icon>badge</mat-icon>
             <span>Employee Types</span>
+          </a>
+          <a mat-list-item routerLink="/countries" routerLinkActive="nav-active">
+            <mat-icon>public</mat-icon>
+            <span>Countries</span>
           </a>
         </div>
       </mat-expansion-panel>

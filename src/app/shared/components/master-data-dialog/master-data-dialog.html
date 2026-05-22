@@ -11,13 +11,6 @@
 <mat-dialog-content>
   <form [formGroup]="form" class="form-grid">
 
-    @if (isEdit) {
-      <mat-form-field appearance="outline">
-        <mat-label>ID</mat-label>
-        <input matInput formControlName="id">
-      </mat-form-field>
-    }
-
     <mat-form-field appearance="outline">
       <mat-label>Code</mat-label>
       <input matInput formControlName="code">

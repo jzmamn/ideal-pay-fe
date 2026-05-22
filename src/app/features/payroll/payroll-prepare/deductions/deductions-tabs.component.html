@@ -1,0 +1,71 @@
+<div class="sub-tabs" role="tablist" aria-label="Deductions sub-tabs">
+  @for (tab of tabs; track tab.id) {
+    <button mat-button
+            role="tab"
+            [class.active-tab]="activeTab() === tab.id"
+            [attr.aria-selected]="activeTab() === tab.id"
+            [attr.tabindex]="activeTab() === tab.id ? 0 : -1"
+            (click)="activeTab.set(tab.id)">
+      {{ tab.label }}
+    </button>
+  }
+</div>
+
+<div class="tab-content" role="tabpanel">
+  @switch (activeTab()) {
+    @case ('fixed-deduction') {
+      @defer (on idle) {
+        <app-fixed-deduction />
+      } @placeholder {
+        <app-grid-skeleton [rows]="10" />
+      } @loading (minimum 300ms) {
+        <app-grid-skeleton [rows]="10" />
+      }
+    }
+    @case ('variable-deduction') {
+      @defer (on idle) {
+        <app-variable-deduction />
+      } @placeholder {
+        <app-grid-skeleton [rows]="10" />
+      } @loading (minimum 300ms) {
+        <app-grid-skeleton [rows]="10" />
+      }
+    }
+    @case ('no-pay') {
+      @defer (on idle) {
+        <app-no-pay />
+      } @placeholder {
+        <app-grid-skeleton [rows]="10" />
+      } @loading (minimum 300ms) {
+        <app-grid-skeleton [rows]="10" />
+      }
+    }
+    @case ('loans') {
+      @defer (on idle) {
+        <app-loans />
+      } @placeholder {
+        <app-grid-skeleton [rows]="10" />
+      } @loading (minimum 300ms) {
+        <app-grid-skeleton [rows]="10" />
+      }
+    }
+    @case ('tax') {
+      @defer (on idle) {
+        <app-tax />
+      } @placeholder {
+        <app-grid-skeleton [rows]="10" />
+      } @loading (minimum 300ms) {
+        <app-grid-skeleton [rows]="10" />
+      }
+    }
+    @case ('salary-decrement') {
+      @defer (on idle) {
+        <app-salary-decrement />
+      } @placeholder {
+        <app-grid-skeleton [rows]="10" />
+      } @loading (minimum 300ms) {
+        <app-grid-skeleton [rows]="10" />
+      }
+    }
+  }
+</div>

@@ -1,0 +1,170 @@
+:host {
+  display: block;
+}
+
+.pay-slip-page {
+  padding: 24px;
+  max-width: 760px;
+}
+
+.controls-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.controls-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.slip-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.slip-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.company-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.company-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.slip-label {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+}
+
+.employee-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 8px;
+}
+
+.info-row {
+  display: flex;
+  gap: 12px;
+  font-size: 13.5px;
+}
+
+.info-label {
+  width: 100px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.info-value {
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.slip-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.slip-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.section-title {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+}
+
+.slip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13.5px;
+  color: #475569;
+
+  &.sub {
+    padding-left: 12px;
+    color: #64748b;
+    font-size: 13px;
+  }
+
+  &.total {
+    font-weight: 600;
+    color: #1e293b;
+    border-top: 1px dashed #e2e8f0;
+    padding-top: 6px;
+    margin-top: 4px;
+  }
+
+  &.net {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    padding: 8px 0 0;
+
+    strong { color: #3b82f6; }
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 64px 24px;
+  color: #94a3b8;
+  text-align: center;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    opacity: 0.4;
+  }
+
+  p { margin: 0; font-size: 0.9rem; }
+}
+
+@media print {
+  .controls-bar { display: none; }
+  .slip-card { border: none; padding: 0; box-shadow: none; }
+}
+
+@media (max-width: 600px) {
+  .pay-slip-page { padding: 16px; }
+  .slip-card { padding: 20px 16px; }
+}

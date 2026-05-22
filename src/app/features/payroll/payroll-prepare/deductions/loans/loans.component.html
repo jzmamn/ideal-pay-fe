@@ -1,0 +1,86 @@
+<section class="section" aria-labelledby="loans-heading">
+
+  <div class="panel-header">
+    <div class="panel-heading">
+      <mat-icon aria-hidden="true">account_balance</mat-icon>
+      <span id="loans-heading" class="panel-title">Loans</span>
+    </div>
+  </div>
+
+  @if (items().length > 0) {
+    <div class="table-wrapper">
+      <table aria-label="Loan deductions">
+        <thead>
+          <tr>
+            <th scope="col">Code</th>
+            <th scope="col">Purpose</th>
+            <th scope="col" class="amount-col">Outstanding</th>
+            <th scope="col" class="amount-col">EMI / Month</th>
+            <th scope="col" class="action-col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item.id; let i = $index) {
+            <tr [class.editing-row]="editingIndex() === i">
+              <td class="code-cell">{{ item.code }}</td>
+              <td>{{ item.purpose }}</td>
+              <td class="amount-cell">
+                <span class="outstanding-value">{{ item.outstanding | number:'1.2-2' }}</span>
+              </td>
+              <td class="amount-cell">
+                @if (editingIndex() === i) {
+                  <mat-form-field appearance="outline" class="amount-field">
+                    <input matInput type="number" min="0"
+                           [formControl]="editAmountCtrl"
+                           [attr.aria-label]="'Edit EMI for ' + item.purpose">
+                    @if (editAmountCtrl.hasError('required') && editAmountCtrl.touched) {
+                      <mat-error>Amount is required</mat-error>
+                    }
+                    @if (editAmountCtrl.hasError('min') && editAmountCtrl.touched) {
+                      <mat-error>Cannot be negative</mat-error>
+                    }
+                  </mat-form-field>
+                } @else {
+                  <span class="amount-value">{{ item.amount | number:'1.2-2' }}</span>
+                }
+              </td>
+              <td class="action-col">
+                @if (editingIndex() === i) {
+                  <button mat-icon-button type="button" color="primary"
+                          (click)="saveEdit(i)"
+                          [attr.aria-label]="'Save EMI for ' + item.purpose"
+                          matTooltip="Save">
+                    <mat-icon>check</mat-icon>
+                  </button>
+                  <button mat-icon-button type="button"
+                          (click)="cancelEdit()"
+                          matTooltip="Cancel">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                } @else {
+                  <button mat-icon-button type="button" class="btn-edit"
+                          [disabled]="editingIndex() !== null"
+                          (click)="startEdit(i)"
+                          [attr.aria-label]="'Edit EMI for ' + item.purpose"
+                          matTooltip="Edit EMI">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+        <tfoot aria-live="polite" aria-atomic="true">
+          <tr class="total-row">
+            <td colspan="3" class="total-label">Total EMI This Month</td>
+            <td class="total-amount">{{ total() | number:'1.2-2' }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  } @else {
+    <p class="empty-note">No active loans found.</p>
+  }
+
+</section>

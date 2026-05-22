@@ -32,7 +32,7 @@ export class RoleDialog {
 
   readonly roleForm = this.fb.group({
     id:          [{ value: this.row?.id ?? null, disabled: true }],
-    code:        [this.row?.code        ?? '', Validators.required],
+    code:        [{ value: this.row?.code ?? '', disabled: this.isEdit }, Validators.required],
     name:        [this.row?.name        ?? '', Validators.required],
     description: [this.row?.description ?? ''],
     isActive:    [this.row?.isActive    ?? true],

@@ -1,17 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MasterDataTableComponent } from '../../../shared/components/master-data-table/master-data-table.component';
 import { MasterDataTableConfig } from '../../../shared/components/master-data-table/master-data-table.config';
 import { UserDialog } from './user-dialog';
 import { UserModel } from './user.model';
-
-const MOCK_USERS: UserModel[] = [
-  { id: 1, code: 'USR001', username: 'admin',   fullName: 'Admin User',    email: 'admin@idealpay.com',   role: 'Administrator', isActive: true  },
-  { id: 2, code: 'USR002', username: 'jsmith',  fullName: 'John Smith',    email: 'jsmith@idealpay.com',  role: 'Manager',       isActive: true  },
-  { id: 3, code: 'USR003', username: 'mjones',  fullName: 'Mary Jones',    email: 'mjones@idealpay.com',  role: 'Accountant',    isActive: true  },
-  { id: 4, code: 'USR004', username: 'rwilson', fullName: 'Robert Wilson', email: 'rwilson@idealpay.com', role: 'HR Officer',    isActive: false },
-  { id: 5, code: 'USR005', username: 'lbrown',  fullName: 'Lisa Brown',    email: 'lbrown@idealpay.com',  role: 'Payroll Clerk', isActive: true  },
-];
+import { UserService } from './user.service';
 
 @Component({
   selector: 'app-users',
@@ -27,13 +20,15 @@ const MOCK_USERS: UserModel[] = [
   `,
 })
 export class Users {
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog  = inject(MatDialog);
+  private readonly userSvc = inject(UserService);
 
-  readonly users = signal<UserModel[]>(MOCK_USERS);
+  readonly users = this.userSvc.users;
 
   readonly tableConfig: MasterDataTableConfig<UserModel> = {
     title: 'Users',
     showNewButton: true,
+    showActiveFilter: true,
     columns: [
       { key: 'id',       label: 'ID',        sortable: false },
       { key: 'username', label: 'Username' },
@@ -43,6 +38,10 @@ export class Users {
       { key: 'isActive', label: 'Active', type: 'boolean' },
     ],
   };
+
+  constructor() {
+    this.userSvc.reload();
+  }
 
   onRowSelected(row: UserModel): void {
     this.openDialog(row);
@@ -58,6 +57,8 @@ export class Users {
       width: '480px',
       maxWidth: '480px',
       data: row,
+    }).afterClosed().subscribe(saved => {
+      if (saved) this.userSvc.reload();
     });
   }
 }

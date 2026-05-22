@@ -12,11 +12,6 @@
   <form [formGroup]="companyForm" class="form-grid">
 
     <mat-form-field appearance="outline">
-      <mat-label>ID</mat-label>
-      <input matInput formControlName="id">
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
       <mat-label>Code</mat-label>
       <input matInput formControlName="code">
       @if (companyForm.get('code')?.hasError('required')) {

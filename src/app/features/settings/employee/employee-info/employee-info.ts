@@ -49,6 +49,11 @@ export class EmployeeInfo {
     return id != null ? (this.masterSvc.grades().find(g => g.id === id)?.name ?? '—') : '—';
   });
 
+  readonly countryName = computed(() => {
+    const id = this.service.selected()?.countryId;
+    return id != null ? (this.masterSvc.countries().find(c => c.id === id)?.name ?? '—') : '—';
+  });
+
   constructor() {
     if (!this.service.selected()) {
       this.router.navigate(['/employee']);

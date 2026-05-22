@@ -1,0 +1,83 @@
+<section class="deductions-section" aria-labelledby="var-ded-heading">
+
+  <div class="panel-header">
+    <div class="panel-heading">
+      <mat-icon aria-hidden="true">remove_circle_outline</mat-icon>
+      <span id="var-ded-heading" class="panel-title">Variable Deductions</span>
+    </div>
+  </div>
+
+  @if (items().length > 0) {
+    <div class="table-wrapper">
+      <table aria-label="Variable deductions">
+        <thead>
+          <tr>
+            <th scope="col">Code</th>
+            <th scope="col">Name</th>
+            <th scope="col" class="amount-col">Amount</th>
+            <th scope="col" class="action-col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item.id; let i = $index) {
+            <tr [class.editing-row]="editingIndex() === i">
+              <td class="code-cell">{{ item.code }}</td>
+              <td>{{ item.name }}</td>
+              <td class="amount-cell">
+                @if (editingIndex() === i) {
+                  <mat-form-field appearance="outline" class="amount-field">
+                    <input matInput type="number" min="0"
+                           [formControl]="editAmountCtrl"
+                           [attr.aria-label]="'Edit amount for ' + item.name">
+                    @if (editAmountCtrl.hasError('required') && editAmountCtrl.touched) {
+                      <mat-error>Amount is required</mat-error>
+                    }
+                    @if (editAmountCtrl.hasError('min') && editAmountCtrl.touched) {
+                      <mat-error>Cannot be negative</mat-error>
+                    }
+                  </mat-form-field>
+                } @else {
+                  <span class="amount-value">{{ item.amount | number:'1.2-2' }}</span>
+                }
+              </td>
+              <td class="action-col">
+                @if (editingIndex() === i) {
+                  <button mat-icon-button type="button" color="primary"
+                          (click)="saveEdit(i)"
+                          [attr.aria-label]="'Save changes for ' + item.name"
+                          matTooltip="Save">
+                    <mat-icon>check</mat-icon>
+                  </button>
+                  <button mat-icon-button type="button"
+                          (click)="cancelEdit()"
+                          [attr.aria-label]="'Cancel editing ' + item.name"
+                          matTooltip="Cancel">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                } @else {
+                  <button mat-icon-button type="button" class="btn-edit"
+                          [disabled]="editingIndex() !== null"
+                          (click)="startEdit(i)"
+                          [attr.aria-label]="'Edit amount for ' + item.name"
+                          matTooltip="Edit amount">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+        <tfoot aria-live="polite" aria-atomic="true">
+          <tr class="total-row">
+            <td colspan="2" class="total-label">Total Variable Deduction</td>
+            <td class="total-amount">{{ total() | number:'1.2-2' }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  } @else {
+    <p class="empty-note">No active variable deductions found.</p>
+  }
+
+</section>
