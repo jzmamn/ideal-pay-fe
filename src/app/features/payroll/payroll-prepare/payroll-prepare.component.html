@@ -1,0 +1,154 @@
+<div class="page-shell">
+
+  <!-- Content: (search + tabs) + right summary panel -->
+  <div class="content-layout">
+
+    <!-- Left column: search + primary tabs -->
+    <div class="main-col">
+
+      <div class="period-select">
+        <p class="period-select-label">Select the pay period to begin.</p>
+        <div class="period-row">
+          <mat-form-field appearance="outline" class="period-month">
+            <mat-label>Month</mat-label>
+            <mat-select [value]="svc.periodMonth()" (valueChange)="svc.periodMonth.set($event)">
+              @for (m of svc.months; track m.value) {
+                <mat-option [value]="m.value">{{ m.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="period-year">
+            <mat-label>Year</mat-label>
+            <mat-select [value]="svc.periodYear()" (valueChange)="svc.periodYear.set($event)">
+              @for (y of svc.years; track y) {
+                <mat-option [value]="y">{{ y }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="employee-search">
+        <p class="employee-search-label">Select the employee to prepare salary.</p>
+        <app-table-autocomplete
+          [formControl]="employeeCtrl"
+          label="Employee"
+          placeholder="Search by name or employee #…"
+          src="/employee?isActive=true"
+          [columns]="employeeCols"
+          [displayFn]="empDisplayFn"
+          (itemSelected)="onEmployeeSelected($event)"
+        />
+      </div>
+
+      <div class="workspace">
+        <mat-tab-group dynamicHeight animationDuration="150ms" aria-label="Earnings and deductions">
+          <mat-tab label="Earnings">
+            <div class="tab-wrap">
+              <app-earnings-tabs />
+            </div>
+          </mat-tab>
+          <mat-tab label="Deductions">
+            <div class="tab-wrap">
+              <app-deductions-tabs />
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+      </div>
+
+    </div>
+
+    <!-- Right summary panel (always in grid column 2) -->
+    <aside class="emp-summary" aria-label="Employee summary">
+      @if (selectedEmployee(); as emp) {
+        <div class="emp-summary-header">
+          <p class="emp-full-name">{{ emp.firstName }} {{ emp.lastName }}</p>
+          <p class="emp-no">{{ emp.employeeNo }}</p>
+        </div>
+
+        <div class="emp-summary-body">
+          @if (emp.payrollName) {
+            <div class="emp-field">
+              <span class="emp-field-label">Payroll Name</span>
+              <span class="emp-field-value">{{ emp.payrollName }}</span>
+            </div>
+          }
+          <div class="emp-field">
+            <span class="emp-field-label">Basic Salary</span>
+            <span class="emp-field-value emp-salary">LKR {{ emp.basicSalary | number:'1.2-2' }}</span>
+          </div>
+          @if (emp.epfNo) {
+            <div class="emp-field">
+              <span class="emp-field-label">EPF No</span>
+              <span class="emp-field-value">{{ emp.epfNo }}</span>
+            </div>
+          }
+          @if (emp.etfNo) {
+            <div class="emp-field">
+              <span class="emp-field-label">ETF No</span>
+              <span class="emp-field-value">{{ emp.etfNo }}</span>
+            </div>
+          }
+          @if (emp.joinedDate) {
+            <div class="emp-field">
+              <span class="emp-field-label">Joined</span>
+              <span class="emp-field-value">{{ emp.joinedDate | date:'dd MMM yyyy' }}</span>
+            </div>
+          }
+
+          @if (employeeSalary(); as sal) {
+            @if (sal.fixedAllowances.length) {
+              <div class="emp-section">
+                <span class="emp-section-title">Allowances</span>
+                @for (item of sal.fixedAllowances; track item.name) {
+                  <div class="emp-line-item">
+                    <span>{{ item.name }}</span>
+                    <span>{{ item.amount | number:'1.2-2' }}</span>
+                  </div>
+                }
+              </div>
+            }
+            @if (sal.fixedDeductions.length) {
+              <div class="emp-section">
+                <span class="emp-section-title">Deductions</span>
+                @for (item of sal.fixedDeductions; track item.name) {
+                  <div class="emp-line-item">
+                    <span>{{ item.name }}</span>
+                    <span class="emp-deduction">{{ item.amount | number:'1.2-2' }}</span>
+                  </div>
+                }
+              </div>
+            }
+          }
+        </div>
+      }
+    </aside>
+
+  </div>
+
+  <!-- Footer action bar -->
+  <footer class="action-bar" role="contentinfo">
+    <button mat-stroked-button
+            [disabled]="saving()"
+            (click)="saveDraft()"
+            aria-label="Save draft">
+      @if (saving()) { Saving… } @else { Save Draft }
+    </button>
+
+    <button mat-stroked-button
+            (click)="recalculate()"
+            aria-label="Recalculate payroll">
+      <mat-icon>refresh</mat-icon> Recalculate
+    </button>
+
+    <button mat-flat-button
+            color="primary"
+            [disabled]="submitting()"
+            (click)="submitForReview()"
+            aria-label="Submit payroll for review">
+      @if (submitting()) { Submitting… } @else { Submit for Review }
+      <mat-icon>arrow_forward</mat-icon>
+    </button>
+  </footer>
+
+</div>

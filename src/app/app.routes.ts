@@ -37,10 +37,48 @@ export const routes: Routes = [
             },
 
             {
+                path: 'payroll-run/:runId/prepare',
+                loadChildren: () =>
+                    import('./features/payroll/payroll-prepare/payroll-prepare.routes')
+                        .then(m => m.PAYROLL_PREPARE_ROUTES),
+            },
+
+            {
                 path: 'payroll',
                 loadComponent: () =>
-                    import('./features/payroll/payroll-entry')
-                        .then(m => m.PayrollEntry)
+                    import('./features/payroll/payroll')
+                        .then(m => m.Payroll),
+                children: [
+                    {
+                        path: '',
+                        redirectTo: 'entry',
+                        pathMatch: 'full',
+                    },
+                    {
+                        path: 'entry',
+                        loadComponent: () =>
+                            import('./features/payroll/payroll-entry/payroll-entry')
+                                .then(m => m.PayrollEntry),
+                    },
+                    {
+                        path: 'pay-slip',
+                        loadComponent: () =>
+                            import('./features/payroll/pay-slip/pay-slip')
+                                .then(m => m.PaySlip),
+                    },
+                    {
+                        path: 'bank-transfer',
+                        loadComponent: () =>
+                            import('./features/payroll/bank-transfer/bank-transfer')
+                                .then(m => m.BankTransfer),
+                    },
+                    {
+                        path: 'batch',
+                        loadComponent: () =>
+                            import('./features/payroll/batch/batch')
+                                .then(m => m.BatchComponent),
+                    },
+                ],
             },
 
             {

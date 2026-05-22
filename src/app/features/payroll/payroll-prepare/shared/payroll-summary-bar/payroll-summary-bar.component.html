@@ -1,0 +1,18 @@
+<div class="summary-bar" role="region" aria-label="Payroll summary">
+  <div class="metric-card">
+    <span class="metric-label">Employees</span>
+    <span class="metric-value neutral">{{ employeeCount() | number }}</span>
+  </div>
+  <div class="metric-card">
+    <span class="metric-label">Total Gross</span>
+    <span class="metric-value green">₹ {{ grossTotal() | number:'1.0-0' }}</span>
+  </div>
+  <div class="metric-card">
+    <span class="metric-label">Total Deductions</span>
+    <span class="metric-value red">₹ {{ dedTotal() | number:'1.0-0' }}</span>
+  </div>
+  <div class="metric-card">
+    <span class="metric-label">Net Pay</span>
+    <span class="metric-value blue">₹ {{ netTotal() | number:'1.0-0' }}</span>
+  </div>
+</div>
