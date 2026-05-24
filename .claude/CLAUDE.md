@@ -1,55 +1,70 @@
+# Angular + TypeScript Expert
 
-You are an expert in TypeScript, Angular, and scalable web application development. You write functional, maintainable, performant, and accessible code following Angular and TypeScript best practices.
+You write functional, maintainable, performant, and accessible Angular code.
+Target: **Angular v20+ / TypeScript strict mode / Angular Material 21**.
 
-## TypeScript Best Practices
+---
 
-- Use strict type checking
+## TypeScript
+
+- Enable strict type checking
 - Prefer type inference when the type is obvious
-- Avoid the `any` type; use `unknown` when type is uncertain
+- Never use `any`; use `unknown` for uncertain types
 
-## Angular Best Practices
+---
 
-- Always use standalone components over NgModules
-- Must NOT set `standalone: true` inside Angular decorators. It's the default in Angular v20+.
-- Use signals for state management
-- Implement lazy loading for feature routes
-- Do NOT use the `@HostBinding` and `@HostListener` decorators. Put host bindings inside the `host` object of the `@Component` or `@Directive` decorator instead
-- Use `NgOptimizedImage` for all static images.
-  - `NgOptimizedImage` does not work for inline base64 images.
+## Angular
 
-## Accessibility Requirements
+- **Standalone components only** — do NOT set `standalone: true` (it's the default in v20+)
+- Use `inject()` for dependency injection, not constructor injection
+- Use `providedIn: 'root'` for singleton services
+- Implement lazy loading for all feature routes
+- Use `NgOptimizedImage` for static images (not for inline base64)
+- Do NOT use `@HostBinding` / `@HostListener` — use the `host` object in `@Component` / `@Directive` instead
 
-- It MUST pass all AXE checks.
-- It MUST follow all WCAG AA minimums, including focus management, color contrast, and ARIA attributes.
+---
 
-### Components
+## Angular Material 21
 
-- Keep components small and focused on a single responsibility
-- Use `input()` and `output()` functions instead of decorators
+- Import components directly from `@angular/material/<component>` (e.g. `MatButtonModule`, `MatInputModule`)
+- Use Material Design 3 (M3) tokens and theming — do NOT use legacy M2 styles
+- Define the app theme using `mat.define-theme()` with `$color`, `$typography`, and `$density` maps
+- Apply the theme via `mat.all-component-themes()` or scope with `mat.component-theme()` for lazy-loaded features
+- Use CSS custom properties (`--mat-*`, `--mdc-*`) for component-level overrides; avoid overriding internal MDC classes directly
+- Prefer Material components over custom equivalents (e.g. `mat-form-field`, `mat-button`, `mat-dialog`)
+- Use `MatIconModule` with a registered icon font or SVG sprite; do NOT hardcode ligature strings without a fallback `aria-label`
+- Use `mat-form-field` with `appearance="outline"` or `"fill"` — not the deprecated `legacy` or `standard`
+- For dialogs, bottom sheets, and snackbars: inject `MatDialog` / `MatBottomSheet` / `MatSnackBar` via `inject()`, not the constructor
+- Do NOT override `.mat-*` classes for theming; use the M3 token system instead
+
+---
+
+## Components
+
+- Single responsibility per component; keep them small
+- `changeDetection: ChangeDetectionStrategy.OnPush` always
+- Use `input()` / `output()` functions, not decorators
 - Use `computed()` for derived state
-- Set `changeDetection: ChangeDetectionStrategy.OnPush` in `@Component` decorator
+- Use `update()` or `set()` on signals — never `mutate()`
+- Prefer Reactive Forms over Template-driven forms
 - Prefer inline templates for small components
-- Prefer Reactive forms instead of Template-driven ones
-- Do NOT use `ngClass`, use `class` bindings instead
-- Do NOT use `ngStyle`, use `style` bindings instead
-- When using external templates/styles, use paths relative to the component TS file.
+- Use paths relative to the component `.ts` file for external templates/styles
 
-## State Management
-
-- Use signals for local component state
-- Use `computed()` for derived state
-- Keep state transformations pure and predictable
-- Do NOT use `mutate` on signals, use `update` or `set` instead
+---
 
 ## Templates
 
-- Keep templates simple and avoid complex logic
-- Use native control flow (`@if`, `@for`, `@switch`) instead of `*ngIf`, `*ngFor`, `*ngSwitch`
-- Use the async pipe to handle observables
-- Do not assume globals like (`new Date()`) are available.
+- Use native control flow: `@if`, `@for`, `@switch` — not `*ngIf`, `*ngFor`, `*ngSwitch`
+- Use `class` bindings — not `ngClass`
+- Use `style` bindings — not `ngStyle`
+- Use the `async` pipe for observables
+- Keep logic out of templates
+- Do not assume globals (e.g. `new Date()`) are available in templates
 
-## Services
+---
 
-- Design services around a single responsibility
-- Use the `providedIn: 'root'` option for singleton services
-- Use the `inject()` function instead of constructor injection
+## Accessibility
+
+- All components must pass AXE checks
+- Meet WCAG AA minimums: focus management, color contrast, ARIA attributes
+- Use Material's built-in ARIA support; always supply `aria-label` or `aria-labelledby` on icon-only buttons and form fields without visible labels

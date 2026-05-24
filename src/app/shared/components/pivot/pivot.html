@@ -1,0 +1,94 @@
+<div class="pivot-wrapper">
+
+  <div class="table-toolbar">
+    <div class="table-toolbar-left">
+      @if (label()) {
+        <span class="table-label">{{ label() }}</span>
+        <div class="toolbar-sep" aria-hidden="true"></div>
+      }
+      <div class="search-field">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input class="search-input"
+               [value]="empFilter()"
+               (input)="empFilter.set($any($event.target).value)"
+               placeholder="Search employees…"
+               aria-label="Filter employees" />
+        @if (empFilter()) {
+          <button class="search-clear" (click)="clearFilter()" aria-label="Clear filter">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </div>
+      <span class="filter-count" aria-live="polite">
+        @if (empFilter()) {
+          {{ filteredRows().length }} / {{ rows().length }}
+        }
+      </span>
+    </div>
+
+    <div class="table-toolbar-right">
+      <button mat-stroked-button (click)="importClick.emit()" aria-label="Import">
+        <mat-icon>upload</mat-icon>
+        <span>Import</span>
+      </button>
+      <button mat-stroked-button (click)="exportClick.emit()" aria-label="Export">
+        <mat-icon>download</mat-icon>
+        <span>Export</span>
+      </button>
+    </div>
+  </div>
+
+  <table [attr.aria-label]="label() || codes()[0]">
+
+    <thead>
+      <tr>
+        <th scope="col" class="emp-id-col">Emp ID</th>
+        <th scope="col" class="emp-name-col">Employee Name</th>
+        @for (code of codes(); track code) {
+          <th scope="col" class="amount-col">{{ code }}</th>
+        }
+      </tr>
+    </thead>
+
+    <tbody>
+      @for (row of filteredRows(); track row.emp.id; let even = $even) {
+        <tr [class.row-even]="even">
+          <td class="emp-id-cell">{{ row.emp.code }}</td>
+          <td class="emp-name-cell">{{ row.emp.name }}</td>
+          @for (code of codes(); track code) {
+            <td class="value-cell"
+                [class.cell-editing]="isEditing(row.idx, code)"
+                (click)="startCellEdit(row.idx, code)"
+                [attr.aria-label]="row.emp.name + ' ' + code">
+              @if (isEditing(row.idx, code)) {
+                <input #editInputEl
+                       type="number" min="0" step="0.01"
+                       class="cell-input"
+                       [formControl]="editCtrl"
+                       (blur)="saveCellEdit()"
+                       (keydown.enter)="saveCellEdit()"
+                       (keydown.escape)="cancelCellEdit()"
+                       [attr.aria-label]="row.emp.name + ' ' + code + ' amount'" />
+              } @else {
+                <span class="cell-value">{{ getAmount(code, row.idx) | number:'1.2-2' }}</span>
+              }
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+
+    <tfoot>
+      <tr>
+        <td class="total-label">Totals</td>
+        <td class="total-name-spacer"></td>
+        @for (code of codes(); track code) {
+          <td class="total-amount">
+            <span class="total-amount-inner">{{ getColTotal(code) | number:'1.2-2' }}</span>
+          </td>
+        }
+      </tr>
+    </tfoot>
+
+  </table>
+</div>

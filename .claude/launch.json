@@ -1,0 +1,24 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Angular Dev Server",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start"],
+      "port": 4200
+    },
+    {
+      "name": "Angular SSR Server",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["dist/ideal-pay-fe/server/server.mjs"],
+      "port": 4000
+    },
+    {
+      "name": "Spring Boot API",
+      "runtimeExecutable": "gradlew",
+      "runtimeArgs": ["bootRun"],
+      "cwd": "D:\\ideal\\payroll\\be_20260519",
+      "port": 8080
+    }
+  ]
+}
