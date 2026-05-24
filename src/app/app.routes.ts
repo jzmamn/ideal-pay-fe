@@ -37,13 +37,6 @@ export const routes: Routes = [
             },
 
             {
-                path: 'payroll-run/:runId/prepare',
-                loadChildren: () =>
-                    import('./features/payroll/payroll-prepare/payroll-prepare.routes')
-                        .then(m => m.PAYROLL_PREPARE_ROUTES),
-            },
-
-            {
                 path: 'payroll',
                 loadComponent: () =>
                     import('./features/payroll/payroll')
@@ -57,8 +50,8 @@ export const routes: Routes = [
                     {
                         path: 'entry',
                         loadComponent: () =>
-                            import('./features/payroll/payroll-entry/payroll-entry')
-                                .then(m => m.PayrollEntry),
+                            import('./features/payroll/individual/individual')
+                                .then(m => m.IndividualComponent),
                     },
                     {
                         path: 'pay-slip',

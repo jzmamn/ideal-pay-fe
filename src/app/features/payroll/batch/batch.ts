@@ -1,22 +1,21 @@
 import {
-  ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef,
-  computed, effect, inject, signal, untracked, viewChild,
+  ChangeDetectionStrategy, Component, DestroyRef,
+  computed, effect, inject, signal, untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
-import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { DecimalPipe } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatStepperModule, MatStepper } from '@angular/material/stepper';
-import { MatDividerModule } from '@angular/material/divider';
+import { MatTabsModule } from '@angular/material/tabs';
 import { EmployeeService } from '../../settings/employee/employee.service';
 import { BatchService, BatchEntry, BatchSavePayload } from './batch.service';
+import { PivotComponent, PivotAmountChange } from '../../../shared/components/pivot/pivot';
 
-// ── Per-category column codes ────────────────────────────────────────────
 const FIXED_ALW_CODES  = ['FAlw1', 'FAlw2', 'FAlw3', 'FAlw4', 'FAlw5'] as const;
 const VAR_ALW_CODES    = ['VAlw1', 'VAlw2', 'VAlw3', 'VAlw4', 'VAlw5'] as const;
 const OT_CODES         = ['OT1',   'OT2',   'OT3'  ] as const;
@@ -38,7 +37,7 @@ const SUB_STEPS = [
 ] as const;
 
 interface BatchEmployee { id: number; code: string; name: string; }
-type AmountMatrix = Record<string, number[]>; // code → [empIndex → amount]
+type AmountMatrix = Record<string, number[]>;
 
 const MOCK_EMPLOYEES: BatchEmployee[] = [
   { id:  1, code: 'Emp0001', name: 'John Doe'    },
@@ -57,7 +56,6 @@ const MOCK_EMPLOYEES: BatchEmployee[] = [
   { id: 14, code: 'Emp0014', name: 'Alan Border' },
 ];
 
-// Fast lookup: code string → category key
 const CODE_TO_CAT: Record<string, string> = Object.fromEntries(
   SUB_STEPS.flatMap(s => (s.codes as readonly string[]).map(c => [c, s.key]))
 );
@@ -76,23 +74,20 @@ function buildAllMatrices(emps: BatchEmployee[]): Record<string, AmountMatrix> {
   selector: 'app-batch',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DecimalPipe, NgTemplateOutlet, ReactiveFormsModule,
+    DecimalPipe, ReactiveFormsModule,
     MatButtonModule, MatIconModule, MatFormFieldModule,
     MatInputModule, MatSelectModule, MatProgressSpinnerModule,
-    MatStepperModule, MatDividerModule,
+    MatTabsModule,
+    PivotComponent,
   ],
   templateUrl: './batch.html',
   styleUrl:    './batch.scss',
 })
 export class BatchComponent {
   private readonly fb         = inject(FormBuilder);
-  private readonly cdr        = inject(ChangeDetectorRef);
   private readonly empSvc     = inject(EmployeeService);
   private readonly batchSvc   = inject(BatchService);
   private readonly destroyRef = inject(DestroyRef);
-
-  private readonly stepper    = viewChild.required<MatStepper>('stepper');
-  private readonly _editInput = viewChild<ElementRef<HTMLInputElement>>('editInputEl');
 
   readonly SUB_STEPS = SUB_STEPS;
 
@@ -124,22 +119,11 @@ export class BatchComponent {
     ),
   });
 
-  readonly editingCell       = signal<{ cat: string; empIndex: number; code: string } | null>(null);
-  readonly saving            = signal(false);
-  readonly saveError         = signal<string | null>(null);
-  readonly saveSuccess       = signal(false);
-  readonly loading           = signal(false);
-  readonly isReviewConfirmed = signal(false);
-  readonly isApproved        = signal(false);
-
-  readonly approveForm = this.fb.group({
-    approvedBy: this.fb.nonNullable.control('', Validators.required),
-    remarks:    this.fb.nonNullable.control(''),
-  });
-
-  readonly editCtrl = new FormControl<number | null>(null, {
-    validators: [Validators.required, Validators.min(0)],
-  });
+  readonly saving          = signal(false);
+  readonly saveError       = signal<string | null>(null);
+  readonly saveSuccess     = signal(false);
+  readonly loading         = signal(false);
+  readonly selectedSubStep = signal(0);
 
   private readonly _matrices = signal<Record<string, AmountMatrix>>(
     buildAllMatrices(MOCK_EMPLOYEES)
@@ -152,39 +136,23 @@ export class BatchComponent {
       : MOCK_EMPLOYEES;
   });
 
-  readonly catColTotals = computed(() => {
-    const m = this._matrices();
-    return Object.fromEntries(
-      SUB_STEPS.map(step => [
-        step.key,
-        Object.fromEntries(
-          (step.codes as readonly string[]).map(code => [
-            code,
-            (m[step.key]?.[code] ?? []).reduce((s, v) => s + v, 0),
-          ])
-        ),
-      ])
-    );
-  });
-
-  readonly catTotals = computed(() => {
-    const ct = this.catColTotals();
-    return Object.fromEntries(
-      SUB_STEPS.map(step => [
-        step.key,
-        Object.values(ct[step.key] ?? {}).reduce((s, v) => s + v, 0),
-      ])
-    );
-  });
+  readonly pivotRows = computed(() =>
+    this.employees().map((emp, idx) => ({ emp, idx }))
+  );
 
   readonly grandTotal = computed(() =>
-    Object.values(this.catTotals()).reduce((s, v) => s + v, 0)
+    SUB_STEPS.reduce((sum, step) => {
+      const mat = this._matrices()[step.key] ?? {};
+      return sum + (step.codes as readonly string[]).reduce((s, code) =>
+        s + (mat[code] ?? []).reduce((a, v) => a + v, 0), 0);
+    }, 0)
   );
+
+  readonly matrices = computed(() => this._matrices());
 
   get periodLabel(): string {
     const { month, year } = this.periodForm.getRawValue();
-    const m = this.months.find(x => x.value === month);
-    return `${m?.label ?? ''} ${year}`;
+    return `${this.months.find(x => x.value === month)?.label ?? ''} ${year}`;
   }
 
   constructor() {
@@ -198,74 +166,23 @@ export class BatchComponent {
     });
   }
 
-  // ── Cell helpers ──────────────────────────────────────────────────────
-
-  isEditing(cat: string, empIndex: number, code: string): boolean {
-    const c = this.editingCell();
-    return c?.cat === cat && c?.empIndex === empIndex && c?.code === code;
-  }
-
-  getAmount(cat: string, code: string, empIndex: number): number {
-    return this._matrices()[cat]?.[code]?.[empIndex] ?? 0;
-  }
-
-  getCatColTotal(cat: string, code: string): number {
-    return this.catColTotals()[cat]?.[code] ?? 0;
-  }
-
-  // ── Inline cell editing ───────────────────────────────────────────────
-
-  startCellEdit(cat: string, empIndex: number, code: string): void {
-    if (this.editingCell()) this.saveCellEdit();
-    this.editCtrl.setValue(this.getAmount(cat, code, empIndex));
-    this.editingCell.set({ cat, empIndex, code });
-    queueMicrotask(() => this._editInput()?.nativeElement.focus());
-  }
-
-  saveCellEdit(): void {
-    const cell = this.editingCell();
-    if (!cell) return;
-    const amount = Math.max(0, Number(this.editCtrl.value ?? 0));
-    const { cat, empIndex, code } = cell;
+  onAmountChange(catKey: string, e: PivotAmountChange): void {
     this._matrices.update(prev => {
-      const catMatrix = { ...(prev[cat] ?? {}) };
-      const col = [...(catMatrix[code] ?? [])];
-      col[empIndex] = amount;
-      catMatrix[code] = col;
-      return { ...prev, [cat]: catMatrix };
+      const cat = { ...(prev[catKey] ?? {}) };
+      const col = [...(cat[e.code] ?? [])];
+      col[e.empIndex] = e.amount;
+      cat[e.code] = col;
+      return { ...prev, [catKey]: cat };
     });
-    this.editingCell.set(null);
   }
-
-  cancelCellEdit(): void { this.editingCell.set(null); }
-
-  confirmReview(): void {
-    this.isReviewConfirmed.set(true);
-    this.cdr.detectChanges();
-    this.stepper().next();
-  }
-
-  approvePayroll(): void {
-    this.approveForm.markAllAsTouched();
-    if (this.approveForm.invalid) return;
-    this.isApproved.set(true);
-    this.cdr.detectChanges();
-    this.stepper().next();
-  }
-
-  // ── Period change ──────────────────────────────────────────────────────
 
   onPeriodChange(): void {
-    this.editingCell.set(null);
     this._matrices.set(buildAllMatrices(this.employees()));
     this._loadValues();
   }
 
-  // ── Save ───────────────────────────────────────────────────────────────
-
   save(): void {
     if (this.saving() || this.periodForm.invalid) return;
-    this.saveCellEdit();
     this.saving.set(true);
     this.saveError.set(null);
     this.saveSuccess.set(false);
@@ -284,20 +201,16 @@ export class BatchComponent {
       )
     );
 
-    const payload: BatchSavePayload = { periodMonth: month, periodYear: year, entries };
-
-    this.batchSvc.save(payload)
+    this.batchSvc.save({ periodMonth: month, periodYear: year, entries } satisfies BatchSavePayload)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => { this.saving.set(false); this.saveSuccess.set(true); },
+        next:  ()           => { this.saving.set(false); this.saveSuccess.set(true); },
         error: (err: unknown) => {
           this.saving.set(false);
           this.saveError.set(err instanceof Error ? err.message : 'Save failed. Please try again.');
         },
       });
   }
-
-  // ── Private ────────────────────────────────────────────────────────────
 
   private _loadValues(): void {
     const { month, year } = this.periodForm.getRawValue();

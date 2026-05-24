@@ -1,334 +1,88 @@
-<!-- ── Shared pivot table template ──────────────────────────────────────── -->
-<ng-template #pivotTpl let-codes="codes" let-catKey="catKey">
-  <div class="pivot-wrapper">
-    <table [attr.aria-label]="catKey + ' pivot table'">
+<div class="page-shell" [formGroup]="periodForm">
 
-      <thead>
-        <tr>
-          <th scope="col" class="emp-id-col">Emp ID</th>
-          <th scope="col" class="emp-name-col">Employee Name</th>
-          @for (code of codes; track code) {
-            <th scope="col" class="amount-col">{{ code }}</th>
-          }
-        </tr>
-      </thead>
-
-      <tbody>
-        @for (emp of employees(); track emp.id; let i = $index) {
-          <tr>
-            <td class="emp-id-cell">{{ emp.code }}</td>
-            <td class="emp-name-cell">{{ emp.name }}</td>
-            @for (code of codes; track code) {
-              <td class="value-cell"
-                  [class.cell-editing]="isEditing(catKey, i, code)"
-                  (click)="startCellEdit(catKey, i, code)"
-                  [attr.aria-label]="emp.name + ' ' + code">
-                @if (isEditing(catKey, i, code)) {
-                  <input #editInputEl
-                         type="number" min="0" step="0.01"
-                         class="cell-input"
-                         [formControl]="editCtrl"
-                         (blur)="saveCellEdit()"
-                         (keydown.enter)="saveCellEdit()"
-                         (keydown.escape)="cancelCellEdit()"
-                         [attr.aria-label]="emp.name + ' ' + code + ' amount'" />
-                } @else {
-                  <span class="cell-value">{{ getAmount(catKey, code, i) | number:'1.2-2' }}</span>
-                }
-              </td>
-            }
-          </tr>
-        }
-      </tbody>
-
-      <tfoot>
-        <tr>
-          <td class="total-label">Total</td>
-          <td class="total-name-spacer"></td>
-          @for (code of codes; track code) {
-            <td class="total-amount">
-              <span class="total-amount-inner">{{ getCatColTotal(catKey, code) | number:'1.2-2' }}</span>
-            </td>
-          }
-        </tr>
-      </tfoot>
-
-    </table>
-  </div>
-</ng-template>
-
-
-<mat-stepper linear #stepper class="payroll-stepper">
-
-  <!-- ══════════════════════════════════════════════════════════════════════
-       Step 1 — Setup
-  ══════════════════════════════════════════════════════════════════════ -->
-  <mat-step label="Setup" [stepControl]="periodForm">
-
-    <div class="step-body setup-body" [formGroup]="periodForm">
-      <p class="step-desc">Select the pay period for batch allowance processing.</p>
-
-      <div class="period-row">
-        <mat-form-field appearance="outline" class="period-month">
-          <mat-label>Month</mat-label>
-          <mat-select formControlName="month" (selectionChange)="onPeriodChange()">
-            @for (m of months; track m.value) {
-              <mat-option [value]="m.value">{{ m.label }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="period-year">
-          <mat-label>Year</mat-label>
-          <mat-select formControlName="year" (selectionChange)="onPeriodChange()">
-            @for (y of years; track y) {
-              <mat-option [value]="y">{{ y }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+  <header class="page-header">
+    <div class="page-header-left">
+      <div class="page-header-icon" aria-hidden="true">
+        <mat-icon>receipt_long</mat-icon>
       </div>
+      <h1 class="page-title">Batch Payroll</h1>
     </div>
 
-    <div class="step-nav">
-      <button mat-flat-button matStepperNext [disabled]="periodForm.invalid">
-        Next
-        <mat-icon iconPositionEnd>arrow_forward</mat-icon>
-      </button>
+    <div class="page-header-right">
+      <mat-form-field appearance="outline" class="period-month" subscriptSizing="dynamic">
+        <mat-label>Month</mat-label>
+        <mat-select formControlName="month" (selectionChange)="onPeriodChange()">
+          @for (m of months; track m.value) {
+            <mat-option [value]="m.value">{{ m.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="period-year" subscriptSizing="dynamic">
+        <mat-label>Year</mat-label>
+        <mat-select formControlName="year" (selectionChange)="onPeriodChange()">
+          @for (y of years; track y) {
+            <mat-option [value]="y">{{ y }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
     </div>
+  </header>
 
-  </mat-step>
+  @if (loading()) {
+    <div class="loading-bar" aria-live="polite">
+      <mat-spinner diameter="16" />
+      <span>Loading…</span>
+    </div>
+  }
 
+  <mat-tab-group class="category-tabs"
+                 [selectedIndex]="selectedSubStep()"
+                 (selectedIndexChange)="selectedSubStep.set($event)"
+                 animationDuration="0">
+    @for (step of SUB_STEPS; track step.key) {
+      <mat-tab [label]="step.label">
+        <app-pivot
+          [codes]="step.codes"
+          [rows]="pivotRows()"
+          [amounts]="matrices()[step.key]"
+          [label]="step.label"
+          (amountChange)="onAmountChange(step.key, $event)">
+        </app-pivot>
+      </mat-tab>
+    }
+  </mat-tab-group>
 
-  <!-- ══════════════════════════════════════════════════════════════════════
-       Step 2 — Prepare  (contains nested sub-stepper)
-  ══════════════════════════════════════════════════════════════════════ -->
-  <mat-step label="Prepare">
-
-    @if (loading()) {
-      <div class="loading-row" aria-live="polite">
-        <mat-spinner diameter="22" />
-        <span>Loading…</span>
+  <footer class="page-footer">
+    <span class="grand-total-chip">
+      Grand Total: <strong>{{ grandTotal() | number:'1.2-2' }}</strong>
+    </span>
+    @if (saveSuccess()) {
+      <div class="status-banner status-banner--success" role="status" aria-live="polite">
+        <mat-icon>check_circle</mat-icon>
+        <span>Batch saved for {{ periodLabel }}</span>
       </div>
     }
-
-    <!-- ── Nested sub-stepper ── -->
-    <mat-stepper class="sub-stepper" [linear]="false">
-
-      @for (step of SUB_STEPS; track step.key; let idx = $index) {
-        <mat-step [label]="step.label">
-
-          <ng-container [ngTemplateOutlet]="pivotTpl"
-                        [ngTemplateOutletContext]="{ codes: step.codes, catKey: step.key }">
-          </ng-container>
-
-          <div class="sub-step-nav">
-            @if (idx > 0) {
-              <button mat-stroked-button matStepperPrevious>
-                <mat-icon>arrow_back</mat-icon> Back
-              </button>
-            } @else {
-              <span></span>
-            }
-            @if (idx < SUB_STEPS.length - 1) {
-              <button mat-flat-button matStepperNext>
-                Next
-                <mat-icon iconPositionEnd>arrow_forward</mat-icon>
-              </button>
-            }
-          </div>
-
-        </mat-step>
-      }
-
-    </mat-stepper>
-
-    <!-- ── Outer step navigation ── -->
-    <div class="step-nav">
-      <button mat-stroked-button matStepperPrevious>
-        <mat-icon>arrow_back</mat-icon> Back
-      </button>
-      <button mat-flat-button matStepperNext>
-        Continue to Review
-        <mat-icon iconPositionEnd>arrow_forward</mat-icon>
-      </button>
-    </div>
-
-  </mat-step>
-
-
-  <!-- ══════════════════════════════════════════════════════════════════════
-       Step 3 — Review
-  ══════════════════════════════════════════════════════════════════════ -->
-  <mat-step label="Review" [completed]="isReviewConfirmed()">
-
-    <div class="step-body">
-      <p class="step-desc">Verify all allowance totals before sending for approval.</p>
-
-      <div class="review-grid">
-
-        <div class="review-card">
-          <h4 class="review-card-title">
-            <mat-icon aria-hidden="true">calendar_month</mat-icon> Pay Period
-          </h4>
-          <div class="review-row">
-            <span class="review-label">Period</span>
-            <span>{{ periodLabel }}</span>
-          </div>
-          <div class="review-row">
-            <span class="review-label">Employees</span>
-            <span>{{ employees().length }}</span>
-          </div>
-          <div class="review-row">
-            <span class="review-label">Categories</span>
-            <span>{{ SUB_STEPS.length }}</span>
-          </div>
-          <mat-divider />
-          <div class="review-row highlight">
-            <span class="review-label">Grand Total</span>
-            <strong>{{ grandTotal() | number:'1.2-2' }}</strong>
-          </div>
-        </div>
-
-        <div class="review-card">
-          <h4 class="review-card-title">
-            <mat-icon aria-hidden="true">receipt_long</mat-icon> Category Totals
-          </h4>
-          @for (step of SUB_STEPS; track step.key) {
-            <div class="review-row">
-              <span class="review-label">{{ step.label }}</span>
-              <span>{{ catTotals()[step.key] | number:'1.2-2' }}</span>
-            </div>
-          }
-        </div>
-
+    @if (saveError()) {
+      <div class="status-banner status-banner--error" role="alert">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ saveError() }}</span>
       </div>
-    </div>
-
-    <div class="step-nav">
-      <button mat-stroked-button matStepperPrevious>
-        <mat-icon>arrow_back</mat-icon> Back
-      </button>
-      <button mat-flat-button (click)="confirmReview()">
-        Confirm Review
-        <mat-icon iconPositionEnd>check</mat-icon>
-      </button>
-    </div>
-
-  </mat-step>
-
-
-  <!-- ══════════════════════════════════════════════════════════════════════
-       Step 4 — Approve
-  ══════════════════════════════════════════════════════════════════════ -->
-  <mat-step label="Approve" [completed]="isApproved()">
-
-    <div class="step-body">
-      <p class="step-desc">Authorise this batch before saving allowances to payroll.</p>
-
-      <div class="approve-layout">
-
-        <div class="approve-summary" aria-label="Approval summary">
-          <p class="approve-period">{{ periodLabel }}</p>
-          <p class="approve-sub">{{ employees().length }} employees · {{ SUB_STEPS.length }} categories</p>
-          <mat-divider />
-          <div class="approve-row">
-            <span>Grand Total</span>
-            <strong>{{ grandTotal() | number:'1.2-2' }}</strong>
-          </div>
-        </div>
-
-        <div class="approve-form-wrap" [formGroup]="approveForm">
-          @if (isApproved()) {
-            <div class="approved-badge" role="status">
-              <mat-icon>verified</mat-icon>
-              <div>
-                <p class="approved-by">Approved by {{ approveForm.value.approvedBy }}</p>
-                @if (approveForm.value.remarks) {
-                  <p class="approved-remarks">"{{ approveForm.value.remarks }}"</p>
-                }
-              </div>
-            </div>
-          } @else {
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Approved By</mat-label>
-              <mat-icon matPrefix>badge</mat-icon>
-              <input matInput formControlName="approvedBy" placeholder="Full name of approver" />
-              @if (approveForm.controls.approvedBy.invalid && approveForm.controls.approvedBy.touched) {
-                <mat-error>Approver name is required</mat-error>
-              }
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Remarks</mat-label>
-              <textarea matInput formControlName="remarks" rows="3"
-                        placeholder="Optional approval notes…"></textarea>
-            </mat-form-field>
-          }
-        </div>
-
-      </div>
-    </div>
-
-    <div class="step-nav">
-      <button mat-stroked-button matStepperPrevious [disabled]="isApproved()">
-        <mat-icon>arrow_back</mat-icon> Back
-      </button>
-      <button mat-flat-button (click)="approvePayroll()" [disabled]="isApproved()">
-        <mat-icon>verified</mat-icon> Approve Batch
-      </button>
-    </div>
-
-  </mat-step>
-
-
-  <!-- ══════════════════════════════════════════════════════════════════════
-       Step 5 — Submit
-  ══════════════════════════════════════════════════════════════════════ -->
-  <mat-step label="Submit">
-
-    <div class="step-body">
-      <p class="step-desc">Review the category totals and save the batch allowances for {{ periodLabel }}.</p>
-
-      <div class="totals-card">
-        <div class="totals-grid">
-          @for (step of SUB_STEPS; track step.key) {
-            <div class="total-item">
-              <span class="total-code">{{ step.label }}</span>
-              <span class="total-val">{{ catTotals()[step.key] | number:'1.2-2' }}</span>
-            </div>
-          }
-        </div>
-      </div>
-
-      @if (saveSuccess()) {
-        <span class="save-indicator" role="status" aria-live="polite">
-          <mat-icon>check_circle</mat-icon> Saved successfully
-        </span>
-      }
-      @if (saveError()) {
-        <span class="save-error" role="alert">
-          <mat-icon>error_outline</mat-icon> {{ saveError() }}
-        </span>
-      }
-    </div>
-
-    <div class="step-nav">
-      <button mat-stroked-button matStepperPrevious>
-        <mat-icon>arrow_back</mat-icon> Back
-      </button>
-      <button mat-flat-button color="primary"
-              [disabled]="saving()"
-              (click)="save()"
-              aria-label="Save all batch allowance values">
+    }
+    <button mat-flat-button
+            [disabled]="saving() || periodForm.invalid"
+            (click)="save()"
+            aria-label="Save batch allowances">
+      <span class="btn-content">
         @if (saving()) {
-          <mat-spinner diameter="18" class="btn-spinner" />
+          <mat-spinner diameter="18" />
+          <span>Saving…</span>
         } @else {
           <mat-icon>save</mat-icon>
+          <span>Save Batch</span>
         }
-        {{ saving() ? 'Saving…' : 'Save All' }}
-      </button>
-    </div>
+      </span>
+    </button>
+  </footer>
 
-  </mat-step>
-
-</mat-stepper>
+</div>
