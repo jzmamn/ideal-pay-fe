@@ -47,7 +47,7 @@ export class CompanyDialog {
 
   readonly companyForm = this.fb.group({
     id:            [{ value: this.row?.id ?? null, disabled: true }],
-    code:          [this.row?.code          ?? '', Validators.required],
+    code:          [{ value: this.row?.code ?? '', disabled: true }, Validators.required],
     name:          [this.row?.name          ?? '', Validators.required],
     contactPerson: [this.row?.contactPerson ?? '', Validators.required],
     isActive:      [this.row?.isActive ?? true],

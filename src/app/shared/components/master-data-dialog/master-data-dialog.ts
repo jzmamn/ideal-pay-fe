@@ -56,7 +56,7 @@ export class MasterDataDialog {
   constructor() {
     this.form = this.fb.group({
       id:       [{ value: this.data.item?.id ?? null, disabled: true }],
-      code:     [this.data.item?.code     ?? '', Validators.required],
+      code:     [{ value: this.data.item?.code ?? '', disabled: true }, Validators.required],
       name:     [this.data.item?.name     ?? '', Validators.required],
       isActive: [this.data.item?.isActive ?? true],
     });
