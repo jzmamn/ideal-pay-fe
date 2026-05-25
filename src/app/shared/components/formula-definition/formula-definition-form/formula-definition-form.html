@@ -1,0 +1,117 @@
+
+  <!-- ── Form ──────────────────────────────────────────────────────────────── -->
+  <form [formGroup]="form" class="form-body">
+
+    <div class="toggle-row">
+      <mat-slide-toggle formControlName="isActive">Active formula</mat-slide-toggle>
+    </div>
+
+    <!-- Expression -->
+    <div class="section-header">
+      <mat-icon>code</mat-icon>
+      <span>Expression</span>
+      <span class="sh-spacer"></span>
+      <mat-form-field appearance="outline" class="insert-select">
+        <mat-label>Insert field</mat-label>
+        <mat-select [value]="insertFieldValue()" (valueChange)="onInsertSelect($event)">
+          @for (group of insertOptionGroups; track group.group) {
+            <mat-optgroup [label]="group.group">
+              @for (item of group.items; track item.value) {
+                <mat-option [value]="item.value" [matTooltip]="item.hint">
+                  {{ item.label }}
+                </mat-option>
+              }
+            </mat-optgroup>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="expr-area">
+      <mat-form-field appearance="outline" class="full-field">
+        <textarea matInput
+          #expressionTextarea
+          formControlName="expression"
+          class="mono-textarea"
+          rows="4"
+          placeholder="e.g. (basicSalary / workingDays / 8) * otHours * otRate"
+          aria-label="MVEL expression"></textarea>
+        @if (form.controls.expression.hasError('required') && form.controls.expression.touched) {
+          <mat-error>Expression is required</mat-error>
+        }
+      </mat-form-field>
+
+      @if (saveError()) {
+        <div class="inline-error">
+          <mat-icon>error_outline</mat-icon>
+          {{ saveError() }}
+        </div>
+      }
+
+      <div class="validate-hint">
+        @if (validating()) {
+          <mat-spinner diameter="14" />
+          <span>Validating…</span>
+        } @else if (validateResult()?.valid === true) {
+          <mat-icon class="hint-icon ok">check_circle</mat-icon>
+          <span class="ok">
+            Valid
+            @if (validateResult()?.result != null) {
+              &nbsp;— default result: <strong>{{ validateResult()!.result }}</strong>
+            }
+          </span>
+        } @else if (validateResult()?.valid === false) {
+          <mat-icon class="hint-icon err">cancel</mat-icon>
+          <span class="err">{{ validateResult()?.error ?? 'Invalid expression' }}</span>
+        }
+      </div>
+    </div>
+
+    <!-- Quick test -->
+    <div class="section-header">
+      <mat-icon>terminal</mat-icon>
+      <span>Quick test</span>
+      <span class="sh-spacer"></span>
+      <button mat-button type="button" (click)="copyToTestExpression()">
+        <mat-icon>content_copy</mat-icon>
+        Copy from expression
+      </button>
+    </div>
+
+    <div class="quick-test-area">
+      <p class="hint-text">Hardcode values to verify the result. This field is not saved.</p>
+      <mat-form-field appearance="outline" class="full-field">
+        <textarea matInput
+          formControlName="testExpression"
+          class="mono-textarea"
+          rows="3"
+          placeholder="e.g. (80000 / 26 / 8) * 12 * 1.5"
+          aria-label="Test expression with hardcoded values"></textarea>
+      </mat-form-field>
+
+      @if (localEvalResult(); as lr) {
+        @if (lr.result !== undefined) {
+          <div class="result-box ok">
+            <mat-icon>check_circle</mat-icon>
+            <span>Result: <strong>{{ lr.result | number:'1.2-6' }}</strong></span>
+          </div>
+        } @else if (lr.userFriendlyError) {
+          <div class="result-box err">
+            <mat-icon>error_outline</mat-icon>
+            <span>{{ lr.userFriendlyError }}</span>
+            @if (lr.technicalError) {
+              <button mat-button class="tech-toggle" type="button" (click)="toggleLocalTechDetail()">
+                {{ showLocalTechDetail() ? 'Hide' : 'Show' }} technical detail
+              </button>
+              @if (showLocalTechDetail()) {
+                <pre class="tech-detail">{{ lr.technicalError }}</pre>
+              }
+            }
+          </div>
+        }
+      }
+    </div>
+
+  </form>
+
+

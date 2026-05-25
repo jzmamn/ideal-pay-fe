@@ -2,14 +2,9 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MasterDataTableComponent } from '../../../shared/components/master-data-table/master-data-table.component';
 import { MasterDataTableConfig } from '../../../shared/components/master-data-table/master-data-table.config';
-import { MasterDataDialog, MasterDataDialogData, FieldDef } from '../../../shared/components/master-data-dialog/master-data-dialog';
 import { MasterDataService } from '../../../shared/services/master-data.service';
-import { NoPayDays, MasterEntity } from '../../../shared/models/master-data.models';
-
-const EXTRA_FIELDS: FieldDef[] = [
-  { key: 'days',        label: 'No Pay Days', type: 'number'   },
-  { key: 'description', label: 'Reason',      type: 'textarea', optional: true },
-];
+import { NoPayDays } from '../../../shared/models/master-data.models';
+import { NopayDialog } from './nopay-dialog';
 
 @Component({
   selector: 'app-nopay-days',
@@ -25,7 +20,7 @@ const EXTRA_FIELDS: FieldDef[] = [
   `,
 })
 export class NopayDays {
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog    = inject(MatDialog);
   private readonly masterSvc = inject(MasterDataService);
 
   readonly data = this.masterSvc.nopayDays;
@@ -35,11 +30,11 @@ export class NopayDays {
     showNewButton: true,
     showActiveFilter: true,
     columns: [
-      { key: 'id',       label: 'ID',          sortable: false },
-      { key: 'code',     label: 'Code',         sortable: true  },
-      { key: 'name',     label: 'Name',         sortable: true  },
-      { key: 'days',     label: 'No Pay Days',  type: 'number'  },
-      { key: 'isActive', label: 'Active',       type: 'boolean' },
+      { key: 'id',       label: 'ID',         sortable: false },
+      { key: 'code',     label: 'Code',        sortable: true  },
+      { key: 'name',     label: 'Name',        sortable: true  },
+      { key: 'days',     label: 'No Pay Days', type: 'number'  },
+      { key: 'isActive', label: 'Active',      type: 'boolean' },
     ],
   };
 
@@ -47,11 +42,11 @@ export class NopayDays {
     this.masterSvc.reload('nopay-days');
   }
 
-  openDialog(item?: MasterEntity): void {
-    this.dialog.open(MasterDataDialog, {
+  openDialog(item?: NoPayDays): void {
+    this.dialog.open(NopayDialog, {
       panelClass: 'square-dialog',
-      width: '600px',
-      data: { entity: 'nopay-days', title: 'Nopay Days', icon: 'event_busy', item, extraFields: EXTRA_FIELDS } satisfies MasterDataDialogData,
+      width: '700px',
+      data: item ?? null,
     });
   }
 }
