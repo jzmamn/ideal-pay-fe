@@ -20,7 +20,7 @@ interface ApiEmployeeType {
   updatedAt: string | null;
 }
 
-type ApiEmployeeTypePayload = Pick<ApiEmployeeType, 'code' | 'name' | 'description' | 'isActive'>;
+type ApiEmployeeTypePayload = Pick<ApiEmployeeType, 'code' | 'name' | 'description' | 'isActive' | 'createdBy' | 'modifiedBy'>;
 
 @Injectable({ providedIn: 'root' })
 export class EmployeeTypeService {
@@ -51,6 +51,8 @@ export class EmployeeTypeService {
       name:        data.name,
       description: data.description ?? null,
       isActive:    data.isActive,
+      createdBy:   1,
+      modifiedBy:  1,
     };
     return this.http.post<ApiResponse<ApiEmployeeType>>(this.baseUrl, payload).pipe(
       map(res => this.toModel(res.data)),
@@ -63,6 +65,8 @@ export class EmployeeTypeService {
       name:        data.name,
       description: data.description ?? null,
       isActive:    data.isActive,
+      createdBy:   1,
+      modifiedBy:  1,
     };
     return this.http.put<void>(`${this.baseUrl}/${id}`, payload);
   }
