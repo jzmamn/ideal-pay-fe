@@ -27,6 +27,11 @@
       }
     </mat-form-field>
 
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Description</mat-label>
+      <textarea matInput formControlName="description" rows="3" cdkTextareaAutosize></textarea>
+    </mat-form-field>
+
     @if (isFixed) {
       <mat-form-field appearance="outline">
         <mat-label>Amount</mat-label>
@@ -45,20 +50,22 @@
     <mat-divider />
 
     <div class="checkbox-group">
-      <mat-checkbox formControlName="liableForEPF">Liable for EPF</mat-checkbox>
-      <mat-checkbox formControlName="liableForETF">Liable for ETF</mat-checkbox>
-      <mat-checkbox formControlName="liableForNopay">Liable for Nopay</mat-checkbox>
+      <mat-checkbox formControlName="liableForEpf">Liable for EPF</mat-checkbox>
+      <mat-checkbox formControlName="liableForEtf">Liable for ETF</mat-checkbox>
+      <mat-checkbox formControlName="liableForPaye">Liable for PAYE</mat-checkbox>
+      <mat-checkbox formControlName="liableNoPay">Liable for No Pay</mat-checkbox>
     </div>
 
   </form>
 
-  @if (!isFixed) {
+  @if (isFixed) {
     <app-formula-definition-form
       #formulaForm
       [initialExpression]="formulaExpression()"
       [initialIsActive]="formulaIsActive()"
       [saving]="formulaSaving()"
       [saveError]="formulaSaveError()"
+      (valueChanged)="onFormulaValueChanged($event)"
       (saveRequested)="onFormulaSaveRequested($event)"
     />
     <div class="formula-save-row">

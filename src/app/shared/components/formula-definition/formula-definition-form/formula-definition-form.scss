@@ -132,8 +132,21 @@
 .mono-textarea {
   font-family: 'Roboto Mono', 'Courier New', monospace !important;
   font-size: 15px !important;
+  font-weight: 700 !important;
   line-height: 1.6 !important;
+  color: #1d4ed8 !important;
   resize: vertical;
+
+  &::placeholder {
+    font-weight: 400 !important;
+  }
+  &::-webkit-input-placeholder {
+    font-weight: 400 !important;
+  }
+}
+
+:host ::ng-deep .mono-textarea::placeholder {
+  font-weight: 400 !important;
 }
 
 .hint-text {

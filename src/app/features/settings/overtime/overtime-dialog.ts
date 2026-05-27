@@ -1,20 +1,17 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { OvertimeModel } from './overtime.model';
+import { Observable } from 'rxjs';
 import { FormulaDefinitionForm } from '../../../shared/components/formula-definition/formula-definition-form/formula-definition-form';
-import { FormulaDefinitionService } from '../../../shared/components/formula-definition/formula-definition.service';
-import {
-  FormulaDefinitionFormValue,
-  FormulaDefinitionRequestDTO,
-} from '../../../shared/components/formula-definition/formula-definition.models';
+import { FormulaDefinitionFormValue } from '../../../shared/components/formula-definition/formula-definition.models';
+import { OvertimeModel } from './overtime.model';
+import { OvertimeService } from './overtime.service';
 
 @Component({
   selector: 'app-overtime-dialog',
@@ -28,7 +25,6 @@ import {
     ReactiveFormsModule,
     MatSlideToggleModule,
     MatDividerModule,
-    MatCheckboxModule,
     FormulaDefinitionForm,
   ],
   host: { class: 'mat-dialog-host' },
@@ -36,67 +32,67 @@ import {
   styleUrl: './overtime.scss',
 })
 export class OvertimeDialog {
-  readonly row  = inject<OvertimeModel | null>(MAT_DIALOG_DATA);
+  readonly row    = inject<OvertimeModel | null>(MAT_DIALOG_DATA);
   readonly isEdit = this.row != null;
 
-  private readonly fb             = inject(FormBuilder);
-  private readonly formulaService = inject(FormulaDefinitionService);
+  private readonly fb          = inject(FormBuilder);
+  private readonly dialogRef   = inject(MatDialogRef<OvertimeDialog>);
+  private readonly overtimeSvc = inject(OvertimeService);
 
   readonly overtimeForm = this.fb.group({
-    id:             [{ value: this.row?.id ?? null, disabled: true }],
-    code:           [{ value: this.row?.code ?? '', disabled: true }, Validators.required],
-    name:           [this.row?.name           ?? '', Validators.required],
-    isActive:       [this.row?.isActive       ?? true],
-    liableForEPF:   [this.row?.liableForEPF   ?? false],
-    liableForETF:   [this.row?.liableForETF   ?? false],
-    liableForNopay: [this.row?.liableForNopay ?? false],
+    id:          [{ value: this.row?.id ?? null, disabled: true }],
+    code:        [{ value: this.row?.code ?? '', disabled: true }],
+    name:        [this.row?.name        ?? '', Validators.required],
+    description: [this.row?.description ?? null as string | null],
+    isActive:    [this.row?.isActive    ?? true],
   });
 
-  // ── Formula state ─────────────────────────────────────────────────────────
-  readonly formulaId         = signal<number | null>(null);
-  readonly formulaExpression = signal('');
-  readonly formulaIsActive   = signal(true);
+  // ── Formula panel state ───────────────────────────────────────────────────
+  readonly formulaExpression = signal(this.row?.formula        ?? '');
+  readonly formulaIsActive   = signal(this.row?.formulaEnabled ?? false);
   readonly formulaSaving     = signal(false);
   readonly formulaSaveError  = signal<string | null>(null);
 
-  constructor() {
-    this.formulaService.getByType('OVERTIME').subscribe(f => {
-      if (f) {
-        this.formulaId.set(f.id);
-        this.formulaExpression.set(f.expression);
-        this.formulaIsActive.set(f.isActive);
-      }
-    });
+  private readonly latestFormula = signal<FormulaDefinitionFormValue>({
+    expression: this.row?.formula        ?? '',
+    isActive:   this.row?.formulaEnabled ?? false,
+  });
+
+  onFormulaValueChanged(value: FormulaDefinitionFormValue): void {
+    this.latestFormula.set(value);
   }
 
   onFormulaSaveRequested(value: FormulaDefinitionFormValue): void {
-    const id = this.formulaId();
-    const payload: FormulaDefinitionRequestDTO = {
-      formulaType: 'OVERTIME',
-      expression:  value.expression,
-      isActive:    value.isActive,
-      createdBy:   1,
-      modifiedBy:  1,
+    this.latestFormula.set(value);
+    this.formulaExpression.set(value.expression);
+    this.formulaIsActive.set(value.isActive);
+  }
+
+  save(): void {
+    if (this.overtimeForm.invalid) { this.overtimeForm.markAllAsTouched(); return; }
+    const v  = this.overtimeForm.getRawValue();
+    const fv = this.latestFormula();
+    const dto = {
+      name:           v.name!,
+      description:    v.description ?? undefined,
+      isActive:       v.isActive!,
+      formula:        fv.expression || undefined,
+      formulaEnabled: fv.isActive,
     };
-    this.formulaSaving.set(true);
-    this.formulaSaveError.set(null);
-    const req$ = id !== null
-      ? this.formulaService.update(id, payload)
-      : this.formulaService.create(payload);
+    const req$: Observable<unknown> = this.isEdit
+      ? this.overtimeSvc.update(this.row!.id, dto)
+      : this.overtimeSvc.create(dto);
     req$.subscribe({
-      next: () => {
-        this.formulaSaving.set(false);
-        if (id === null) {
-          this.formulaService.getByType('OVERTIME').subscribe(f => {
-            if (f) this.formulaId.set(f.id);
-          });
-        }
-      },
-      error: (err: unknown) => {
-        this.formulaSaving.set(false);
-        const msg = (err as { error?: { message?: string } })?.error?.message ?? 'Failed to save formula.';
-        this.formulaSaveError.set(msg);
-      },
+      next: () => this.dialogRef.close(true),
+      error: () => this.dialogRef.close(false),
+    });
+  }
+
+  delete(): void {
+    if (this.row?.id == null) return;
+    this.overtimeSvc.delete(this.row.id).subscribe({
+      next: () => this.dialogRef.close(true),
+      error: () => this.dialogRef.close(false),
     });
   }
 }

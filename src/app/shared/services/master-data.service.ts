@@ -21,7 +21,7 @@ import { GradeService } from '../../features/infrastructure/grades/grade.service
 import { DesignationService } from '../../features/infrastructure/designations/designation.service';
 import { EmployeeTypeService } from '../../features/infrastructure/employee-type/employee-type.service';
 import { JobCategoryService } from '../../features/infrastructure/job-categories/job-category.service';
-import { NoPayDaysService } from '../../features/infrastructure/nopay-days/nopay-days.service';
+import { NoPayDaysService } from '../../features/settings/nopay-days/nopay-days.service';
 import { CountryService } from '../../features/infrastructure/country/country.service';
 
 export type EntitySlug =

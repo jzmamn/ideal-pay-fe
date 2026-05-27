@@ -2,26 +2,26 @@ export class OvertimeModel {
   id: number;
   code: string;
   name: string;
+  description: string | undefined;
   isActive: boolean;
-  liableForEPF: boolean;
-  liableForETF: boolean;
-  liableForNopay: boolean;
+  formula: string | undefined;
+  formulaEnabled: boolean;
 
   constructor(
     id: number,
     code: string,
     name: string,
+    description: string | undefined,
     isActive: boolean,
-    liableForEPF = false,
-    liableForETF = false,
-    liableForNopay = false,
+    formula: string | undefined,
+    formulaEnabled: boolean,
   ) {
-    this.id = id;
-    this.code = code;
-    this.name = name;
-    this.isActive = isActive;
-    this.liableForEPF = liableForEPF;
-    this.liableForETF = liableForETF;
-    this.liableForNopay = liableForNopay;
+    this.id             = id;
+    this.code           = code;
+    this.name           = name;
+    this.description    = description;
+    this.isActive       = isActive;
+    this.formula        = formula;
+    this.formulaEnabled = formulaEnabled;
   }
 }

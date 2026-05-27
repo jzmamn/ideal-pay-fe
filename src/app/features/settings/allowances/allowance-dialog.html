@@ -27,9 +27,9 @@
       }
     </mat-form-field>
 
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" class="full-width">
       <mat-label>Description</mat-label>
-      <input matInput formControlName="description">
+      <textarea matInput formControlName="description" rows="3" cdkTextareaAutosize></textarea>
     </mat-form-field>
 
     @if (isFixed) {
@@ -59,13 +59,14 @@
 
   </form>
 
-  @if (!isFixed) {
+  @if (isFixed) {
     <app-formula-definition-form
       #formulaForm
       [initialExpression]="formulaExpression()"
       [initialIsActive]="formulaIsActive()"
       [saving]="formulaSaving()"
       [saveError]="formulaSaveError()"
+      (valueChanged)="onFormulaValueChanged($event)"
       (saveRequested)="onFormulaSaveRequested($event)"
     />
     <div class="formula-save-row">

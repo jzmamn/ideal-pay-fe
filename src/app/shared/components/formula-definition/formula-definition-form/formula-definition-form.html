@@ -14,7 +14,7 @@
       <mat-form-field appearance="outline" class="insert-select">
         <mat-label>Insert field</mat-label>
         <mat-select [value]="insertFieldValue()" (valueChange)="onInsertSelect($event)">
-          @for (group of insertOptionGroups; track group.group) {
+          @for (group of insertOptionGroups(); track $index) {
             <mat-optgroup [label]="group.group">
               @for (item of group.items; track item.value) {
                 <mat-option [value]="item.value" [matTooltip]="item.hint">
@@ -48,23 +48,7 @@
         </div>
       }
 
-      <div class="validate-hint">
-        @if (validating()) {
-          <mat-spinner diameter="14" />
-          <span>Validating…</span>
-        } @else if (validateResult()?.valid === true) {
-          <mat-icon class="hint-icon ok">check_circle</mat-icon>
-          <span class="ok">
-            Valid
-            @if (validateResult()?.result != null) {
-              &nbsp;— default result: <strong>{{ validateResult()!.result }}</strong>
-            }
-          </span>
-        } @else if (validateResult()?.valid === false) {
-          <mat-icon class="hint-icon err">cancel</mat-icon>
-          <span class="err">{{ validateResult()?.error ?? 'Invalid expression' }}</span>
-        }
-      </div>
+
     </div>
 
     <!-- Quick test -->

@@ -2,9 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { API_BASE_URL } from '../../../api-url.token';
-import { AllowanceModel } from './allowance.model';
-import { AllowanceType } from './allowance.types';
+import { API_BASE_URL } from '../../../../api-url.token';
+import { AllowanceModel } from '../allowance.model';
+import { AllowanceType } from '../allowance.types';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -25,6 +25,8 @@ interface ApiFixedAllowance {
   liableForEtf: boolean;
   liableForPaye: boolean;
   liableNoPay: boolean;
+  formula: string | null;
+  formulaEnabled: boolean;
   createdBy: number;
   createdDate: string | null;
   modifiedBy: number;
@@ -34,8 +36,9 @@ interface ApiFixedAllowance {
 }
 
 type ApiFixedAllowancePayload = Pick<ApiFixedAllowance,
-  'code' | 'name' | 'description' | 'amount' | 'isActive' | 'isTaxable' |
-  'liableForEpf' | 'liableForEtf' | 'liableForPaye' | 'liableNoPay'
+  'name' | 'description' | 'amount' | 'isActive' | 'isTaxable' |
+  'liableForEpf' | 'liableForEtf' | 'liableForPaye' | 'liableNoPay' |
+  'formula' | 'formulaEnabled' | 'createdBy' | 'modifiedBy'
 >;
 
 @Injectable({ providedIn: 'root' })
@@ -57,16 +60,19 @@ export class FixedAllowanceService {
 
   create(data: Omit<AllowanceModel, 'id' | 'type'>): Observable<AllowanceModel> {
     const payload: ApiFixedAllowancePayload = {
-      code:         data.code,
-      name:         data.name,
-      description:  data.description,
-      amount:       data.amount!,
-      isActive:     data.isActive,
-      isTaxable:    data.isTaxable,
-      liableForEpf: data.liableForEpf,
-      liableForEtf: data.liableForEtf,
-      liableForPaye: data.liableForPaye,
-      liableNoPay:  data.liableNoPay,
+      name:           data.name,
+      description:    data.description,
+      amount:         data.amount!,
+      isActive:       data.isActive,
+      isTaxable:      data.isTaxable,
+      liableForEpf:   data.liableForEpf,
+      liableForEtf:   data.liableForEtf,
+      liableForPaye:  data.liableForPaye,
+      liableNoPay:    data.liableNoPay,
+      formula:        data.formula ?? null,
+      formulaEnabled: data.formulaEnabled,
+      createdBy:      1,
+      modifiedBy:     1,
     };
     return this.http.post<ApiResponse<ApiFixedAllowance>>(this.baseUrl, payload).pipe(
       map(res => this.toModel(res.data)),
@@ -75,16 +81,19 @@ export class FixedAllowanceService {
 
   update(id: number, data: Omit<AllowanceModel, 'type'>): Observable<void> {
     const payload: ApiFixedAllowancePayload = {
-      code:         data.code,
-      name:         data.name,
-      description:  data.description,
-      amount:       data.amount!,
-      isActive:     data.isActive,
-      isTaxable:    data.isTaxable,
-      liableForEpf: data.liableForEpf,
-      liableForEtf: data.liableForEtf,
-      liableForPaye: data.liableForPaye,
-      liableNoPay:  data.liableNoPay,
+      name:           data.name,
+      description:    data.description,
+      amount:         data.amount!,
+      isActive:       data.isActive,
+      isTaxable:      data.isTaxable,
+      liableForEpf:   data.liableForEpf,
+      liableForEtf:   data.liableForEtf,
+      liableForPaye:  data.liableForPaye,
+      liableNoPay:    data.liableNoPay,
+      formula:        data.formula ?? null,
+      formulaEnabled: data.formulaEnabled,
+      createdBy:      1,
+      modifiedBy:     1,
     };
     return this.http.put<void>(`${this.baseUrl}/${id}`, payload);
   }
@@ -107,6 +116,8 @@ export class FixedAllowanceService {
       item.liableForPaye,
       item.liableNoPay,
       AllowanceType.FIXED,
+      item.formula ?? undefined,
+      item.formulaEnabled,
     );
   }
 }

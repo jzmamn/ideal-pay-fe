@@ -2,9 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { API_BASE_URL } from '../../../api-url.token';
-import { AllowanceModel } from './allowance.model';
-import { AllowanceType } from './allowance.types';
+import { API_BASE_URL } from '../../../../api-url.token';
+import { AllowanceModel } from '../allowance.model';
+import { AllowanceType } from '../allowance.types';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -33,8 +33,9 @@ interface ApiVariableAllowance {
 }
 
 type ApiVariableAllowancePayload = Pick<ApiVariableAllowance,
-  'code' | 'name' | 'description' | 'isActive' | 'isTaxable' |
-  'liableForEpf' | 'liableForEtf' | 'liableForPaye' | 'liableNoPay'
+  'name' | 'description' | 'isActive' |
+  'liableForEpf' | 'liableForEtf' | 'liableForPaye' | 'liableNoPay' |
+  'createdBy' | 'modifiedBy'
 >;
 
 @Injectable({ providedIn: 'root' })
@@ -56,15 +57,15 @@ export class VariableAllowanceService {
 
   create(data: Omit<AllowanceModel, 'id' | 'type'>): Observable<AllowanceModel> {
     const payload: ApiVariableAllowancePayload = {
-      code:          data.code,
       name:          data.name,
       description:   data.description,
       isActive:      data.isActive,
-      isTaxable:     data.isTaxable,
       liableForEpf:  data.liableForEpf,
       liableForEtf:  data.liableForEtf,
       liableForPaye: data.liableForPaye,
       liableNoPay:   data.liableNoPay,
+      createdBy:     1,
+      modifiedBy:    1,
     };
     return this.http.post<ApiResponse<ApiVariableAllowance>>(this.baseUrl, payload).pipe(
       map(res => this.toModel(res.data)),
@@ -73,15 +74,15 @@ export class VariableAllowanceService {
 
   update(id: number, data: Omit<AllowanceModel, 'type'>): Observable<void> {
     const payload: ApiVariableAllowancePayload = {
-      code:          data.code,
       name:          data.name,
       description:   data.description,
       isActive:      data.isActive,
-      isTaxable:     data.isTaxable,
       liableForEpf:  data.liableForEpf,
       liableForEtf:  data.liableForEtf,
       liableForPaye: data.liableForPaye,
       liableNoPay:   data.liableNoPay,
+      createdBy:     1,
+      modifiedBy:    1,
     };
     return this.http.put<void>(`${this.baseUrl}/${id}`, payload);
   }

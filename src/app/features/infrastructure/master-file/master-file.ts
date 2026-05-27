@@ -4,7 +4,7 @@ import { Branches } from '../branches/branches';
 import { Designations } from '../designations/designations';
 import { Grades } from '../grades/grades';
 import { JobCategories } from '../job-categories/job-categories';
-import { NopayDays } from '../nopay-days/nopay-days';
+import { NopayDays } from '../../settings/nopay-days/nopay-days';
 import { Countries } from '../country/countries';
 
 @Component({

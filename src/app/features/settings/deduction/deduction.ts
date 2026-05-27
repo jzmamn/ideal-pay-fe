@@ -40,12 +40,16 @@ export class Deduction implements OnInit {
       { key: 'code',           label: 'Code' },
       { key: 'name',           label: 'Name' },
       ...(this.deductionType() === DeductionType.FIXED
-        ? [{ key: 'amount' as const, label: 'Amount', type: 'currency' as const }]
+        ? [
+            { key: 'amount' as const, label: 'Amount', type: 'currency' as const },
+            { key: 'formulaEnabled' as const, label: 'Formula', type: 'icon' as const, icon: 'functions', iconTooltip: 'Formula enabled', sortable: false },
+          ]
         : []),
       { key: 'isActive',       label: 'Active',         type: 'boolean' as const },
-      { key: 'liableForEPF',   label: 'Liable for EPF', type: 'boolean' as const },
-      { key: 'liableForETF',   label: 'Liable for ETF', type: 'boolean' as const },
-      { key: 'liableForNopay', label: 'Liable No Pay',  type: 'boolean' as const },
+      { key: 'liableForEpf',  label: 'Liable for EPF',  type: 'boolean' as const },
+      { key: 'liableForEtf',  label: 'Liable for ETF',  type: 'boolean' as const },
+      { key: 'liableForPaye', label: 'Liable for PAYE', type: 'boolean' as const },
+      { key: 'liableNoPay',   label: 'Liable No Pay',   type: 'boolean' as const },
     ],
   }));
 
@@ -109,8 +113,9 @@ export class Deduction implements OnInit {
         service.update(result.data.id, result.data).subscribe(() => {
           const updated = new DeductionModel(
             result.data.id, result.data.code, result.data.name,
-            result.data.isActive, type, result.data.amount,
-            result.data.liableForEPF, result.data.liableForETF, result.data.liableForNopay,
+            result.data.description, result.data.isActive, type, result.data.amount,
+            result.data.liableForEpf, result.data.liableForEtf, result.data.liableForPaye,
+            result.data.liableNoPay, result.data.formula, result.data.formulaEnabled,
           );
           this.allDeductions.update(list => list.map(d => d.id === updated.id ? updated : d));
         });

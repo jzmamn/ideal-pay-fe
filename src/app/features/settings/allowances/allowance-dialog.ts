@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -11,12 +12,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { AllowanceModel } from './allowance.model';
 import { AllowanceType } from './allowance.types';
 import { FormulaDefinitionForm } from '../../../shared/components/formula-definition/formula-definition-form/formula-definition-form';
-import { FormulaDefinitionService } from '../../../shared/components/formula-definition/formula-definition.service';
-import {
-  FormulaDefinitionFormValue,
-  FormulaDefinitionRequestDTO,
-  FormulaType,
-} from '../../../shared/components/formula-definition/formula-definition.models';
+import { FormulaDefinitionFormValue } from '../../../shared/components/formula-definition/formula-definition.models';
 
 export interface AllowanceDialogData {
   row: AllowanceModel | null;
@@ -42,21 +38,20 @@ export type AllowanceDialogResult =
     MatDividerModule,
     MatCheckboxModule,
     FormulaDefinitionForm,
+    CdkTextareaAutosize,
   ],
   host: { class: 'mat-dialog-host' },
   templateUrl: './allowance-dialog.html',
   styleUrl: './allowances.scss',
 })
 export class AllowanceDialog {
-  private readonly data          = inject<AllowanceDialogData>(MAT_DIALOG_DATA);
-  private readonly dialogRef     = inject<MatDialogRef<AllowanceDialog, AllowanceDialogResult>>(MatDialogRef);
-  private readonly formulaService = inject(FormulaDefinitionService);
+  private readonly data      = inject<AllowanceDialogData>(MAT_DIALOG_DATA);
+  private readonly dialogRef = inject<MatDialogRef<AllowanceDialog, AllowanceDialogResult>>(MatDialogRef);
 
   readonly row         = this.data.row;
   readonly isEdit      = this.row != null;
   readonly isFixed     = this.data.allowanceType === AllowanceType.FIXED;
   readonly dialogTitle = this.isFixed ? 'Fixed Allowance' : 'Variable Allowance';
-  readonly formulaType: FormulaType | null = this.isFixed ? null : 'VARIABLE_ALLOWANCE';
 
   private readonly fb = inject(FormBuilder);
 
@@ -75,70 +70,43 @@ export class AllowanceDialog {
   });
 
   // ── Formula state ─────────────────────────────────────────────────────────
-  readonly formulaId         = signal<number | null>(null);
-  readonly formulaExpression = signal('');
-  readonly formulaIsActive   = signal(true);
+  readonly formulaExpression = signal(this.row?.formula        ?? '');
+  readonly formulaIsActive   = signal(this.row?.formulaEnabled ?? false);
   readonly formulaSaving     = signal(false);
   readonly formulaSaveError  = signal<string | null>(null);
 
-  constructor() {
-    if (this.formulaType) {
-      this.formulaService.getByType(this.formulaType).subscribe(f => {
-        if (f) {
-          this.formulaId.set(f.id);
-          this.formulaExpression.set(f.expression);
-          this.formulaIsActive.set(f.isActive);
-        }
-      });
-    }
+  private readonly latestFormula = signal<FormulaDefinitionFormValue>({
+    expression: this.row?.formula        ?? '',
+    isActive:   this.row?.formulaEnabled ?? false,
+  });
+
+  onFormulaValueChanged(value: FormulaDefinitionFormValue): void {
+    this.latestFormula.set(value);
   }
 
   onFormulaSaveRequested(value: FormulaDefinitionFormValue): void {
-    const type = this.formulaType!;
-    const id   = this.formulaId();
-    const payload: FormulaDefinitionRequestDTO = {
-      formulaType: type,
-      expression:  value.expression,
-      isActive:    value.isActive,
-      createdBy:   1,
-      modifiedBy:  1,
-    };
-    this.formulaSaving.set(true);
-    this.formulaSaveError.set(null);
-    const req$ = id !== null
-      ? this.formulaService.update(id, payload)
-      : this.formulaService.create(payload);
-    req$.subscribe({
-      next: () => {
-        this.formulaSaving.set(false);
-        if (id === null) {
-          this.formulaService.getByType(type).subscribe(f => {
-            if (f) this.formulaId.set(f.id);
-          });
-        }
-      },
-      error: (err: unknown) => {
-        this.formulaSaving.set(false);
-        const msg = (err as { error?: { message?: string } })?.error?.message ?? 'Failed to save formula.';
-        this.formulaSaveError.set(msg);
-      },
-    });
+    this.latestFormula.set(value);
+    this.formulaExpression.set(value.expression);
+    this.formulaIsActive.set(value.isActive);
   }
 
   onSave(): void {
     if (this.allowanceForm.invalid) return;
     const raw  = this.allowanceForm.getRawValue();
+    const fv   = this.latestFormula();
     const base = {
-      code:          raw.code!,
-      name:          raw.name!,
-      description:   raw.description,
-      amount:        this.isFixed ? raw.amount! : undefined,
-      isActive:      raw.isActive!,
-      isTaxable:     raw.isTaxable!,
-      liableForEpf:  raw.liableForEpf!,
-      liableForEtf:  raw.liableForEtf!,
-      liableForPaye: raw.liableForPaye!,
-      liableNoPay:   raw.liableNoPay!,
+      code:           raw.code!,
+      name:           raw.name!,
+      description:    raw.description,
+      amount:         this.isFixed ? raw.amount! : undefined,
+      isActive:       raw.isActive!,
+      isTaxable:      raw.isTaxable!,
+      liableForEpf:   raw.liableForEpf!,
+      liableForEtf:   raw.liableForEtf!,
+      liableForPaye:  raw.liableForPaye!,
+      liableNoPay:    raw.liableNoPay!,
+      formula:        this.isFixed ? (fv.expression || undefined) : undefined,
+      formulaEnabled: this.isFixed ? fv.isActive : false,
     };
     if (this.isEdit) {
       this.dialogRef.close({ action: 'update', data: { id: this.row!.id, ...base } });

@@ -18,7 +18,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { FixedAllowanceService } from '../../allowances/fixed-allowance.service';
+import { FixedAllowanceService } from '../../allowances/fixed/fixed-allowance.service';
 
 export interface FixedAllowance {
   id: number;

@@ -10,7 +10,7 @@ import {
   inject,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -20,48 +20,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { EMPTY, Subject } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, finalize, switchMap } from 'rxjs/operators';
-import {
-  FormulaDefinitionFormValue,
-  FormulaValidateResponseDTO,
-} from '../formula-definition.models';
-import { FormulaDefinitionService } from '../formula-definition.service';
-
-const INSERT_OPTION_GROUPS = [
-  {
-    group: 'Standard payroll fields',
-    items: [
-      { label: 'basicSalary',  value: 'basicSalary',  hint: "Employee's basic salary" },
-      { label: 'workingDays',  value: 'workingDays',  hint: 'Working days in period (default 26)' },
-      { label: 'nopayDays',    value: 'nopayDays',    hint: 'No-pay days taken' },
-      { label: 'otHours',      value: 'otHours',      hint: 'Overtime hours worked' },
-      { label: 'otRate',       value: 'otRate',       hint: 'Overtime multiplier (e.g. 1.5)' },
-    ],
-  },
-  {
-    group: 'Operators',
-    items: [
-      { label: '+',   value: ' + ',   hint: 'Addition' },
-      { label: '-',   value: ' - ',   hint: 'Subtraction' },
-      { label: '*',   value: ' * ',   hint: 'Multiplication' },
-      { label: '/',   value: ' / ',   hint: 'Division' },
-      { label: '( )', value: '()',    hint: 'Wrap selection in parentheses' },
-      { label: '?:',  value: ' ? : ', hint: 'Ternary: condition ? ifTrue : ifFalse' },
-    ],
-  },
-  {
-    group: 'Common constants',
-    items: [
-      { label: '0.08 — EPF employee 8%',  value: '0.08', hint: 'EPF employee 8%' },
-      { label: '0.12 — EPF employer 12%', value: '0.12', hint: 'EPF employer 12%' },
-      { label: '0.03 — ETF 3%',           value: '0.03', hint: 'ETF 3%' },
-      { label: '0.10 — 10%',              value: '0.10', hint: '10% rate' },
-      { label: '8 — hours per day',       value: '8',    hint: '8 hours per day' },
-    ],
-  },
-];
+import { debounceTime } from 'rxjs/operators';
+import { FormulaDefinitionFormValue } from '../formula-definition.models';
+import { FormulaDefinitionFieldsService } from '../formula-definition-fields.service';
 
 type LocalEvalResult = { result?: number; userFriendlyError?: string; technicalError?: string };
 
@@ -78,7 +39,6 @@ type LocalEvalResult = { result?: number; userFriendlyError?: string; technicalE
     MatSelectModule,
     MatSlideToggleModule,
     MatTooltipModule,
-    MatProgressSpinnerModule,
   ],
   templateUrl: './formula-definition-form.html',
   styleUrl: './formula-definition-form.scss',
@@ -92,9 +52,9 @@ export class FormulaDefinitionForm {
 
   // ── Outputs ───────────────────────────────────────────────────────────────
   readonly saveRequested = output<FormulaDefinitionFormValue>();
+  readonly valueChanged  = output<FormulaDefinitionFormValue>();
 
   // ── DI ────────────────────────────────────────────────────────────────────
-  private readonly service    = inject(FormulaDefinitionService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb         = inject(FormBuilder);
 
@@ -102,12 +62,13 @@ export class FormulaDefinitionForm {
 
   // ── State ─────────────────────────────────────────────────────────────────
   readonly insertFieldValue    = signal<string | null>(null);
-  readonly validating          = signal(false);
-  readonly validateResult      = signal<FormulaValidateResponseDTO | null>(null);
   readonly localEvalResult     = signal<LocalEvalResult | null>(null);
   readonly showLocalTechDetail = signal(false);
 
-  readonly insertOptionGroups = INSERT_OPTION_GROUPS;
+  readonly insertOptionGroups = toSignal(
+    inject(FormulaDefinitionFieldsService).getFields(),
+    { initialValue: [] },
+  );
 
   readonly form = this.fb.nonNullable.group({
     expression:     ['', Validators.required],
@@ -115,21 +76,28 @@ export class FormulaDefinitionForm {
     testExpression: [''],
   });
 
-  private readonly expressionValidate$ = new Subject<string>();
-
   constructor() {
     effect(() => {
       this.form.patchValue({
         expression: this.initialExpression(),
         isActive:   this.initialIsActive(),
-      });
+      }, { emitEvent: false });
     });
 
-    this.setupExpressionValidation();
+    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      const v = this.form.getRawValue();
+      this.valueChanged.emit({ expression: v.expression, isActive: v.isActive });
+    });
+
     this.setupLocalEval();
   }
 
   // ── Public API ────────────────────────────────────────────────────────────
+
+  getCurrentValues(): FormulaDefinitionFormValue {
+    const v = this.form.getRawValue();
+    return { expression: v.expression, isActive: v.isActive };
+  }
 
   save(): void {
     if (this.form.invalid) {
@@ -179,35 +147,6 @@ export class FormulaDefinitionForm {
   toggleLocalTechDetail(): void { this.showLocalTechDetail.update(v => !v); }
 
   // ── Private ───────────────────────────────────────────────────────────────
-
-  private setupExpressionValidation(): void {
-    this.expressionValidate$.pipe(
-      debounceTime(600),
-      distinctUntilChanged(),
-      switchMap(expr => {
-        if (!expr?.trim()) {
-          this.validateResult.set(null);
-          return EMPTY;
-        }
-        this.validating.set(true);
-        return this.service.validate(expr).pipe(
-          catchError(() => {
-            this.validating.set(false);
-            this.validateResult.set({ valid: false, error: 'Validation request failed' });
-            return EMPTY;
-          }),
-          finalize(() => this.validating.set(false)),
-        );
-      }),
-      takeUntilDestroyed(this.destroyRef),
-    ).subscribe((result: FormulaValidateResponseDTO) => this.validateResult.set(result));
-
-    this.form.controls.expression.valueChanges.pipe(
-      takeUntilDestroyed(this.destroyRef),
-    ).subscribe(val => {
-      this.expressionValidate$.next(val ?? '');
-    });
-  }
 
   private setupLocalEval(): void {
     this.form.controls.testExpression.valueChanges.pipe(

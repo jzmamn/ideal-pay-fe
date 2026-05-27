@@ -5,8 +5,8 @@ import { MasterDataTableConfig } from '../../../shared/components/master-data-ta
 import { AllowanceDialog, AllowanceDialogResult } from './allowance-dialog';
 import { AllowanceModel } from './allowance.model';
 import { AllowanceType } from './allowance.types';
-import { FixedAllowanceService } from './fixed-allowance.service';
-import { VariableAllowanceService } from './variable-allowance.service';
+import { FixedAllowanceService } from './fixed/fixed-allowance.service';
+import { VariableAllowanceService } from './variable/variable-allowance.service';
 
 
 @Component({
@@ -41,7 +41,10 @@ export class Allowances implements OnInit {
       { key: 'code',          label: 'Code' },
       { key: 'name',          label: 'Name' },
       ...(this.allowanceType() === AllowanceType.FIXED
-        ? [{ key: 'amount' as const, label: 'Amount', type: 'currency' as const }]
+        ? [
+            { key: 'amount' as const, label: 'Amount', type: 'currency' as const },
+            { key: 'formulaEnabled' as const, label: 'Formula', type: 'icon' as const, icon: 'functions', iconTooltip: 'Formula enabled', sortable: false },
+          ]
         : []),
       { key: 'isActive',      label: 'Active',          type: 'boolean' as const },
       { key: 'isTaxable',     label: 'Taxable',         type: 'boolean' as const },
@@ -115,6 +118,7 @@ export class Allowances implements OnInit {
             result.data.amount, result.data.isActive, result.data.isTaxable,
             result.data.liableForEpf, result.data.liableForEtf, result.data.liableForPaye,
             result.data.liableNoPay, type,
+            result.data.formula, result.data.formulaEnabled,
           );
           this.allAllowances.update(list => list.map(a => a.id === updated.id ? updated : a));
         });

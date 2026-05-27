@@ -10,13 +10,19 @@ interface ApiOvertime {
   id: number;
   code: string;
   name: string;
+  description: string | null;
   isActive: boolean;
-  liableForEPF: boolean;
-  liableForETF: boolean;
-  liableForNopay: boolean;
+  formula: string | null;
+  formulaEnabled: boolean;
+  createdBy: number;
+  modifiedBy: number;
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
-type ApiOvertimePayload = Omit<ApiOvertime, 'id'>;
+type ApiOvertimePayload = Pick<ApiOvertime,
+  'name' | 'description' | 'isActive' | 'formula' | 'formulaEnabled' | 'createdBy' | 'modifiedBy'
+>;
 
 @Injectable({ providedIn: 'root' })
 export class OvertimeService {
@@ -35,28 +41,30 @@ export class OvertimeService {
     );
   }
 
-  create(data: Omit<OvertimeModel, 'id'>): Observable<OvertimeModel> {
+  create(data: Omit<OvertimeModel, 'id' | 'code'>): Observable<OvertimeModel> {
     const payload: ApiOvertimePayload = {
-      code:           data.code,
       name:           data.name,
+      description:    data.description ?? null,
       isActive:       data.isActive,
-      liableForEPF:   data.liableForEPF,
-      liableForETF:   data.liableForETF,
-      liableForNopay: data.liableForNopay,
+      formula:        data.formula ?? null,
+      formulaEnabled: data.formulaEnabled ?? false,
+      createdBy:      1,
+      modifiedBy:     1,
     };
     return this.http.post<ApiResponse<ApiOvertime>>(this.baseUrl, payload).pipe(
       map(res => this.toModel(res.data)),
     );
   }
 
-  update(id: number, data: Omit<OvertimeModel, 'id'>): Observable<void> {
+  update(id: number, data: Omit<OvertimeModel, 'id' | 'code'>): Observable<void> {
     const payload: ApiOvertimePayload = {
-      code:           data.code,
       name:           data.name,
+      description:    data.description ?? null,
       isActive:       data.isActive,
-      liableForEPF:   data.liableForEPF,
-      liableForETF:   data.liableForETF,
-      liableForNopay: data.liableForNopay,
+      formula:        data.formula ?? null,
+      formulaEnabled: data.formulaEnabled ?? false,
+      createdBy:      1,
+      modifiedBy:     1,
     };
     return this.http.put<void>(`${this.baseUrl}/${id}`, payload);
   }
@@ -70,10 +78,10 @@ export class OvertimeService {
       item.id,
       item.code,
       item.name,
+      item.description ?? undefined,
       item.isActive,
-      item.liableForEPF,
-      item.liableForETF,
-      item.liableForNopay,
+      item.formula ?? undefined,
+      item.formulaEnabled ?? false,
     );
   }
 }

@@ -24,15 +24,16 @@ export class Overtime implements OnInit {
     showNewButton: true,
     showActiveFilter: true,
     columns: [
-      { key: 'id',       label: 'ID',     sortable: false },
-      { key: 'code',     label: 'Code' },
-      { key: 'name',     label: 'Name' },
-      { key: 'isActive', label: 'Active', type: 'boolean' },
+      { key: 'id',             label: 'ID',      sortable: false },
+      { key: 'code',           label: 'Code' },
+      { key: 'name',           label: 'Name' },
+      { key: 'isActive',       label: 'Active',  type: 'boolean' },
+      { key: 'formulaEnabled', label: 'Formula', type: 'icon', icon: 'functions', iconTooltip: 'Formula enabled', sortable: false },
     ],
   };
 
   ngOnInit(): void {
-    this.overtimeService.getAll().subscribe(data => this.overtimes.set(data));
+    this.load();
   }
 
   onRowSelected(row: OvertimeModel): void {
@@ -43,11 +44,15 @@ export class Overtime implements OnInit {
     this.openDialog(null);
   }
 
+  private load(): void {
+    this.overtimeService.getAll().subscribe(data => this.overtimes.set(data));
+  }
+
   private openDialog(row: OvertimeModel | null): void {
     this.dialog.open(OvertimeDialog, {
       panelClass: 'square-dialog',
       width: '600px',
       data: row,
-    });
+    }).afterClosed().subscribe(saved => { if (saved) this.load(); });
   }
 }

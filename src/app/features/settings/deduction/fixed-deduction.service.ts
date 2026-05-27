@@ -17,11 +17,15 @@ interface ApiFixedDeduction {
   id: number;
   code: string;
   name: string;
+  description: string | null;
   amount: number;
   isActive: boolean;
-  liableForEPF: boolean;
-  liableForETF: boolean;
-  liableForNopay: boolean;
+  liableForEpf: boolean;
+  liableForEtf: boolean;
+  liableForPaye: boolean;
+  liableNoPay: boolean;
+  formula: string | null;
+  formulaEnabled: boolean;
   createdBy: number;
   createdDate: string | null;
   modifiedBy: number;
@@ -31,8 +35,9 @@ interface ApiFixedDeduction {
 }
 
 type ApiFixedDeductionPayload = Pick<ApiFixedDeduction,
-  'code' | 'name' | 'amount' | 'isActive' |
-  'liableForEPF' | 'liableForETF' | 'liableForNopay'
+  'name' | 'description' | 'amount' | 'isActive' |
+  'liableForEpf' | 'liableForEtf' | 'liableForPaye' | 'liableNoPay' |
+  'formula' | 'formulaEnabled' | 'createdBy' | 'modifiedBy'
 >;
 
 @Injectable({ providedIn: 'root' })
@@ -54,13 +59,18 @@ export class FixedDeductionService {
 
   create(data: Omit<DeductionModel, 'id' | 'type'>): Observable<DeductionModel> {
     const payload: ApiFixedDeductionPayload = {
-      code:           data.code,
       name:           data.name,
+      description:    data.description,
       amount:         data.amount!,
       isActive:       data.isActive,
-      liableForEPF:   data.liableForEPF,
-      liableForETF:   data.liableForETF,
-      liableForNopay: data.liableForNopay,
+      liableForEpf:   data.liableForEpf,
+      liableForEtf:   data.liableForEtf,
+      liableForPaye:  data.liableForPaye,
+      liableNoPay:    data.liableNoPay,
+      formula:        data.formula ?? null,
+      formulaEnabled: data.formulaEnabled,
+      createdBy:      1,
+      modifiedBy:     1,
     };
     return this.http.post<ApiResponse<ApiFixedDeduction>>(this.baseUrl, payload).pipe(
       map(res => this.toModel(res.data)),
@@ -69,13 +79,18 @@ export class FixedDeductionService {
 
   update(id: number, data: Omit<DeductionModel, 'type'>): Observable<void> {
     const payload: ApiFixedDeductionPayload = {
-      code:           data.code,
       name:           data.name,
+      description:    data.description,
       amount:         data.amount!,
       isActive:       data.isActive,
-      liableForEPF:   data.liableForEPF,
-      liableForETF:   data.liableForETF,
-      liableForNopay: data.liableForNopay,
+      liableForEpf:   data.liableForEpf,
+      liableForEtf:   data.liableForEtf,
+      liableForPaye:  data.liableForPaye,
+      liableNoPay:    data.liableNoPay,
+      formula:        data.formula ?? null,
+      formulaEnabled: data.formulaEnabled,
+      createdBy:      1,
+      modifiedBy:     1,
     };
     return this.http.put<void>(`${this.baseUrl}/${id}`, payload);
   }
@@ -89,12 +104,16 @@ export class FixedDeductionService {
       item.id,
       item.code,
       item.name,
+      item.description,
       item.isActive,
       DeductionType.FIXED,
       item.amount,
-      item.liableForEPF,
-      item.liableForETF,
-      item.liableForNopay,
+      item.liableForEpf,
+      item.liableForEtf,
+      item.liableForPaye,
+      item.liableNoPay,
+      item.formula ?? undefined,
+      item.formulaEnabled,
     );
   }
 }

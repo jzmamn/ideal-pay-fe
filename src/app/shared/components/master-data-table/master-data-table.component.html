@@ -53,6 +53,13 @@
                     {{ getCellValue(row, col.key) ? 'check_circle' : 'cancel' }}
                   </mat-icon>
                 }
+                @case ('icon') {
+                  @if (getCellValue(row, col.key)) {
+                    <mat-icon class="active-icon formula-icon" [matTooltip]="col.iconTooltip ?? ''" aria-hidden="false" [attr.aria-label]="col.iconTooltip ?? col.icon ?? 'active'">
+                      {{ col.icon ?? 'check_circle' }}
+                    </mat-icon>
+                  }
+                }
                 @default {
                   {{ formatCellValue(row, col) }}
                 }

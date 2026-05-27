@@ -21,7 +21,7 @@ interface ApiNoPayDays {
   updatedAt: string | null;
 }
 
-type ApiNoPayDaysPayload = Pick<ApiNoPayDays, 'code' | 'name' | 'days' | 'description' | 'isActive'>;
+type ApiNoPayDaysPayload = Pick<ApiNoPayDays, 'code' | 'name' | 'days' | 'description' | 'isActive' | 'createdBy' | 'modifiedBy'>;
 
 @Injectable({ providedIn: 'root' })
 export class NoPayDaysService {
@@ -53,6 +53,8 @@ export class NoPayDaysService {
       days:        data.days,
       description: data.description ?? null,
       isActive:    data.isActive,
+      createdBy:   1,
+      modifiedBy:  1,
     };
     return this.http.post<ApiResponse<ApiNoPayDays>>(this.baseUrl, payload).pipe(
       map(res => this.toModel(res.data)),
@@ -66,6 +68,8 @@ export class NoPayDaysService {
       days:        data.days,
       description: data.description ?? null,
       isActive:    data.isActive,
+      createdBy:   1,
+      modifiedBy:  1,
     };
     return this.http.put<void>(`${this.baseUrl}/${id}`, payload);
   }

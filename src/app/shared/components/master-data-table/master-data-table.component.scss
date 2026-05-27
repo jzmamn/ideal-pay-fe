@@ -70,6 +70,12 @@ td mat-icon {
   width: 20px;
   height: 20px;
 
+  &.formula-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+
   &.active-icon {
     color: var(--mat-sys-primary, #1976d2);
   }

@@ -17,10 +17,12 @@ interface ApiVariableDeduction {
   id: number;
   code: string;
   name: string;
+  description: string | null;
   isActive: boolean;
-  liableForEPF: boolean;
-  liableForETF: boolean;
-  liableForNopay: boolean;
+  liableForEpf: boolean;
+  liableForEtf: boolean;
+  liableForPaye: boolean;
+  liableNoPay: boolean;
   createdBy: number;
   createdDate: string | null;
   modifiedBy: number;
@@ -30,8 +32,9 @@ interface ApiVariableDeduction {
 }
 
 type ApiVariableDeductionPayload = Pick<ApiVariableDeduction,
-  'code' | 'name' | 'isActive' |
-  'liableForEPF' | 'liableForETF' | 'liableForNopay'
+  'name' | 'description' | 'isActive' |
+  'liableForEpf' | 'liableForEtf' | 'liableForPaye' | 'liableNoPay' |
+  'createdBy' | 'modifiedBy'
 >;
 
 @Injectable({ providedIn: 'root' })
@@ -53,12 +56,15 @@ export class VariableDeductionService {
 
   create(data: Omit<DeductionModel, 'id' | 'type'>): Observable<DeductionModel> {
     const payload: ApiVariableDeductionPayload = {
-      code:           data.code,
-      name:           data.name,
-      isActive:       data.isActive,
-      liableForEPF:   data.liableForEPF,
-      liableForETF:   data.liableForETF,
-      liableForNopay: data.liableForNopay,
+      name:          data.name,
+      description:   data.description,
+      isActive:      data.isActive,
+      liableForEpf:  data.liableForEpf,
+      liableForEtf:  data.liableForEtf,
+      liableForPaye: data.liableForPaye,
+      liableNoPay:   data.liableNoPay,
+      createdBy:     1,
+      modifiedBy:    1,
     };
     return this.http.post<ApiResponse<ApiVariableDeduction>>(this.baseUrl, payload).pipe(
       map(res => this.toModel(res.data)),
@@ -67,12 +73,15 @@ export class VariableDeductionService {
 
   update(id: number, data: Omit<DeductionModel, 'type'>): Observable<void> {
     const payload: ApiVariableDeductionPayload = {
-      code:           data.code,
-      name:           data.name,
-      isActive:       data.isActive,
-      liableForEPF:   data.liableForEPF,
-      liableForETF:   data.liableForETF,
-      liableForNopay: data.liableForNopay,
+      name:          data.name,
+      description:   data.description,
+      isActive:      data.isActive,
+      liableForEpf:  data.liableForEpf,
+      liableForEtf:  data.liableForEtf,
+      liableForPaye: data.liableForPaye,
+      liableNoPay:   data.liableNoPay,
+      createdBy:     1,
+      modifiedBy:    1,
     };
     return this.http.put<void>(`${this.baseUrl}/${id}`, payload);
   }
@@ -86,12 +95,14 @@ export class VariableDeductionService {
       item.id,
       item.code,
       item.name,
+      item.description,
       item.isActive,
       DeductionType.VARIABLE,
       undefined,
-      item.liableForEPF,
-      item.liableForETF,
-      item.liableForNopay,
+      item.liableForEpf,
+      item.liableForEtf,
+      item.liableForPaye,
+      item.liableNoPay,
     );
   }
 }
