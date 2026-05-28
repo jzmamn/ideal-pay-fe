@@ -2,9 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,9 +18,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTabsModule } from '@angular/material/tabs';
-import { EmployeeModel } from '../employee.model';
-import { EmployeeSalaryModel } from '../employee-salary.model';
-import { EmployeeService, EmployeePayload } from '../employee.service';
+import { EmployeeRequest, EmployeeResponse } from '../employee.model';
+import { EmployeeService } from '../employee.service';
 import { EmployeeSalaryService } from '../employee-salary.service';
 import { MasterDataService } from '../../../../shared/services/master-data.service';
 import { Grade } from '../../../../shared/models/master-data.models';
@@ -40,18 +41,22 @@ const DATE_FORMATS: MatDateFormats = {
   },
 };
 
-function parseDate(s: string): Date | null {
+function parseDate(s: string | undefined): Date | null {
   if (!s) return null;
   const [y, m, d] = s.split('-').map(Number);
   return new Date(y, m - 1, d);
 }
 
-function formatDate(d: Date | null): string {
+function formatDate(d: Date | null | undefined): string {
   if (!d) return '';
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+function orUndef(s: string): string | undefined {
+  return s || undefined;
 }
 
 @Component({
@@ -83,47 +88,56 @@ function formatDate(d: Date | null): string {
   styleUrl: './employee-form.scss',
 })
 export class EmployeeForm {
-  private readonly router = inject(Router);
-  private readonly fb = inject(FormBuilder);
-  readonly service = inject(EmployeeService);
-  readonly salaryService = inject(EmployeeSalaryService);
-  readonly masterSvc = inject(MasterDataService);
+  private readonly router     = inject(Router);
+  private readonly fb         = inject(FormBuilder);
+  readonly service            = inject(EmployeeService);
+  readonly salaryService      = inject(EmployeeSalaryService);
+  readonly masterSvc          = inject(MasterDataService);
 
-  readonly isEditMode = computed(() => !!this.service.selected());
-  readonly selectedTabIndex = signal(0);
+  readonly isEditMode         = computed(() => !!this.service.selected());
+  readonly selectedTabIndex   = signal(0);
   readonly selectedSalaryTabIndex = signal(0);
 
   readonly form = this.fb.group({
-    employeeNo:      ['', Validators.required],
-    firstName:       ['', Validators.required],
-    lastName:        ['', Validators.required],
-    dateOfBirth:     [null as Date | null],
-    nic:             [''],
-    payrollName:     [''],
-    email:           ['', [Validators.required, Validators.email]],
-    phone:           [''],
-    joinedDate:      [null as Date | null, Validators.required],
-    isActive:        [true],
-    notes:           [''],
-    remarks:         [''],
-    employeeTypeId:  [null as number | null, Validators.required],
-    noPayDaysId:     [null as number | null],
-    epfNo:           [''],
-    etfNo:           [''],
-    adrsLine1:       ['', Validators.required],
+    employeeNo:    ['', Validators.required],
+    firstName:     ['', Validators.required],
+    lastName:      ['', Validators.required],
+    dateOfBirth:   [null as Date | null],
+    nic:           [''],
+    payrollName:   [''],
+    email:         ['', Validators.email],
+    phone:         [''],
+    joinedDate:    [null as Date | null, Validators.required],
+    isActive:      [true],
+    remarks:       [''],
+
+    employeeTypeId: [null as number | null, Validators.required],
+    contractFrom:   [{ value: null as Date | null, disabled: true }],
+    contractTo:     [{ value: null as Date | null, disabled: true }],
+
+    nopayDaysId:   [null as number | null, Validators.required],
+    epfNo:         [''],
+    etfNo:         [''],
+
+    jobCategoryId: [null as number | null, Validators.required],
+    designationId: [null as number | null, Validators.required],
+    branchId:      [null as number | null, Validators.required],
+    gradeId:       [null as number | null],
+    basicSalary:   [0, [Validators.required, Validators.min(0)]],
+
+    statusId:      [null as number | null, Validators.required],
+    statDate:      [null as Date | null],
+    statFrom:      [{ value: null as Date | null, disabled: true }],
+    statTo:        [{ value: null as Date | null, disabled: true }],
+
+    adrsLine1:       [''],
     adrsLine2:       [''],
     city:            [''],
     district:        [''],
-    country:         [null as number | null],
+    country:         [null as number | null, Validators.required],
     contactPerson:   [''],
     cpAddress:       [''],
-    cpContactNumber: ['', [Validators.pattern(/^\+?[0-9\s\-]{7,15}$/)]],
-    cpEmail:         ['', [Validators.email]],
-    jobCategoryId:   [null as number | null],
-    designationId:   [null as number | null],
-    branchId:        [null as number | null],
-    gradeId:         [null as number | null],
-    basicSalary:     [0, [Validators.required, Validators.min(0)]],
+    cpContactNumber: ['', Validators.pattern(/^\+?[0-9\s\-]{7,15}$/)],
   });
 
   private readonly _fixedAllowances = signal<FixedAllowance[]>([]);
@@ -143,39 +157,94 @@ export class EmployeeForm {
     data: this.masterSvc.activeGrades(),
   }));
 
+  private readonly _empTypeId = toSignal(
+    this.form.controls.employeeTypeId.valueChanges,
+    { initialValue: this.form.controls.employeeTypeId.value },
+  );
+  private readonly _statusId = toSignal(
+    this.form.controls.statusId.valueChanges,
+    { initialValue: this.form.controls.statusId.value },
+  );
+
   onGradeSelected(grade: Grade): void {
-    this.form.get('gradeId')?.setValue(grade.id);
+    this.form.controls.gradeId.setValue(grade.id);
     if (grade.amount != null) {
-      this.form.get('basicSalary')?.setValue(grade.amount);
+      this.form.controls.basicSalary.setValue(grade.amount);
     }
   }
 
   constructor() {
     this.masterSvc.loadAll();
 
+    effect(() => {
+      const type  = this.masterSvc.activeEmployeeTypes().find(t => t.id === this._empTypeId());
+      const start = this.form.controls.contractFrom;
+      const end   = this.form.controls.contractTo;
+      if (type?.dateRange) {
+        start.enable({ emitEvent: false });
+        end.enable({ emitEvent: false });
+        const emp = this.service.selected();
+        if (emp && this._empTypeId() === emp.employeeTypeId) {
+          start.setValue(parseDate(emp.contractFrom), { emitEvent: false });
+          end.setValue(parseDate(emp.contractTo),   { emitEvent: false });
+        }
+      } else {
+        start.disable({ emitEvent: false });
+        end.disable({ emitEvent: false });
+      }
+    });
+
+    effect(() => {
+      const status = this.masterSvc.activeStatuses().find(s => s.id === this._statusId());
+      const start  = this.form.controls.statFrom;
+      const end    = this.form.controls.statTo;
+      if (status?.dateOnly) {
+        start.enable({ emitEvent: false });
+        end.enable({ emitEvent: false });
+        const emp = this.service.selected();
+        if (emp && this._statusId() === emp.statusId) {
+          start.setValue(parseDate(emp.statFrom), { emitEvent: false });
+          end.setValue(parseDate(emp.statTo),     { emitEvent: false });
+        }
+      } else {
+        start.disable({ emitEvent: false });
+        end.disable({ emitEvent: false });
+      }
+    });
+
     const emp = this.service.selected();
     if (emp) {
       this.form.patchValue({
-        employeeNo:      emp.employeeNo,
-        firstName:       emp.firstName,
-        lastName:        emp.lastName,
-        dateOfBirth:     parseDate(emp.dateOfBirth),
-        nic:             emp.nic,
-        payrollName:     emp.payrollName,
-        email:           emp.email,
-        phone:           emp.phone,
-        joinedDate:      parseDate(emp.joinedDate),
-        isActive:        emp.isActive,
-        notes:           emp.notes,
-        remarks:         emp.remarks,
-        epfNo:           emp.epfNo,
-        etfNo:           emp.etfNo,
-        employeeTypeId:  emp.employeeTypeId,
-        noPayDaysId:     emp.noPayDaysId,
-        jobCategoryId:   emp.jobCategoryId,
-        designationId:   emp.designationId,
-        branchId:        emp.branchId,
-        gradeId:         emp.gradeId,
+        employeeNo:    emp.employeeNo,
+        firstName:     emp.firstName,
+        lastName:      emp.lastName,
+        dateOfBirth:   parseDate(emp.dateOfBirth),
+        nic:           emp.nic,
+        payrollName:   emp.payrollName,
+        email:         emp.email,
+        phone:         emp.phone,
+        joinedDate:    parseDate(emp.joinedDate),
+        isActive:      emp.isActive,
+        remarks:       emp.remarks,
+        epfNo:         emp.epfNo,
+        etfNo:         emp.etfNo,
+
+        employeeTypeId: emp.employeeTypeId,
+        contractFrom:   parseDate(emp.contractFrom),
+        contractTo:     parseDate(emp.contractTo),
+
+        nopayDaysId:   emp.nopayDaysId,
+        jobCategoryId: emp.jobCategoryId,
+        designationId: emp.designationId,
+        branchId:      emp.branchId,
+        gradeId:       emp.gradeId,
+        basicSalary:   emp.basicSalary,
+
+        statusId:  emp.statusId,
+        statDate:  parseDate(emp.statDate),
+        statFrom:  parseDate(emp.statFrom),
+        statTo:    parseDate(emp.statTo),
+
         adrsLine1:       emp.adrsLine1,
         adrsLine2:       emp.adrsLine2,
         city:            emp.city,
@@ -184,8 +253,6 @@ export class EmployeeForm {
         contactPerson:   emp.contactPerson,
         cpAddress:       emp.cpAddress,
         cpContactNumber: emp.cpContactNumber,
-        cpEmail:         emp.cpEmail,
-        basicSalary:     emp.basicSalary,
       });
     }
   }
@@ -200,8 +267,8 @@ export class EmployeeForm {
 
   private navigateToFirstInvalidTab(): void {
     const tabGroups = [
-      ['firstName', 'lastName', 'email', 'adrsLine1'],
-      ['employeeNo', 'joinedDate', 'jobCategoryId', 'designationId', 'branchId', 'employeeTypeId'],
+      ['firstName', 'lastName', 'adrsLine1'],
+      ['employeeNo', 'joinedDate', 'employeeTypeId', 'nopayDaysId', 'jobCategoryId', 'designationId', 'branchId', 'statusId', 'country'],
       ['basicSalary'],
     ];
     const index = tabGroups.findIndex(keys =>
@@ -216,57 +283,59 @@ export class EmployeeForm {
       this.navigateToFirstInvalidTab();
       return;
     }
-    const v = this.form.getRawValue();
+    const v       = this.form.getRawValue();
     const existing = this.service.selected();
 
-    const payload: EmployeePayload = {
-      employeeNo:      v.employeeNo!,
-      firstName:       v.firstName!,
-      lastName:        v.lastName!,
-      dateOfBirth:     formatDate(v.dateOfBirth),
-      nic:             v.nic ?? '',
-      payrollName:     v.payrollName ?? '',
-      email:           v.email!,
-      phone:           v.phone ?? '',
-      joinedDate:      formatDate(v.joinedDate),
-      isActive:        v.isActive ?? true,
-      notes:           v.notes ?? '',
-      remarks:         v.remarks ?? '',
-      epfNo:           v.epfNo ?? '',
-      etfNo:           v.etfNo ?? '',
-      employeeTypeId:  v.employeeTypeId,
-      noPayDaysId:     v.noPayDaysId,
-      jobCategoryId:   v.jobCategoryId,
-      designationId:   v.designationId,
-      branchId:        v.branchId,
-      gradeId:         v.gradeId,
-      adrsLine1:       v.adrsLine1 ?? '',
-      adrsLine2:       v.adrsLine2 ?? '',
-      city:            v.city ?? '',
-      district:        v.district ?? '',
-      countryId:       v.country ?? null,
-      contactPerson:   v.contactPerson ?? '',
-      cpAddress:       v.cpAddress ?? '',
-      cpContactNumber: v.cpContactNumber ?? '',
-      cpEmail:         v.cpEmail ?? '',
-      basicSalary:     v.basicSalary ?? 0,
+    const payload: EmployeeRequest = {
+      employeeNo:    v.employeeNo!,
+      firstName:     v.firstName!,
+      lastName:      v.lastName!,
+      dateOfBirth:   orUndef(formatDate(v.dateOfBirth)),
+      nic:           orUndef(v.nic ?? ''),
+      isActive:      v.isActive ?? true,
+      remarks:       orUndef(v.remarks ?? ''),
+      payrollName:   v.payrollName ?? '',
+      epfNo:         orUndef(v.epfNo ?? ''),
+      etfNo:         orUndef(v.etfNo ?? ''),
+      basicSalary:   v.basicSalary ?? 0,
+      joinedDate:    formatDate(v.joinedDate)!,
+
+      employeeTypeId: v.employeeTypeId!,
+      contractFrom:   orUndef(formatDate(v.contractFrom)),
+      contractTo:     orUndef(formatDate(v.contractTo)),
+
+      nopayDaysId:   v.nopayDaysId!,
+      jobCategoryId: v.jobCategoryId!,
+      designationId: v.designationId!,
+      branchId:      v.branchId!,
+      gradeId:       v.gradeId!,
+
+      statusId:  v.statusId!,
+      statDate:  orUndef(formatDate(v.statDate)),
+      statFrom:  orUndef(formatDate(v.statFrom)),
+      statTo:    orUndef(formatDate(v.statTo)),
+
+      phone:           orUndef(v.phone ?? ''),
+      email:           orUndef(v.email ?? ''),
+      adrsLine1:       orUndef(v.adrsLine1 ?? ''),
+      adrsLine2:       orUndef(v.adrsLine2 ?? ''),
+      city:            orUndef(v.city ?? ''),
+      district:        orUndef(v.district ?? ''),
+      countryId:       v.country!,
+      contactPerson:   orUndef(v.contactPerson ?? ''),
+      cpAddress:       orUndef(v.cpAddress ?? ''),
+      cpContactNumber: orUndef(v.cpContactNumber ?? ''),
+
+      createdBy:  1,
+      modifiedBy: 1,
     };
 
     if (existing) {
       this.service.update(existing.id, payload).subscribe({
         next: () => {
-          const updated: EmployeeModel = {
-            ...payload,
-            id:           existing.id,
-            createdBy:    existing.createdBy,
-            createdDate:  existing.createdDate,
-            modifiedBy:   existing.modifiedBy,
-            modifiedDate: existing.modifiedDate,
-          };
-          this.service.select(updated);
           this.salaryService.save({
             employeeId:      existing.id,
-            basicSalary:     payload.basicSalary,
+            basicSalary:     payload.basicSalary ?? 0,
             fixedAllowances: this._fixedAllowances().map(a => ({ name: a.name, amount: a.amount })),
             fixedDeductions: this._fixedDeductions().map(d => ({ name: d.name, amount: d.amount })),
           });
@@ -276,11 +345,11 @@ export class EmployeeForm {
       });
     } else {
       this.service.create(payload).subscribe({
-        next: (created) => {
+        next: (created: EmployeeResponse) => {
           this.service.select(created);
           this.salaryService.save({
             employeeId:      created.id,
-            basicSalary:     payload.basicSalary,
+            basicSalary:     payload.basicSalary ?? 0,
             fixedAllowances: this._fixedAllowances().map(a => ({ name: a.name, amount: a.amount })),
             fixedDeductions: this._fixedDeductions().map(d => ({ name: d.name, amount: d.amount })),
           });

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { MasterDataTableComponent } from '../../../../shared/components/master-data-table/master-data-table.component';
 import { MasterDataTableConfig } from '../../../../shared/components/master-data-table/master-data-table.config';
-import { EmployeeModel } from '../employee.model';
+import { EmployeeResponse } from '../employee.model';
 import { EmployeeService } from '../employee.service';
 
 @Component({
@@ -22,7 +22,7 @@ export class EmployeeHome {
     this.service.reload();
   }
 
-  readonly tableConfig: MasterDataTableConfig<EmployeeModel> = {
+  readonly tableConfig: MasterDataTableConfig<EmployeeResponse> = {
     title: 'Employees',
     showNewButton: true,
     showActiveFilter: true,
@@ -35,7 +35,7 @@ export class EmployeeHome {
     ],
   };
 
-  onRowSelected(emp: EmployeeModel): void {
+  onRowSelected(emp: EmployeeResponse): void {
     this.service.select(emp);
     this.router.navigate(['/employee/info']);
   }

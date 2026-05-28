@@ -132,6 +132,7 @@ mat-expansion-panel {
 
 .col-half { grid-column: span 2; }
 .col-full { grid-column: span 4; }
+.col-break { grid-column-start: 1; }
 
 @media (max-width: 900px) {
   .col-half { grid-column: span 2; }

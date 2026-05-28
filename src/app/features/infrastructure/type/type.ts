@@ -8,6 +8,7 @@ import { EmployeeType as EmployeeTypeModel, MasterEntity } from '../../../shared
 
 const EXTRA_FIELDS: FieldDef[] = [
   { key: 'description', label: 'Description', type: 'textarea', optional: true },
+  { key: 'dateRange',   label: 'Has Contract Period', type: 'toggle', optional: true },
 ];
 
 @Component({

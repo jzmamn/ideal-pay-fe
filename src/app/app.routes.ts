@@ -182,7 +182,7 @@ export const routes: Routes = [
             {
                 path: 'employee-types',
                 loadComponent: () =>
-                    import('./features/infrastructure/employee-type/employee-type')
+                    import('./features/infrastructure/type/type')
                         .then(m => m.EmployeeType)
             },
 

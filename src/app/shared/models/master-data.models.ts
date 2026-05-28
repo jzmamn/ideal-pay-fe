@@ -26,6 +26,11 @@ export interface Designation extends MasterEntity {}
 
 export interface EmployeeType extends MasterEntity {
   description?: string;
+  dateRange: boolean;
+}
+
+export interface EmployeeStatus extends MasterEntity {
+  dateOnly: boolean;
 }
 
 export interface NoPayDays extends MasterEntity {

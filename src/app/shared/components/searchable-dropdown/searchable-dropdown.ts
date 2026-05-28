@@ -50,7 +50,6 @@ export class SearchableDropdown implements ControlValueAccessor {
   private onTouched: () => void = () => {};
 
   constructor() {
-    // Keep display text in sync whenever options load or selection changes
     effect(() => {
       const id = this._selectedId();
       const name = id != null ? (this.options().find(o => o.id === id)?.name ?? '') : '';
@@ -76,8 +75,11 @@ export class SearchableDropdown implements ControlValueAccessor {
     this.onTouched();
   }
 
+  onFocus(): void {
+    this.searchCtrl.setValue('');
+  }
+
   onBlur(): void {
-    // Restore display to last valid selection on blur
     const id = this._selectedId();
     const name = id != null ? (this.options().find(o => o.id === id)?.name ?? '') : '';
     this.searchCtrl.setValue(name, { emitEvent: false });

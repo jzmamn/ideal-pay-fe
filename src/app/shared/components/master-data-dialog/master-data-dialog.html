@@ -28,19 +28,23 @@
     </mat-form-field>
 
     @for (field of data.extraFields; track field.key) {
-      <mat-form-field appearance="outline" [class.col-full]="field.type === 'textarea'">
-        <mat-label>{{ field.label }}</mat-label>
-        @if (field.type === 'number') {
-          <input matInput type="number" [formControlName]="field.key">
-        } @else if (field.type === 'textarea') {
-          <textarea matInput rows="3" [formControlName]="field.key"></textarea>
-        } @else {
-          <input matInput [formControlName]="field.key">
-        }
-        @if (form.get(field.key)?.hasError('required') && form.get(field.key)?.touched) {
-          <mat-error>{{ field.label }} is required</mat-error>
-        }
-      </mat-form-field>
+      @if (field.type === 'toggle') {
+        <mat-slide-toggle [formControlName]="field.key">{{ field.label }}</mat-slide-toggle>
+      } @else {
+        <mat-form-field appearance="outline" [class.col-full]="field.type === 'textarea'">
+          <mat-label>{{ field.label }}</mat-label>
+          @if (field.type === 'number') {
+            <input matInput type="number" [formControlName]="field.key">
+          } @else if (field.type === 'textarea') {
+            <textarea matInput rows="3" [formControlName]="field.key"></textarea>
+          } @else {
+            <input matInput [formControlName]="field.key">
+          }
+          @if (form.get(field.key)?.hasError('required') && form.get(field.key)?.touched) {
+            <mat-error>{{ field.label }} is required</mat-error>
+          }
+        </mat-form-field>
+      }
     }
 
     <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>

@@ -5,6 +5,7 @@
     [formControl]="searchCtrl"
     [placeholder]="placeholder()"
     [matAutocomplete]="auto"
+    (focus)="onFocus()"
     (blur)="onBlur()"
     aria-autocomplete="list"
   >

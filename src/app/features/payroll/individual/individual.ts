@@ -16,7 +16,7 @@ import { EmployeeSalaryService } from '../../settings/employee/employee-salary.s
 import { EarningsTabsComponent } from './individual-salary/earnings/earnings-tabs.component';
 import { DeductionsTabsComponent } from './individual-salary/deductions/deductions-tabs.component';
 import { TableAutocomplete, type TableColumn } from '../../../shared/components/table-autocomplete/table-autocomplete';
-import { type EmployeeModel } from '../../settings/employee/employee.model';
+import { type EmployeeResponse } from '../../settings/employee/employee.model';
 
 type WorkflowStep = 'prepare' | 'review' | 'approve' | 'disburse';
 
@@ -56,7 +56,7 @@ export class IndividualComponent implements OnInit {
   private readonly fb          = inject(FormBuilder);
 
   readonly employeeCtrl     = new FormControl<number | null>(null);
-  readonly selectedEmployee = signal<EmployeeModel | null>(null);
+  readonly selectedEmployee = signal<EmployeeResponse | null>(null);
   readonly workflowStep     = signal<WorkflowStep>('prepare');
   readonly saving           = signal(false);
   readonly submitting       = signal(false);
@@ -76,13 +76,13 @@ export class IndividualComponent implements OnInit {
     remarks:    this.fb.nonNullable.control(''),
   });
 
-  readonly employeeCols: TableColumn<EmployeeModel>[] = [
+  readonly employeeCols: TableColumn<EmployeeResponse>[] = [
     { key: 'employeeNo', label: 'Emp #' },
     { key: 'firstName',  label: 'First Name' },
     { key: 'lastName',   label: 'Last Name' },
   ];
 
-  readonly empDisplayFn = (item: EmployeeModel): string =>
+  readonly empDisplayFn = (item: EmployeeResponse): string =>
     `${item.firstName} ${item.lastName} — ${item.employeeNo}`;
 
   // ── Salary computations ────────────────────────────────────────────────────
@@ -134,7 +134,7 @@ export class IndividualComponent implements OnInit {
   // ── Event handlers ─────────────────────────────────────────────────────────
 
   onEmployeeSelected(item: unknown): void {
-    this.selectedEmployee.set(item as EmployeeModel);
+    this.selectedEmployee.set(item as EmployeeResponse);
     this.workflowStep.set('prepare');
   }
 

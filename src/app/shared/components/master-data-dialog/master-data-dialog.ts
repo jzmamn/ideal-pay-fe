@@ -14,7 +14,7 @@ import { EntitySlug, MasterDataService } from '../../services/master-data.servic
 export interface FieldDef {
   key: string;
   label: string;
-  type: 'text' | 'number' | 'textarea';
+  type: 'text' | 'number' | 'textarea' | 'toggle';
   optional?: boolean;
 }
 
@@ -63,7 +63,7 @@ export class MasterDataDialog {
 
     (this.data.extraFields ?? []).forEach(f => {
       const existing = this.data.item as Record<string, unknown> | undefined;
-      const val = existing?.[f.key] ?? (f.type === 'number' ? 0 : '');
+      const val = existing?.[f.key] ?? (f.type === 'number' ? 0 : f.type === 'toggle' ? false : '');
       this.form.addControl(f.key, this.fb.control(val, f.optional ? [] : Validators.required));
     });
   }

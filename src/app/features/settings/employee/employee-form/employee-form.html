@@ -73,9 +73,6 @@
             <mat-form-field appearance="outline">
               <mat-label>Email</mat-label>
               <input matInput formControlName="email" type="email">
-              @if (form.get('email')?.hasError('required') && form.get('email')?.touched) {
-                <mat-error>Required</mat-error>
-              }
               @if (form.get('email')?.hasError('email') && form.get('email')?.touched) {
                 <mat-error>Invalid email address</mat-error>
               }
@@ -89,9 +86,6 @@
             <mat-form-field appearance="outline">
               <mat-label>Address Line 1</mat-label>
               <input matInput formControlName="adrsLine1">
-              @if (form.get('adrsLine1')?.invalid && form.get('adrsLine1')?.touched) {
-                <mat-error>Required</mat-error>
-              }
             </mat-form-field>
 
             <mat-form-field appearance="outline">
@@ -132,14 +126,6 @@
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>Email</mat-label>
-              <input matInput formControlName="cpEmail" type="email">
-              @if (form.get('cpEmail')?.hasError('email') && form.get('cpEmail')?.touched) {
-                <mat-error>Invalid email</mat-error>
-              }
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
               <mat-label>Address</mat-label>
               <input matInput formControlName="cpAddress">
             </mat-form-field>
@@ -162,7 +148,7 @@
               }
             </mat-form-field>
 
-            <mat-form-field appearance="outline" class="col-half">
+            <mat-form-field appearance="outline">
               <mat-label>Payroll Name</mat-label>
               <input matInput formControlName="payrollName">
             </mat-form-field>
@@ -203,20 +189,41 @@
             </mat-form-field>
 
             <app-searchable-dropdown
-              formControlName="noPayDaysId"
+              formControlName="nopayDaysId"
               label="Nopay Days Rule"
               [options]="nopayDaysOptions()" />
 
             <app-searchable-dropdown
+              class="col-break"
               formControlName="employeeTypeId"
               label="Employee Type"
               [options]="masterSvc.activeEmployeeTypes()" />
 
-            <div class="toggle-row col-full">
-              <mat-slide-toggle formControlName="isActive" color="primary">
-                Active employee
-              </mat-slide-toggle>
-            </div>
+            <mat-form-field appearance="outline">
+              <mat-label>Employee Type Period</mat-label>
+              <mat-date-range-input [rangePicker]="empTypePicker">
+                <input matStartDate formControlName="contractFrom" placeholder="Start date" readonly>
+                <input matEndDate formControlName="contractTo" placeholder="End date" readonly>
+              </mat-date-range-input>
+              <mat-datepicker-toggle matIconSuffix [for]="empTypePicker" />
+              <mat-date-range-picker #empTypePicker />
+            </mat-form-field>
+
+            <app-searchable-dropdown
+              class="col-break"
+              formControlName="statusId"
+              label="Status"
+              [options]="masterSvc.activeStatuses()" />
+
+            <mat-form-field appearance="outline">
+              <mat-label>Status Period</mat-label>
+              <mat-date-range-input [rangePicker]="statusPicker">
+                <input matStartDate formControlName="statFrom" placeholder="Start date" readonly>
+                <input matEndDate formControlName="statTo" placeholder="End date" readonly>
+              </mat-date-range-input>
+              <mat-datepicker-toggle matIconSuffix [for]="statusPicker" />
+              <mat-date-range-picker #statusPicker />
+            </mat-form-field>
 
           </div>
         </div>
