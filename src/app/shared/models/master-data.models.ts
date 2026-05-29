@@ -24,6 +24,8 @@ export interface Department extends MasterEntity {}
 
 export interface Designation extends MasterEntity {}
 
+export interface District extends MasterEntity {}
+
 export interface EmployeeType extends MasterEntity {
   description?: string;
   dateRange: boolean;

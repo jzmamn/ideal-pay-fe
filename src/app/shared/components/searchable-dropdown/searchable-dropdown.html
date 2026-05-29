@@ -5,6 +5,7 @@
     [formControl]="searchCtrl"
     [placeholder]="placeholder()"
     [matAutocomplete]="auto"
+    [errorStateMatcher]="errorStateMatcher"
     (focus)="onFocus()"
     (blur)="onBlur()"
     aria-autocomplete="list"
@@ -18,4 +19,5 @@
       }
     }
   </mat-autocomplete>
+  <mat-error>Required</mat-error>
 </mat-form-field>

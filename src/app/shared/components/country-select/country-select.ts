@@ -2,14 +2,15 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DoCheck,
   effect,
-  forwardRef,
   inject,
   signal,
 } from '@angular/core';
-import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
+import { ControlValueAccessor, FormControl, NgControl, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { ErrorStateMatcher } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MasterDataService } from '../../services/master-data.service';
@@ -17,11 +18,6 @@ import { MasterDataService } from '../../services/master-data.service';
 @Component({
   selector: 'app-country-select',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => CountrySelect),
-    multi: true,
-  }],
   imports: [MatAutocompleteModule, MatFormFieldModule, MatInputModule, ReactiveFormsModule],
   template: `
     <mat-form-field appearance="outline" style="width:100%">
@@ -31,6 +27,7 @@ import { MasterDataService } from '../../services/master-data.service';
         [formControl]="searchCtrl"
         placeholder="Search country..."
         [matAutocomplete]="auto"
+        [errorStateMatcher]="errorStateMatcher"
         (blur)="onBlur()"
         aria-autocomplete="list"
       >
@@ -43,19 +40,26 @@ import { MasterDataService } from '../../services/master-data.service';
           }
         }
       </mat-autocomplete>
+      <mat-error>Required</mat-error>
     </mat-form-field>
   `,
 })
-export class CountrySelect implements ControlValueAccessor {
+export class CountrySelect implements ControlValueAccessor, DoCheck {
   private readonly masterSvc = inject(MasterDataService);
+  readonly ngControl = inject(NgControl, { optional: true, self: true });
 
   readonly searchCtrl = new FormControl('');
   private readonly _searchValue = toSignal(this.searchCtrl.valueChanges, { initialValue: '' });
   private readonly _selectedId = signal<number | null>(null);
 
+  readonly errorStateMatcher: ErrorStateMatcher = {
+    isErrorState: () => !!(this.ngControl?.invalid && this.ngControl?.touched),
+  };
+
   readonly filteredCountries = computed(() => {
     const countries = this.masterSvc.activeCountries();
-    const query = (this._searchValue() ?? '').toLowerCase();
+    const raw = this._searchValue();
+    const query = typeof raw === 'string' ? raw.toLowerCase() : '';
     if (!query) return countries;
     return countries.filter(c =>
       c.name.toLowerCase().includes(query) || c.code.toLowerCase().includes(query)
@@ -66,6 +70,9 @@ export class CountrySelect implements ControlValueAccessor {
   private onTouched: () => void = () => {};
 
   constructor() {
+    if (this.ngControl) {
+      this.ngControl.valueAccessor = this;
+    }
     this.masterSvc.reload('countries');
     effect(() => {
       const id = this._selectedId();
@@ -74,6 +81,12 @@ export class CountrySelect implements ControlValueAccessor {
         : '';
       this.searchCtrl.setValue(name, { emitEvent: false });
     });
+  }
+
+  ngDoCheck(): void {
+    if (this.ngControl?.touched && !this.searchCtrl.touched) {
+      this.searchCtrl.markAsTouched();
+    }
   }
 
   writeValue(id: number | null): void {

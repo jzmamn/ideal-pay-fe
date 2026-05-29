@@ -173,9 +173,9 @@ export const routes: Routes = [
             },
 
             {
-                path: 'nopay-days',
+                path: 'nopay',
                 loadComponent: () =>
-                    import('./features/settings/nopay-days/nopay-days')
+                    import('./features/settings/nopay/nopay-days')
                         .then(m => m.NopayDays)
             },
 
@@ -191,6 +191,13 @@ export const routes: Routes = [
                 loadComponent: () =>
                     import('./features/infrastructure/country/countries')
                         .then(m => m.Countries)
+            },
+
+            {
+                path: 'districts',
+                loadComponent: () =>
+                    import('./features/infrastructure/district/districts')
+                        .then(m => m.Districts)
             },
 
             {

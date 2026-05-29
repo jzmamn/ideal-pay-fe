@@ -2,12 +2,12 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MasterDataTableComponent } from '../../../shared/components/master-data-table/master-data-table.component';
 import { MasterDataTableConfig } from '../../../shared/components/master-data-table/master-data-table.config';
+import { MasterDataDialog, MasterDataDialogData } from '../../../shared/components/master-data-dialog/master-data-dialog';
 import { MasterDataService } from '../../../shared/services/master-data.service';
-import { NoPayDays } from '../../../shared/models/master-data.models';
-import { NopayDialog } from './nopay-dialog';
+import { District, MasterEntity } from '../../../shared/models/master-data.models';
 
 @Component({
-  selector: 'app-nopay-days',
+  selector: 'app-districts',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [MasterDataTableComponent],
   template: `
@@ -19,34 +19,33 @@ import { NopayDialog } from './nopay-dialog';
     />
   `,
 })
-export class NopayDays {
+export class Districts {
   private readonly dialog    = inject(MatDialog);
   private readonly masterSvc = inject(MasterDataService);
 
-  readonly data = this.masterSvc.nopayDays;
+  readonly data = this.masterSvc.districts;
 
-  readonly config: MasterDataTableConfig<NoPayDays> = {
-    title: 'Nopay Days',
+  readonly config: MasterDataTableConfig<District> = {
+    title: 'Districts',
     showNewButton: true,
     showActiveFilter: true,
     columns: [
-      { key: 'id',       label: 'ID',         sortable: false },
-      { key: 'code',     label: 'Code',        sortable: true  },
-      { key: 'name',     label: 'Name',        sortable: true  },
-      { key: 'days',     label: 'No Pay Days', type: 'number'  },
-      { key: 'isActive', label: 'Active',      type: 'boolean' },
+      { key: 'id',       label: 'ID',     sortable: false },
+      { key: 'code',     label: 'Code',   sortable: true  },
+      { key: 'name',     label: 'Name',   sortable: true  },
+      { key: 'isActive', label: 'Active', type: 'boolean' },
     ],
   };
 
   constructor() {
-    this.masterSvc.reload('nopay-days');
+    this.masterSvc.reload('districts');
   }
 
-  openDialog(item?: NoPayDays): void {
-    this.dialog.open(NopayDialog, {
+  openDialog(item?: MasterEntity): void {
+    this.dialog.open(MasterDataDialog, {
       panelClass: 'square-dialog',
-      width: '700px',
-      data: item ?? null,
+      width: '600px',
+      data: { entity: 'districts', title: 'District', icon: 'map', item } satisfies MasterDataDialogData,
     });
   }
 }

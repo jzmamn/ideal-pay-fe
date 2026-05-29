@@ -28,7 +28,7 @@ export interface EmployeeRequest {
   adrsLine1?: string;
   adrsLine2?: string;
   city?: string;
-  district?: string;
+  districtId?: number;
   countryId: number;
   contactPerson?: string;
   cpAddress?: string;
@@ -92,7 +92,8 @@ export interface EmployeeResponse {
   adrsLine1?: string;
   adrsLine2?: string;
   city?: string;
-  district?: string;
+  districtId?: number;
+  districtName?: string;
 
   countryId: number;
   countryName: string;

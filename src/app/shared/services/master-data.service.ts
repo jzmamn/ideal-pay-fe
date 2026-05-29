@@ -8,6 +8,7 @@ import {
   Country,
   Department,
   Designation,
+  District,
   EmployeeStatus,
   EmployeeType,
   Grade,
@@ -22,19 +23,21 @@ import { GradeService } from '../../features/infrastructure/grades/grade.service
 import { DesignationService } from '../../features/infrastructure/designations/designation.service';
 import { EmployeeTypeService } from '../../features/infrastructure/type/type.service';
 import { JobCategoryService } from '../../features/infrastructure/job-categories/job-category.service';
-import { NoPayDaysService } from '../../features/settings/nopay-days/nopay-days.service';
+import { NopayDaysService } from '../../features/settings/nopay/nopay-days.service';
 import { CountryService } from '../../features/infrastructure/country/country.service';
+import { DistrictService } from '../../features/infrastructure/district/district.service';
 import { StatusService } from '../../features/infrastructure/status/status.service';
 
 export type EntitySlug =
   | 'companies'
   | 'countries'
   | 'departments'
+  | 'districts'
   | 'job-categories'
   | 'branches'
   | 'grades'
   | 'designations'
-  | 'nopay-days'
+  | 'nopay'
   | 'employee-types'
   | 'statuses';
 
@@ -48,8 +51,9 @@ export class MasterDataService {
   private readonly designationSvc  = inject(DesignationService);
   private readonly employeeTypeSvc = inject(EmployeeTypeService);
   private readonly jobCategorySvc  = inject(JobCategoryService);
-  private readonly noPayDaysSvc    = inject(NoPayDaysService);
+  private readonly nopaySvc        = inject(NopayDaysService);
   private readonly countrySvc      = inject(CountryService);
+  private readonly districtSvc     = inject(DistrictService);
   private readonly statusSvc       = inject(StatusService);
 
   private readonly _countries     = signal<Country[]>([]);
@@ -59,6 +63,7 @@ export class MasterDataService {
   private readonly _branches      = signal<Branch[]>([]);
   private readonly _grades        = signal<Grade[]>([]);
   private readonly _designations  = signal<Designation[]>([]);
+  private readonly _districts     = signal<District[]>([]);
   private readonly _nopayDays     = signal<NoPayDays[]>([]);
   private readonly _employeeTypes = signal<EmployeeType[]>([]);
   private readonly _statuses      = signal<EmployeeStatus[]>([]);
@@ -70,6 +75,7 @@ export class MasterDataService {
   readonly branches      = this._branches.asReadonly();
   readonly grades        = this._grades.asReadonly();
   readonly designations  = this._designations.asReadonly();
+  readonly districts     = this._districts.asReadonly();
   readonly nopayDays     = this._nopayDays.asReadonly();
   readonly employeeTypes = this._employeeTypes.asReadonly();
   readonly statuses      = this._statuses.asReadonly();
@@ -81,6 +87,7 @@ export class MasterDataService {
   readonly activeBranches      = computed(() => this._branches().filter(x => x.isActive));
   readonly activeGrades        = computed(() => this._grades().filter(x => x.isActive));
   readonly activeDesignations  = computed(() => this._designations().filter(x => x.isActive));
+  readonly activeDistricts     = computed(() => this._districts().filter(x => x.isActive));
   readonly activeNopayDays     = computed(() => this._nopayDays().filter(x => x.isActive));
   readonly activeEmployeeTypes = computed(() => this._employeeTypes().filter(x => x.isActive));
   readonly activeStatuses      = this._statuses.asReadonly();
@@ -93,7 +100,8 @@ export class MasterDataService {
     'branches':       () => this.branchSvc.getAll().subscribe({ next: d => this._branches.set(d), error: () => {} }),
     'grades':         () => this.gradeSvc.getAll().subscribe({ next: d => this._grades.set(d), error: () => {} }),
     'designations':   () => this.designationSvc.getAll().subscribe({ next: d => this._designations.set(d), error: () => {} }),
-    'nopay-days':     () => this.noPayDaysSvc.getAll().subscribe({ next: d => this._nopayDays.set(d), error: () => {} }),
+    'districts':      () => this.districtSvc.getAll().subscribe({ next: d => this._districts.set(d), error: () => {} }),
+    'nopay':     () => this.nopaySvc.getAll().subscribe({ next: d => this._nopayDays.set(d), error: () => {} }),
     'employee-types': () => this.employeeTypeSvc.getAll().subscribe({ next: d => this._employeeTypes.set(d), error: () => {} }),
     'statuses':       () => this.statusSvc.getActive().subscribe({ next: d => this._statuses.set(d), error: () => {} }),
   };
@@ -114,9 +122,10 @@ export class MasterDataService {
       case 'branches':       return this.branchSvc.create(dto as Omit<Branch, 'id'>) as Observable<T>;
       case 'grades':         return this.gradeSvc.create(dto as Omit<Grade, 'id'>) as Observable<T>;
       case 'designations':   return this.designationSvc.create(dto as Omit<Designation, 'id'>) as Observable<T>;
+      case 'districts':      return this.districtSvc.create(dto as Omit<District, 'id'>) as Observable<T>;
       case 'employee-types': return this.employeeTypeSvc.create(dto as unknown as Omit<EmployeeType, 'id'>) as unknown as Observable<T>;
       case 'job-categories': return this.jobCategorySvc.create(dto as Omit<JobCategory, 'id'>) as Observable<T>;
-      case 'nopay-days':     return this.noPayDaysSvc.create(dto as unknown as Omit<NoPayDays, 'id'>) as unknown as Observable<T>;
+      case 'nopay':     return this.nopaySvc.create(dto as unknown as Omit<NoPayDays, 'id'>) as unknown as Observable<T>;
       default:               return this.http.post<T>(`/api/master/${entity}`, dto);
     }
   }
@@ -129,9 +138,10 @@ export class MasterDataService {
       case 'branches':       return this.branchSvc.update(id, dto as Branch).pipe(map(() => dto as T));
       case 'grades':         return this.gradeSvc.update(id, dto as Grade).pipe(map(() => dto as T));
       case 'designations':   return this.designationSvc.update(id, dto as Designation).pipe(map(() => dto as T));
+      case 'districts':      return this.districtSvc.update(id, dto as District).pipe(map(() => dto as T));
       case 'employee-types': return this.employeeTypeSvc.update(id, dto as unknown as EmployeeType).pipe(map(() => dto as T));
       case 'job-categories': return this.jobCategorySvc.update(id, dto as JobCategory).pipe(map(() => dto as T));
-      case 'nopay-days':     return this.noPayDaysSvc.update(id, dto as unknown as NoPayDays).pipe(map(() => dto as T));
+      case 'nopay':     return this.nopaySvc.update(id, dto as unknown as NoPayDays).pipe(map(() => dto as T));
       default:               return this.http.put<T>(`/api/master/${entity}/${id}`, dto);
     }
   }
@@ -144,9 +154,10 @@ export class MasterDataService {
       case 'branches':       return this.branchSvc.delete(id);
       case 'grades':         return this.gradeSvc.delete(id);
       case 'designations':   return this.designationSvc.delete(id);
+      case 'districts':      return this.districtSvc.delete(id);
       case 'employee-types': return this.employeeTypeSvc.delete(id);
       case 'job-categories': return this.jobCategorySvc.delete(id);
-      case 'nopay-days':     return this.noPayDaysSvc.delete(id);
+      case 'nopay':     return this.nopaySvc.delete(id);
       default:               return this.http.delete<void>(`/api/master/${entity}/${id}`);
     }
   }

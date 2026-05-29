@@ -45,7 +45,7 @@
 
             <mat-form-field appearance="outline">
               <mat-label>Date of Birth</mat-label>
-              <input matInput [matDatepicker]="dobPicker" formControlName="dateOfBirth">
+              <input matInput [matDatepicker]="dobPicker" formControlName="dateOfBirth" readonly>
               <mat-datepicker-toggle matIconSuffix [for]="dobPicker" />
               <mat-datepicker #dobPicker />
             </mat-form-field>
@@ -98,7 +98,10 @@
               <input matInput formControlName="city">
             </mat-form-field>
 
-            <app-district-select formControlName="district" />
+            <app-searchable-dropdown
+              formControlName="districtId"
+              label="District"
+              [options]="masterSvc.activeDistricts()" />
 
             <app-country-select formControlName="country" />
 
@@ -155,7 +158,7 @@
 
             <mat-form-field appearance="outline">
               <mat-label>Joined Date</mat-label>
-              <input matInput [matDatepicker]="joinedDatePicker" formControlName="joinedDate">
+              <input matInput [matDatepicker]="joinedDatePicker" formControlName="joinedDate" readonly>
               <mat-datepicker-toggle matIconSuffix [for]="joinedDatePicker" />
               <mat-datepicker #joinedDatePicker />
               @if (form.get('joinedDate')?.invalid && form.get('joinedDate')?.touched) {
@@ -216,13 +219,10 @@
               [options]="masterSvc.activeStatuses()" />
 
             <mat-form-field appearance="outline">
-              <mat-label>Status Period</mat-label>
-              <mat-date-range-input [rangePicker]="statusPicker">
-                <input matStartDate formControlName="statFrom" placeholder="Start date" readonly>
-                <input matEndDate formControlName="statTo" placeholder="End date" readonly>
-              </mat-date-range-input>
-              <mat-datepicker-toggle matIconSuffix [for]="statusPicker" />
-              <mat-date-range-picker #statusPicker />
+              <mat-label>Status Date</mat-label>
+              <input matInput [matDatepicker]="statusDatePicker" formControlName="statDate" readonly>
+              <mat-datepicker-toggle matIconSuffix [for]="statusDatePicker" />
+              <mat-datepicker #statusDatePicker />
             </mat-form-field>
 
           </div>

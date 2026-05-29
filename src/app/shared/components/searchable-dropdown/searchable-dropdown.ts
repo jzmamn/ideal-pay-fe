@@ -2,19 +2,21 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DoCheck,
   effect,
-  forwardRef,
+  inject,
   input,
   signal,
 } from '@angular/core';
 import {
   ControlValueAccessor,
   FormControl,
-  NG_VALUE_ACCESSOR,
+  NgControl,
   ReactiveFormsModule,
 } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { ErrorStateMatcher } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
@@ -23,25 +25,27 @@ export type DropdownOption = { id: number; name: string };
 @Component({
   selector: 'app-searchable-dropdown',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => SearchableDropdown),
-    multi: true,
-  }],
   imports: [MatAutocompleteModule, MatFormFieldModule, MatInputModule, ReactiveFormsModule],
   templateUrl: './searchable-dropdown.html',
 })
-export class SearchableDropdown implements ControlValueAccessor {
+export class SearchableDropdown implements ControlValueAccessor, DoCheck {
   readonly label       = input<string>('');
   readonly options     = input<DropdownOption[]>([]);
   readonly placeholder = input<string>('Search...');
+
+  readonly ngControl   = inject(NgControl, { optional: true, self: true });
 
   readonly searchCtrl = new FormControl('');
   private readonly _searchValue = toSignal(this.searchCtrl.valueChanges, { initialValue: '' });
   private readonly _selectedId = signal<number | null>(null);
 
+  readonly errorStateMatcher: ErrorStateMatcher = {
+    isErrorState: () => !!(this.ngControl?.invalid && this.ngControl?.touched),
+  };
+
   readonly filteredOptions = computed(() => {
-    const query = (this._searchValue() ?? '').toLowerCase();
+    const raw = this._searchValue();
+    const query = typeof raw === 'string' ? raw.toLowerCase() : '';
     if (!query) return this.options();
     return this.options().filter(o => o.name.toLowerCase().includes(query));
   });
@@ -50,11 +54,21 @@ export class SearchableDropdown implements ControlValueAccessor {
   private onTouched: () => void = () => {};
 
   constructor() {
+    if (this.ngControl) {
+      this.ngControl.valueAccessor = this;
+    }
+
     effect(() => {
       const id = this._selectedId();
       const name = id != null ? (this.options().find(o => o.id === id)?.name ?? '') : '';
       this.searchCtrl.setValue(name, { emitEvent: false });
     });
+  }
+
+  ngDoCheck(): void {
+    if (this.ngControl?.touched && !this.searchCtrl.touched) {
+      this.searchCtrl.markAsTouched();
+    }
   }
 
   writeValue(id: number | null): void {
