@@ -21,15 +21,14 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { EmployeeRequest, EmployeeResponse } from '../employee.model';
 import { EmployeeService } from '../employee.service';
-import { EmployeeSalaryService } from '../employee-salary.service';
 import { MasterDataService } from '../../../../shared/services/master-data.service';
 import { Grade } from '../../../../shared/models/master-data.models';
 import { LookupConfig } from '../../../../shared/components/lookup/lookup.config';
 import { LookupComponent } from '../../../../shared/components/lookup/lookup.component';
 import { SearchableDropdown } from '../../../../shared/components/searchable-dropdown/searchable-dropdown';
 import { CountrySelect } from '../../../../shared/components/country-select/country-select';
-import { EmployeeAllowances, FixedAllowance } from '../employee-allowances/employee-allowances.component';
-import { EmployeeDeductions, FixedDeduction } from '../employee-deductions/employee-deductions.component';
+import { EmployeeAllowances } from '../employee-fixed-allowance/employee-fixed-allowance.component';
+import { EmployeeDeductions } from '../employee-fixed-deduction/employee-fixed-deduction.component';
 
 const DATE_FORMATS: MatDateFormats = {
   parse: { dateInput: { year: 'numeric', month: 'numeric', day: 'numeric' } },
@@ -87,15 +86,15 @@ function orUndef(s: string): string | undefined {
   styleUrl: './employee-form.scss',
 })
 export class EmployeeForm {
-  private readonly router     = inject(Router);
-  private readonly fb         = inject(FormBuilder);
-  private readonly snackBar   = inject(MatSnackBar);
-  readonly service            = inject(EmployeeService);
-  readonly salaryService      = inject(EmployeeSalaryService);
-  readonly masterSvc          = inject(MasterDataService);
+  private readonly router   = inject(Router);
+  private readonly fb       = inject(FormBuilder);
+  private readonly snackBar = inject(MatSnackBar);
+  readonly service          = inject(EmployeeService);
+  readonly masterSvc        = inject(MasterDataService);
 
-  readonly isEditMode         = computed(() => !!this.service.selected());
-  readonly selectedTabIndex   = signal(0);
+  readonly isEditMode           = computed(() => !!this.service.selected());
+  readonly empId                = computed(() => this.service.selected()?.id ?? null);
+  readonly selectedTabIndex     = signal(0);
   readonly selectedSalaryTabIndex = signal(0);
 
   readonly form = this.fb.group({
@@ -137,12 +136,6 @@ export class EmployeeForm {
     cpAddress:       [''],
     cpContactNumber: ['', Validators.pattern(/^\+?[0-9\s\-]{7,15}$/)],
   });
-
-  private readonly _fixedAllowances = signal<FixedAllowance[]>([]);
-  private readonly _fixedDeductions = signal<FixedDeduction[]>([]);
-
-  readonly fixedAllowancesCount = computed(() => this._fixedAllowances().length);
-  readonly fixedDeductionsCount = computed(() => this._fixedDeductions().length);
 
   readonly nopayDaysOptions = computed(() =>
     this.masterSvc.activeNopayDays().map(n => ({ id: n.id, name: `${n.name} (${n.days}d)` }))
@@ -250,14 +243,6 @@ export class EmployeeForm {
     }
   }
 
-  onAllowancesChange(list: FixedAllowance[]): void {
-    this._fixedAllowances.set(list);
-  }
-
-  onDeductionsChange(list: FixedDeduction[]): void {
-    this._fixedDeductions.set(list);
-  }
-
   private navigateToFirstInvalidTab(): void {
     const tabGroups = [
       ['firstName', 'lastName', 'country'],
@@ -324,12 +309,6 @@ export class EmployeeForm {
     if (existing) {
       this.service.update(existing.id, payload).subscribe({
         next: () => {
-          this.salaryService.save({
-            employeeId:      existing.id,
-            basicSalary:     payload.basicSalary ?? 0,
-            fixedAllowances: this._fixedAllowances().map(a => ({ name: a.name, amount: a.amount })),
-            fixedDeductions: this._fixedDeductions().map(d => ({ name: d.name, amount: d.amount })),
-          });
           this.service.reload();
           this.router.navigate(['/employee/info']);
         },
@@ -341,12 +320,6 @@ export class EmployeeForm {
       this.service.create(payload).subscribe({
         next: (created: EmployeeResponse) => {
           this.service.select(created);
-          this.salaryService.save({
-            employeeId:      created.id,
-            basicSalary:     payload.basicSalary ?? 0,
-            fixedAllowances: this._fixedAllowances().map(a => ({ name: a.name, amount: a.amount })),
-            fixedDeductions: this._fixedDeductions().map(d => ({ name: d.name, amount: d.amount })),
-          });
           this.service.reload();
           this.router.navigate(['/employee/info']);
         },

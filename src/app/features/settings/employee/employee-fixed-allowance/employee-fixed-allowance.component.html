@@ -1,16 +1,16 @@
-<section class="deductions-section" aria-labelledby="deductions-heading">
+<section class="allowances-section" aria-labelledby="allowances-heading">
 
   <!-- ── Header ────────────────────────────────────────────────── -->
   <div class="panel-header">
     <div class="panel-heading">
-      <mat-icon aria-hidden="true">remove_circle_outline</mat-icon>
-      <span id="deductions-heading" class="panel-title">Fixed Deductions</span>
+      <mat-icon aria-hidden="true">payments</mat-icon>
+      <span id="allowances-heading" class="panel-title">Fixed Allowances</span>
     </div>
   </div>
 
-  @if (selectedDeductions().length > 0) {
+  @if (allowances().length > 0) {
     <div class="table-wrapper">
-      <table aria-label="Fixed deductions">
+      <table aria-label="Fixed allowances">
         <thead>
           <tr>
             <th scope="col">Code</th>
@@ -20,10 +20,10 @@
           </tr>
         </thead>
         <tbody>
-          @for (deduction of selectedDeductions(); track deduction.id; let i = $index) {
+          @for (allowance of allowances(); track allowance.id; let i = $index) {
             <tr [class.editing-row]="editingIndex() === i">
-              <td class="code-cell">{{ deduction.code }}</td>
-              <td>{{ deduction.name }}</td>
+              <td class="code-cell">{{ allowance.faCode }}</td>
+              <td>{{ allowance.faName }}</td>
               <td class="amount-cell">
                 @if (editingIndex() === i) {
                   <mat-form-field appearance="outline" class="amount-field">
@@ -32,7 +32,7 @@
                       type="number"
                       min="0"
                       [formControl]="editAmountCtrl"
-                      [attr.aria-label]="'Edit amount for ' + deduction.name"
+                      [attr.aria-label]="'Edit amount for ' + allowance.faName"
                     >
                     @if (editAmountCtrl.hasError('required') && editAmountCtrl.touched) {
                       <mat-error>Amount is required</mat-error>
@@ -42,7 +42,7 @@
                     }
                   </mat-form-field>
                 } @else {
-                  <span class="amount-value">{{ deduction.amount | number:'1.2-2' }}</span>
+                  <span class="amount-value">{{ allowance.amount | number:'1.2-2' }}</span>
                 }
               </td>
               <td class="action-col">
@@ -52,7 +52,8 @@
                     type="button"
                     color="primary"
                     (click)="saveEdit(i)"
-                    [attr.aria-label]="'Save changes for ' + deduction.name"
+                    [disabled]="saving()"
+                    [attr.aria-label]="'Save changes for ' + allowance.faName"
                     matTooltip="Save"
                   >
                     <mat-icon>check</mat-icon>
@@ -61,7 +62,8 @@
                     mat-icon-button
                     type="button"
                     (click)="cancelEdit()"
-                    [attr.aria-label]="'Cancel editing ' + deduction.name"
+                    [disabled]="saving()"
+                    [attr.aria-label]="'Cancel editing ' + allowance.faName"
                     matTooltip="Cancel"
                   >
                     <mat-icon>close</mat-icon>
@@ -73,7 +75,7 @@
                     class="btn-edit"
                     [disabled]="editingIndex() !== null"
                     (click)="startEdit(i)"
-                    [attr.aria-label]="'Edit amount for ' + deduction.name"
+                    [attr.aria-label]="'Edit amount for ' + allowance.faName"
                     matTooltip="Edit amount"
                   >
                     <mat-icon>edit</mat-icon>
@@ -85,15 +87,15 @@
         </tbody>
         <tfoot aria-live="polite" aria-atomic="true">
           <tr class="total-row">
-            <td colspan="2" class="total-label">Total Fixed Deduction</td>
-            <td class="total-amount">{{ totalFixedDeduction() | number:'1.2-2' }}</td>
+            <td colspan="2" class="total-label">Total Fixed Allowance</td>
+            <td class="total-amount">{{ totalFixedAllowance() | number:'1.2-2' }}</td>
             <td></td>
           </tr>
         </tfoot>
       </table>
     </div>
   } @else {
-    <p class="empty-note">No active fixed deductions found.</p>
+    <p class="empty-note">No fixed allowances found for this employee.</p>
   }
 
 </section>

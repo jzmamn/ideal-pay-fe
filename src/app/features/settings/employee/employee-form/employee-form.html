@@ -258,28 +258,16 @@
           >
 
             <!-- Sub-tab: Fixed Allowances -->
-            <mat-tab>
-              <ng-template mat-tab-label>
-                Fixed Allowances
-                @if (fixedAllowancesCount()) {
-                  <span class="tab-badge">{{ fixedAllowancesCount() }}</span>
-                }
-              </ng-template>
+            <mat-tab label="Fixed Allowances">
               <div class="tab-content">
-                <app-employee-allowances (allowancesChange)="onAllowancesChange($event)" />
+                <app-employee-allowances [empId]="empId()" />
               </div>
             </mat-tab>
 
             <!-- Sub-tab: Fixed Deductions -->
-            <mat-tab>
-              <ng-template mat-tab-label>
-                Fixed Deductions
-                @if (fixedDeductionsCount()) {
-                  <span class="tab-badge">{{ fixedDeductionsCount() }}</span>
-                }
-              </ng-template>
+            <mat-tab label="Fixed Deductions">
               <div class="tab-content">
-                <app-employee-deductions (deductionsChange)="onDeductionsChange($event)" />
+                <app-employee-deductions [empId]="empId()" />
               </div>
             </mat-tab>
 

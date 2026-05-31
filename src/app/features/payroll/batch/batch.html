@@ -43,11 +43,11 @@
     @for (step of SUB_STEPS; track step.key) {
       <mat-tab [label]="step.label">
         <app-pivot
-          [codes]="step.codes"
+          [codes]="codesFor(step.uiKey)"
           [rows]="pivotRows()"
-          [amounts]="matrices()[step.key]"
+          [amounts]="matrices()[step.uiKey]"
           [label]="step.label"
-          (amountChange)="onAmountChange(step.key, $event)">
+          (amountChange)="onAmountChange(step.uiKey, $event)">
         </app-pivot>
       </mat-tab>
     }

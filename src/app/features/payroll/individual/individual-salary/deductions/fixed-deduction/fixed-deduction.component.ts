@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { EmployeeDeductions } from '../../../../../settings/employee/employee-deductions/employee-deductions.component';
+import { EmployeeDeductions } from '../../../../../settings/employee/employee-fixed-deduction/employee-fixed-deduction.component';
 
 @Component({
   selector: 'app-fixed-deduction',
