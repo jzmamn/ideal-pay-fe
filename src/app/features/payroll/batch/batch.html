@@ -40,15 +40,149 @@
                  [selectedIndex]="selectedSubStep()"
                  (selectedIndexChange)="selectedSubStep.set($event)"
                  animationDuration="0">
-    @for (step of SUB_STEPS; track step.key) {
+    @for (step of SUB_STEPS; track step.uiKey) {
       <mat-tab [label]="step.label">
-        <app-pivot
-          [codes]="codesFor(step.uiKey)"
-          [rows]="pivotRows()"
-          [amounts]="matrices()[step.uiKey]"
-          [label]="step.label"
-          (amountChange)="onAmountChange(step.uiKey, $event)">
-        </app-pivot>
+
+        @if (step.uiKey === 'nopay') {
+
+          <!-- ── NoPay table (pivot-style) ───────────────────────── -->
+          <div class="np-wrapper">
+
+            <div class="table-toolbar">
+              <div class="table-toolbar-left">
+                <span class="table-label">NoPay</span>
+                <div class="toolbar-sep" aria-hidden="true"></div>
+                <div class="search-field">
+                  <mat-icon class="search-icon">search</mat-icon>
+                  <input class="search-input"
+                         [value]="nopayFilter()"
+                         (input)="nopayFilter.set($any($event.target).value)"
+                         placeholder="Search employees…"
+                         aria-label="Filter employees" />
+                  @if (nopayFilter()) {
+                    <button class="search-clear" (click)="nopayFilter.set('')" aria-label="Clear filter">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  }
+                </div>
+                <span class="filter-count" aria-live="polite">
+                  @if (nopayFilter()) {
+                    {{ filteredNopayRows().length }} / {{ nopayRowsCount() }}
+                  }
+                </span>
+              </div>
+              <div class="table-toolbar-right">
+                <button mat-stroked-button aria-label="Import">
+                  <mat-icon>upload</mat-icon>
+                  <span>Import</span>
+                </button>
+                <button mat-stroked-button aria-label="Export">
+                  <mat-icon>download</mat-icon>
+                  <span>Export</span>
+                </button>
+              </div>
+            </div>
+
+            <table aria-label="NoPay">
+              <thead>
+                <tr>
+                  <th scope="col" class="emp-id-col">Emp ID</th>
+                  <th scope="col" class="emp-name-col">Employee Name</th>
+                  <th scope="col" class="np-rule-col">Nopay Rule</th>
+                  <th scope="col" class="amount-col">Rule Days</th>
+                  <th scope="col" class="amount-col">Days</th>
+                  <th scope="col" class="amount-col">Amount</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                @if (filteredNopayRows().length === 0) {
+                  <tr>
+                    <td colspan="6" class="np-empty">No NoPay entries for this period.</td>
+                  </tr>
+                } @else {
+                  @for (item of filteredNopayRows(); track item.idx; let even = $even) {
+                    <tr [class.row-even]="even">
+
+                      <td class="emp-id-cell">{{ item.row.employeeNo }}</td>
+                      <td class="emp-name-cell">{{ item.row.payrollName }}</td>
+                      <td class="np-rule-cell">{{ item.row.nopayRule ?? '—' }}</td>
+                      <td class="value-cell readonly-cell">
+                        <span class="cell-value">{{ item.row.nopayRuleDays ?? '—' }}</span>
+                      </td>
+
+                      <!-- Days — click to edit -->
+                      <td class="value-cell"
+                          [class.cell-editing]="isNopayEditing(item.idx, 'days')"
+                          (click)="startNopayEdit(item.idx, 'days')"
+                          [attr.aria-label]="item.row.payrollName + ' days'">
+                        @if (isNopayEditing(item.idx, 'days')) {
+                          <input type="number" min="0" step="0.01"
+                                 class="cell-input"
+                                 [formControl]="nopayEditCtrl"
+                                 (blur)="saveNopayEdit()"
+                                 (keydown.enter)="saveNopayEdit()"
+                                 (keydown.escape)="cancelNopayEdit()"
+                                 [attr.aria-label]="item.row.payrollName + ' days input'" />
+                        } @else {
+                          <span class="cell-value">{{ item.row.days | number:'1.2-2' }}</span>
+                        }
+                      </td>
+
+                      <!-- Amount — click to edit -->
+                      <td class="value-cell"
+                          [class.cell-editing]="isNopayEditing(item.idx, 'amount')"
+                          (click)="startNopayEdit(item.idx, 'amount')"
+                          [attr.aria-label]="item.row.payrollName + ' amount'">
+                        @if (isNopayEditing(item.idx, 'amount')) {
+                          <input type="number" min="0" step="0.01"
+                                 class="cell-input"
+                                 [formControl]="nopayEditCtrl"
+                                 (blur)="saveNopayEdit()"
+                                 (keydown.enter)="saveNopayEdit()"
+                                 (keydown.escape)="cancelNopayEdit()"
+                                 [attr.aria-label]="item.row.payrollName + ' amount input'" />
+                        } @else {
+                          <span class="cell-value">{{ item.row.amount | number:'1.2-2' }}</span>
+                        }
+                      </td>
+
+                    </tr>
+                  }
+                }
+              </tbody>
+
+              <tfoot>
+                <tr>
+                  <td class="total-label">Totals</td>
+                  <td class="total-name-spacer"></td>
+                  <td class="total-np-spacer"></td>
+                  <td class="total-amount"></td>
+                  <td class="total-amount">
+                    <span class="total-amount-inner">{{ nopayDaysTotal() | number:'1.2-2' }}</span>
+                  </td>
+                  <td class="total-amount">
+                    <span class="total-amount-inner">{{ nopayAmountTotal() | number:'1.2-2' }}</span>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+
+          </div>
+
+        } @else {
+
+          <!-- ── Pivot table (all other tabs) ───────────────────── -->
+          <app-pivot
+            [codes]="namesFor(step.uiKey)"
+            [rows]="pivotRows()"
+            [amounts]="matrices()[step.uiKey]"
+            [label]="step.label"
+            (amountChange)="onAmountChange(step.uiKey, $event)">
+          </app-pivot>
+
+        }
+
       </mat-tab>
     }
   </mat-tab-group>

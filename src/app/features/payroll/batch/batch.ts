@@ -19,15 +19,10 @@ import { PivotComponent, PivotAmountChange } from '../../../shared/components/pi
 
 // ── Constants ─────────────────────────────────────────────────────────────
 
-/** Fields returned by every SP that are NOT component columns */
 const FIXED_SP_FIELDS = new Set([
   'id', 'employee_no', 'first_name', 'last_name', 'payroll_name', 'basic_salary',
 ]);
 
-/**
- * Maps each backend section key → component type sent in the save payload.
- * Loans / Bonus are future — no backend section yet.
- */
 const SECTION_CONFIG = [
   { backendKey: 'fixedAllowances',    uiKey: 'fixedAlw',  label: 'Fixed Allowance',    type: 'FA'    },
   { backendKey: 'variableAllowances', uiKey: 'varAlw',    label: 'Variable Allowance', type: 'VA'    },
@@ -35,7 +30,6 @@ const SECTION_CONFIG = [
   { backendKey: 'fixedDeductions',    uiKey: 'fixedDed',  label: 'Fixed Deduction',    type: 'FD'    },
   { backendKey: 'variableDeductions', uiKey: 'varDed',    label: 'Variable Deduction', type: 'VD'    },
   { backendKey: 'nopays',             uiKey: 'nopay',     label: 'NoPay',              type: 'NOPAY' },
-  // Not yet backed by an SP — shown as empty tabs
   { backendKey: null,                 uiKey: 'loans',     label: 'Loans',              type: null    },
   { backendKey: null,                 uiKey: 'bonus',     label: 'Bonus',              type: null    },
 ] as const;
@@ -43,57 +37,54 @@ const SECTION_CONFIG = [
 // ── Types ─────────────────────────────────────────────────────────────────
 
 interface BatchEmployee { id: number; code: string; name: string; }
-/** code → amounts indexed by employee position */
+
 type AmountMatrix = Record<string, number[]>;
-/** code → hours indexed by employee position  (OT only) */
 type HoursMatrix  = Record<string, number[]>;
-/** code → days  indexed by employee position  (NOPAY only) */
-type DaysMatrix   = Record<string, number[]>;
+
+export interface NopayFlatRow {
+  empId:         number;
+  employeeNo:    string;
+  payrollName:   string;
+  nopayRule:     string | null;  // nd_emp.name  — read-only
+  nopayRuleDays: number | null;  // nd_emp.days  — read-only
+  nopayCode:     string | null;  // nd_enp.code  — save payload
+  days:          number;
+  amount:        number;
+}
 
 // ── Pivot helpers ─────────────────────────────────────────────────────────
 
-/**
- * Extract active component codes from an SP pivot result.
- * For OT/NoPay returns the base code (strips _amount / _hours / _days suffix).
- */
-function extractCodes(rows: PivotRow[], type: string): string[] {
-  if (!rows.length) return [];
-  const keys = Object.keys(rows[0]).filter(k => !FIXED_SP_FIELDS.has(k));
-  if (type === 'OT' || type === 'NOPAY') {
-    return [...new Set(
-      keys
-        .filter(k => k.endsWith('_amount'))
-        .map(k => k.replace(/_amount$/, ''))
-    )];
-  }
-  return keys;
+function extractComponents(rows: PivotRow[]): { names: string[]; labelToCode: Record<string, string> } {
+  if (!rows.length) return { names: [], labelToCode: {} };
+  const labelToCode: Record<string, string> = {};
+  Object.keys(rows[0])
+    .filter(k => k.endsWith('_label') && !FIXED_SP_FIELDS.has(k))
+    .forEach(labelCol => {
+      const code = labelCol.replace(/_label$/, '');
+      const name = String(rows[0][labelCol] ?? code);
+      labelToCode[name] = code;
+    });
+  return { names: Object.keys(labelToCode), labelToCode };
 }
 
-/** Build amount matrix from SP rows */
-function buildAmountMatrix(rows: PivotRow[], codes: string[], type: string): AmountMatrix {
+function buildAmountMatrix(
+  rows: PivotRow[], names: string[], labelToCode: Record<string, string>, type: string
+): AmountMatrix {
   return Object.fromEntries(
-    codes.map(code => {
-      const col = (type === 'OT' || type === 'NOPAY') ? `${code}_amount` : code;
-      return [code, rows.map(row => Number(row[col] ?? 0))];
+    names.map(name => {
+      const code   = labelToCode[name];
+      const colKey = type === 'OT' ? `${code}_amount` : code;
+      return [name, rows.map(row => Number(row[colKey] ?? 0))];
     })
   );
 }
 
-/** Build hours matrix from OT SP rows */
-function buildHoursMatrix(rows: PivotRow[], codes: string[]): HoursMatrix {
+function buildHoursMatrix(rows: PivotRow[], names: string[], labelToCode: Record<string, string>): HoursMatrix {
   return Object.fromEntries(
-    codes.map(code => [code, rows.map(row => Number(row[`${code}_hours`] ?? 0))])
+    names.map(name => [name, rows.map(row => Number(row[`${labelToCode[name]}_hours`] ?? 0))])
   );
 }
 
-/** Build days matrix from NoPay SP rows */
-function buildDaysMatrix(rows: PivotRow[], codes: string[]): DaysMatrix {
-  return Object.fromEntries(
-    codes.map(code => [code, rows.map(row => Number(row[`${code}_days`] ?? 0))])
-  );
-}
-
-/** Extract employee list from SP pivot rows (excludes default row id = -1) */
 function extractEmployees(rows: PivotRow[]): BatchEmployee[] {
   return rows
     .filter(row => Number(row['id']) > 0)
@@ -104,9 +95,32 @@ function extractEmployees(rows: PivotRow[]): BatchEmployee[] {
     }));
 }
 
-/** Build an empty amount matrix initialised to 0 */
-function emptyMatrix(emps: BatchEmployee[], codes: string[]): AmountMatrix {
-  return Object.fromEntries(codes.map(c => [c, emps.map(() => 0)]));
+function emptyMatrix(emps: BatchEmployee[], names: string[]): AmountMatrix {
+  return Object.fromEntries(names.map(n => [n, emps.map(() => 0)]));
+}
+
+function normalisedRow(row: PivotRow): PivotRow {
+  return Object.fromEntries(
+    Object.entries(row).map(([k, v]) => [k.toLowerCase(), v])
+  );
+}
+
+function buildNopayFlatRows(rows: PivotRow[]): NopayFlatRow[] {
+  return rows
+    .filter(row => Number(row['id'] ?? row['ID']) > 0)
+    .map(raw => {
+      const row = normalisedRow(raw);
+      return {
+        empId:         Number(row['id']),
+        employeeNo:    String(row['employee_no'] ?? ''),
+        payrollName:   String(row['payroll_name'] || `${row['first_name'] ?? ''} ${row['last_name'] ?? ''}`.trim()),
+        nopayRule:     row['nopay_rule']      != null ? String(row['nopay_rule'])      : null,
+        nopayRuleDays: row['nopay_rule_days'] != null ? Number(row['nopay_rule_days']) : null,
+        nopayCode:     row['nopay_code']      != null ? String(row['nopay_code'])      : null,
+        days:          Number(row['days']   ?? 0),
+        amount:        Number(row['amount'] ?? 0),
+      };
+    });
 }
 
 // ── Component ─────────────────────────────────────────────────────────────
@@ -129,7 +143,6 @@ export class BatchComponent {
   private readonly batchSvc   = inject(BatchService);
   private readonly destroyRef = inject(DestroyRef);
 
-  // ── Tab config (static — labels never change) ──────────────────────────
   readonly SUB_STEPS = SECTION_CONFIG;
 
   // ── Period form ────────────────────────────────────────────────────────
@@ -151,37 +164,29 @@ export class BatchComponent {
   ];
 
   readonly periodForm = this.fb.group({
-    month: this.fb.nonNullable.control(
-      this._today.getMonth() + 1,
-      [Validators.required, Validators.min(1)],
-    ),
-    year: this.fb.nonNullable.control(
-      this._today.getFullYear(),
-      Validators.required,
-    ),
+    month: this.fb.nonNullable.control(this._today.getMonth() + 1, [Validators.required, Validators.min(1)]),
+    year:  this.fb.nonNullable.control(this._today.getFullYear(), Validators.required),
   });
 
-  // ── State signals ──────────────────────────────────────────────────────
+  // ── State ──────────────────────────────────────────────────────────────
   readonly saving          = signal(false);
   readonly saveError       = signal<string | null>(null);
   readonly saveSuccess     = signal(false);
   readonly loading         = signal(false);
   readonly selectedSubStep = signal(0);
 
-  /** Active employees — populated from the first non-empty SP section */
-  private readonly _employees = signal<BatchEmployee[]>([]);
+  private readonly _employees   = signal<BatchEmployee[]>([]);
+  private readonly _matrices    = signal<Record<string, AmountMatrix>>({});
+  private readonly _hours       = signal<Record<string, HoursMatrix>>({});
+  private readonly _labelToCode = signal<Record<string, Record<string, string>>>({});
+  private readonly _names       = signal<Record<string, string[]>>({});
+  private readonly _nopayRows   = signal<NopayFlatRow[]>([]);
 
-  /** Amount matrices per section key */
-  private readonly _matrices  = signal<Record<string, AmountMatrix>>({});
+  // ── NoPay table state ─────────────────────────────────────────────────
+  readonly nopayFilter   = signal('');
+  readonly nopayEditCtrl = this.fb.nonNullable.control(0);
 
-  /** Hours matrices for OT section */
-  private readonly _hours     = signal<HoursMatrix>({});
-
-  /** Days matrices for NoPay section */
-  private readonly _days      = signal<DaysMatrix>({});
-
-  /** Dynamic codes per section key — filled from SP result */
-  private readonly _codes     = signal<Record<string, string[]>>({});
+  private readonly _nopayEditCell = signal<{ idx: number; field: 'days' | 'amount' } | null>(null);
 
   // ── Computed ───────────────────────────────────────────────────────────
 
@@ -191,16 +196,30 @@ export class BatchComponent {
 
   readonly matrices = computed(() => this._matrices());
 
-  readonly grandTotal = computed(() => {
-    const mats = this._matrices();
-    return Object.values(mats).reduce((total, mat) =>
-      total + Object.values(mat).reduce((s, col) =>
-        s + col.reduce((a, v) => a + v, 0), 0), 0);
+  readonly filteredNopayRows = computed(() => {
+    const filter = this.nopayFilter().toLowerCase().trim();
+    return this._nopayRows()
+      .map((row, idx) => ({ row, idx }))
+      .filter(({ row }) =>
+        !filter ||
+        row.payrollName.toLowerCase().includes(filter) ||
+        row.employeeNo.toLowerCase().includes(filter)
+      );
   });
 
-  /** Codes for each tab — resolved from SP result or empty array */
-  codesFor(uiKey: string): string[] {
-    return this._codes()[uiKey] ?? [];
+  readonly nopayRowsCount   = computed(() => this._nopayRows().length);
+  readonly nopayDaysTotal   = computed(() => this._nopayRows().reduce((s, r) => s + r.days,   0));
+  readonly nopayAmountTotal = computed(() => this._nopayRows().reduce((s, r) => s + r.amount, 0));
+
+  readonly grandTotal = computed(() =>
+    Object.values(this._matrices()).reduce((total, mat) =>
+      total + Object.values(mat).reduce((s, col) =>
+        s + col.reduce((a, v) => a + v, 0), 0), 0)
+    + this.nopayAmountTotal()
+  );
+
+  namesFor(uiKey: string): string[] {
+    return this._names()[uiKey] ?? [];
   }
 
   get periodLabel(): string {
@@ -214,7 +233,7 @@ export class BatchComponent {
     this._loadValues();
   }
 
-  // ── Event handlers ─────────────────────────────────────────────────────
+  // ── Event handlers — pivot tabs ────────────────────────────────────────
 
   onAmountChange(uiKey: string, e: PivotAmountChange): void {
     this._matrices.update(prev => {
@@ -226,54 +245,108 @@ export class BatchComponent {
     });
   }
 
+  // ── Event handlers — nopay table ──────────────────────────────────────
+
+  isNopayEditing(idx: number, field: 'days' | 'amount'): boolean {
+    const c = this._nopayEditCell();
+    return c?.idx === idx && c?.field === field;
+  }
+
+  startNopayEdit(idx: number, field: 'days' | 'amount'): void {
+    const row = this._nopayRows()[idx];
+    if (!row) return;
+    this.nopayEditCtrl.setValue(field === 'days' ? row.days : row.amount);
+    this._nopayEditCell.set({ idx, field });
+  }
+
+  saveNopayEdit(): void {
+    const cell = this._nopayEditCell();
+    if (!cell) return;
+    const value = this.nopayEditCtrl.value;
+    this._nopayRows.update(rows => {
+      const updated = [...rows];
+      updated[cell.idx] = { ...updated[cell.idx], [cell.field]: isNaN(value) ? 0 : value };
+      return updated;
+    });
+    this._nopayEditCell.set(null);
+  }
+
+  cancelNopayEdit(): void {
+    this._nopayEditCell.set(null);
+  }
+
+  onNopayChange(idx: number, field: 'days' | 'amount', value: number): void {
+    this._nopayRows.update(rows => {
+      const updated = [...rows];
+      updated[idx] = { ...updated[idx], [field]: isNaN(value) ? 0 : value };
+      return updated;
+    });
+  }
+
   onPeriodChange(): void {
-    // Reset all state then reload
     this._employees.set([]);
     this._matrices.set({});
     this._hours.set({});
-    this._days.set({});
-    this._codes.set({});
+    this._names.set({});
+    this._labelToCode.set({});
+    this._nopayRows.set([]);
+    this.nopayFilter.set('');
+    this._nopayEditCell.set(null);
     this._loadValues();
   }
 
+  // ── Save ───────────────────────────────────────────────────────────────
+
   save(): void {
     if (this.saving() || this.periodForm.invalid) return;
+    this.saveNopayEdit(); // commit any open cell
     this.saving.set(true);
     this.saveError.set(null);
     this.saveSuccess.set(false);
 
     const { month, year } = this.periodForm.getRawValue();
-    const emps    = this._employees();
-    const mats    = this._matrices();
-    const hours   = this._hours();
-    const days    = this._days();
+    const emps        = this._employees();
+    const mats        = this._matrices();
+    const hoursMap    = this._hours();
+    const labelToCode = this._labelToCode();
     const entries: BatchSaveEntry[] = [];
 
+    // ── Pivot sections (FA, FD, VA, VD, OT) ───────────────────────────
     for (const cfg of SECTION_CONFIG) {
-      if (!cfg.type || !cfg.backendKey) continue;   // Loans/Bonus — skip
-      const codes = this._codes()[cfg.uiKey] ?? [];
-      for (const code of codes) {
+      if (!cfg.type || !cfg.backendKey || cfg.type === 'NOPAY') continue;
+      const names   = this._names()[cfg.uiKey] ?? [];
+      const codeMap = labelToCode[cfg.uiKey] ?? {};
+
+      for (const name of names) {
+        const code = codeMap[name];
+        if (!code) continue;
         for (let i = 0; i < emps.length; i++) {
-          const amount = mats[cfg.uiKey]?.[code]?.[i] ?? 0;
+          const amount = mats[cfg.uiKey]?.[name]?.[i] ?? 0;
           const entry: BatchSaveEntry = {
             componentCode: code,
             componentType: cfg.type,
             employeeId:    emps[i].id,
             amount,
           };
-          if (cfg.type === 'OT') {
-            entry.hours = hours[code]?.[i] ?? 0;
-          }
-          if (cfg.type === 'NOPAY') {
-            entry.days = days[code]?.[i] ?? 0;
-          }
+          if (cfg.type === 'OT') { entry.hours = hoursMap[cfg.uiKey]?.[name]?.[i] ?? 0; }
           entries.push(entry);
         }
       }
     }
 
-    // TODO: replace 1 with the current user ID from your AuthService
-    const modifiedBy = 1;
+    // ── Flat nopay rows ────────────────────────────────────────────────
+    for (const row of this._nopayRows()) {
+      if (!row.nopayCode) continue;
+      entries.push({
+        componentCode: row.nopayCode,
+        componentType: 'NOPAY',
+        employeeId:    row.empId,
+        amount:        row.amount,
+        days:          row.days,
+      });
+    }
+
+    const modifiedBy = 1; // TODO: replace with AuthService user id
 
     this.batchSvc
       .save({ periodMonth: month, periodYear: year, entries } satisfies BatchSavePayload, modifiedBy)
@@ -282,9 +355,7 @@ export class BatchComponent {
         next: () => { this.saving.set(false); this.saveSuccess.set(true); },
         error: (err: unknown) => {
           this.saving.set(false);
-          this.saveError.set(
-            err instanceof Error ? err.message : 'Save failed. Please try again.'
-          );
+          this.saveError.set(err instanceof Error ? err.message : 'Save failed. Please try again.');
         },
       });
   }
@@ -294,7 +365,6 @@ export class BatchComponent {
   private _loadValues(): void {
     const { month, year } = this.periodForm.getRawValue();
     this.loading.set(true);
-
     this.batchSvc.load(month, year)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -304,51 +374,43 @@ export class BatchComponent {
   }
 
   private _applyLoadResponse(resp: BatchLoadResponse): void {
-    const newCodes:   Record<string, string[]>     = {};
-    const newMats:    Record<string, AmountMatrix>  = {};
-    const newHours:   HoursMatrix                  = {};
-    const newDays:    DaysMatrix                   = {};
-    let   employees:  BatchEmployee[]              = [];
+    const newMats:        Record<string, AmountMatrix>           = {};
+    const newHours:       Record<string, HoursMatrix>            = {};
+    const newNames:       Record<string, string[]>               = {};
+    const newLabelToCode: Record<string, Record<string, string>> = {};
+    let   employees:      BatchEmployee[]                        = [];
 
     for (const cfg of SECTION_CONFIG) {
-      if (!cfg.backendKey || !cfg.type) continue;
+      if (!cfg.backendKey || !cfg.type || cfg.type === 'NOPAY') continue;
 
-      const rows = resp[cfg.backendKey as keyof BatchLoadResponse] ?? [];
+      const rows = (resp[cfg.backendKey as keyof BatchLoadResponse] ?? [])
+        .filter(row => Number(row['id']) > 0);
 
-      // Extract employees from the first non-empty section
       if (!employees.length && rows.length) {
         employees = extractEmployees(rows);
       }
 
-      const codes = extractCodes(rows, cfg.type);
-      newCodes[cfg.uiKey]  = codes;
-      newMats[cfg.uiKey]   = rows.length
-        ? buildAmountMatrix(rows, codes, cfg.type)
-        : emptyMatrix(employees, codes);
+      const { names, labelToCode } = extractComponents(rows);
+      newNames[cfg.uiKey]       = names;
+      newLabelToCode[cfg.uiKey] = labelToCode;
+
+      newMats[cfg.uiKey] = rows.length
+        ? buildAmountMatrix(rows, names, labelToCode, cfg.type)
+        : emptyMatrix(employees, names);
 
       if (cfg.type === 'OT') {
-        const otCodes = codes;
-        otCodes.forEach(code => {
-          newHours[code] = rows.length
-            ? buildHoursMatrix(rows, [code])[code]
-            : employees.map(() => 0);
-        });
-      }
-
-      if (cfg.type === 'NOPAY') {
-        const npCodes = codes;
-        npCodes.forEach(code => {
-          newDays[code] = rows.length
-            ? buildDaysMatrix(rows, [code])[code]
-            : employees.map(() => 0);
-        });
+        newHours[cfg.uiKey] = rows.length
+          ? buildHoursMatrix(rows, names, labelToCode)
+          : emptyMatrix(employees, names);
       }
     }
 
+    this._nopayRows.set(buildNopayFlatRows(resp.nopays ?? []));
+
     this._employees.set(employees);
-    this._codes.set(newCodes);
+    this._names.set(newNames);
+    this._labelToCode.set(newLabelToCode);
     this._matrices.set(newMats);
     this._hours.set(newHours);
-    this._days.set(newDays);
   }
 }
