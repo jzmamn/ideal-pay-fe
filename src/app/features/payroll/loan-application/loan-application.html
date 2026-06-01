@@ -1,0 +1,418 @@
+<div class="page-shell">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="page-header-left">
+      <div class="page-header-icon" aria-hidden="true">
+        <mat-icon>account_balance</mat-icon>
+      </div>
+      <div>
+        <h1 class="page-title">Loan Applications</h1>
+        <p class="page-subtitle">Manage employee loan deductions per payroll month</p>
+      </div>
+    </div>
+    <div class="page-header-right">
+      @if (!isFormOpen()) {
+        <button mat-flat-button (click)="openCreate()" aria-label="New loan application">
+          <mat-icon>add</mat-icon>
+          <span>New Application</span>
+        </button>
+      }
+    </div>
+  </header>
+
+  <!-- ── Loading bar ────────────────────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="loading-bar" aria-live="polite">
+      <mat-spinner diameter="16" />
+      <span>Loading loan data…</span>
+    </div>
+  }
+
+  <!-- ── Stats panel ────────────────────────────────────────────────────── -->
+  @if (!loading()) {
+    <div class="stats-panel" aria-label="Loan statistics">
+      <div class="stat-card">
+        <div class="stat-icon stat-icon--total" aria-hidden="true">
+          <mat-icon>folder_open</mat-icon>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{{ totalCount() }}</span>
+          <span class="stat-label">Total Records</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-icon--pending" aria-hidden="true">
+          <mat-icon>pending_actions</mat-icon>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{{ pendingCount() }}</span>
+          <span class="stat-label">Pending</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-icon--processed" aria-hidden="true">
+          <mat-icon>task_alt</mat-icon>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{{ processedCount() }}</span>
+          <span class="stat-label">Processed</span>
+        </div>
+      </div>
+      <div class="stat-card stat-card--amount">
+        <div class="stat-icon stat-icon--amount" aria-hidden="true">
+          <mat-icon>payments</mat-icon>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{{ totalAmount() | number:'1.2-2' }}</span>
+          <span class="stat-label">Total Monthly Deductions (LKR)</span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Create / Edit form panel ───────────────────────────────────────── -->
+  @if (isFormOpen()) {
+    <div class="form-panel" [formGroup]="form">
+
+      <div class="form-panel-header">
+        <mat-icon aria-hidden="true">{{ formMode() === 'create' ? 'add_circle_outline' : 'edit' }}</mat-icon>
+        <h2 class="form-title">
+          {{ formMode() === 'create' ? 'New Loan Application' : 'Edit Loan Application' }}
+        </h2>
+      </div>
+
+      <!-- Row 1: Employee + Loan Type + Month -->
+      <div class="form-row">
+        <app-table-autocomplete
+          class="field-employee"
+          formControlName="employeeId"
+          label="Employee"
+          placeholder="Search by name or employee #…"
+          src="/employee?isActive=true"
+          [columns]="employeeCols"
+          [displayFn]="empDisplayFn"
+          aria-label="Select employee"
+        />
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field-loan-type">
+          <mat-label>Loan Type</mat-label>
+          <mat-select formControlName="loanId" aria-label="Select loan type">
+            @for (t of loanTypes(); track t.id) {
+              <mat-option [value]="t.id">{{ t.name }}</mat-option>
+            }
+          </mat-select>
+          @if (form.controls.loanId.invalid && form.controls.loanId.touched) {
+            <mat-error>Loan type is required</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field-month">
+          <mat-label>Start Month</mat-label>
+          <mat-select formControlName="payrollMonth" aria-label="Select payroll month">
+            @for (m of monthOptions; track m.value) {
+              <mat-option [value]="m.value">{{ m.label }}</mat-option>
+            }
+          </mat-select>
+          @if (form.controls.payrollMonth.invalid && form.controls.payrollMonth.touched) {
+            <mat-error>Month is required</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <!-- Row 2: Principal + Installments + Monthly calc -->
+      <div class="form-row form-row--calc">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field-principal">
+          <mat-label>Total Loan Amount (LKR)</mat-label>
+          <input matInput type="number" min="1" step="0.01"
+                 formControlName="principalAmount"
+                 placeholder="0.00"
+                 aria-label="Total loan principal" />
+          @if (form.controls.principalAmount.hasError('required') && form.controls.principalAmount.touched) {
+            <mat-error>Amount is required</mat-error>
+          }
+          @if (form.controls.principalAmount.hasError('min') && form.controls.principalAmount.touched) {
+            <mat-error>Must be greater than 0</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field-installments">
+          <mat-label>No. of Installments</mat-label>
+          <input matInput type="number" min="1" max="360" step="1"
+                 formControlName="installments"
+                 placeholder="e.g. 12"
+                 aria-label="Number of installments" />
+          @if (form.controls.installments.hasError('required') && form.controls.installments.touched) {
+            <mat-error>Required</mat-error>
+          }
+          @if (form.controls.installments.hasError('min') && form.controls.installments.touched) {
+            <mat-error>Min 1</mat-error>
+          }
+          @if (form.controls.installments.hasError('max') && form.controls.installments.touched) {
+            <mat-error>Max 360</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Monthly installment preview chip -->
+        <div class="calc-preview" aria-live="polite">
+          @if (monthlyInstallmentPreview() !== null) {
+            <div class="calc-chip">
+              <mat-icon aria-hidden="true">calculate</mat-icon>
+              <span class="calc-label">Monthly Installment</span>
+              <span class="calc-amount">{{ monthlyInstallmentPreview()! | number:'1.2-2' }} LKR</span>
+            </div>
+          } @else {
+            <div class="calc-chip calc-chip--empty">
+              <mat-icon aria-hidden="true">calculate</mat-icon>
+              <span class="calc-label">Enter amount &amp; installments to calculate</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Row 3: Processed status -->
+      <div class="form-row form-row--status">
+        <mat-checkbox formControlName="isProcessed">Mark as Processed</mat-checkbox>
+
+        @if (form.controls.isProcessed.value) {
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field-processed-date">
+            <mat-label>Processed Date</mat-label>
+            <input matInput type="date" formControlName="processedDate" aria-label="Processed date" />
+          </mat-form-field>
+        }
+      </div>
+
+      @if (saveError()) {
+        <div class="save-error-banner" role="alert">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ saveError() }}</span>
+        </div>
+      }
+
+      <div class="form-actions">
+        <button mat-stroked-button type="button" (click)="cancelForm()" [disabled]="saving()">
+          Cancel
+        </button>
+        <button mat-flat-button type="button" (click)="submit()" [disabled]="saving()">
+          <span class="btn-content">
+            @if (saving()) {
+              <mat-spinner diameter="18" />
+              <span>Saving…</span>
+            } @else {
+              <mat-icon>save</mat-icon>
+              <span>{{ formMode() === 'create' ? 'Apply Loan' : 'Update' }}</span>
+            }
+          </span>
+        </button>
+      </div>
+
+    </div>
+  }
+
+  <!-- ── Delete confirmation banner ─────────────────────────────────────── -->
+  @if (pendingDeleteId() !== null) {
+    <div class="delete-banner" role="alertdialog" aria-label="Confirm deletion">
+      <mat-icon class="delete-warn-icon">warning_amber</mat-icon>
+      <span>Delete this loan application? This action cannot be undone.</span>
+      <div class="delete-banner-actions">
+        <button mat-stroked-button type="button" (click)="cancelDelete()" [disabled]="deleting()">
+          Cancel
+        </button>
+        <button mat-flat-button type="button" class="btn-danger"
+                (click)="executeDelete()" [disabled]="deleting()">
+          @if (deleting()) { <mat-spinner diameter="16" /> } @else { Delete }
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ── Filter bar ──────────────────────────────────────────────────────── -->
+  <div class="filter-bar">
+
+    <mat-form-field appearance="outline" class="filter-field filter-month" subscriptSizing="dynamic">
+      <mat-label>Month</mat-label>
+      <mat-select [value]="monthFilter()" (selectionChange)="monthFilter.set($event.value)">
+        <mat-option [value]="null">All Months</mat-option>
+        @for (m of monthOptions; track m.value) {
+          <mat-option [value]="m.value">{{ m.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-field filter-type" subscriptSizing="dynamic">
+      <mat-label>Loan Type</mat-label>
+      <mat-select [value]="loanTypeFilter()" (selectionChange)="loanTypeFilter.set($event.value)">
+        <mat-option [value]="null">All Types</mat-option>
+        @for (t of loanTypes(); track t.id) {
+          <mat-option [value]="t.id">{{ t.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-field filter-status" subscriptSizing="dynamic">
+      <mat-label>Status</mat-label>
+      <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
+        <mat-option value="all">All</mat-option>
+        <mat-option value="pending">Pending</mat-option>
+        <mat-option value="processed">Processed</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <div class="search-field">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input class="search-input"
+             [value]="searchFilter()"
+             (input)="searchFilter.set($any($event.target).value)"
+             placeholder="Search employee, loan type…"
+             aria-label="Filter loans" />
+      @if (searchFilter()) {
+        <button class="search-clear" (click)="searchFilter.set('')" aria-label="Clear search">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </div>
+
+    @if (hasActiveFilters()) {
+      <button mat-stroked-button class="btn-clear-filters" (click)="clearFilters()" aria-label="Clear all filters">
+        <mat-icon>filter_alt_off</mat-icon>
+        <span>Clear</span>
+      </button>
+    }
+
+    <span class="filter-count" aria-live="polite">
+      {{ filteredLoans().length }} of {{ totalCount() }} records
+    </span>
+
+  </div>
+
+  <!-- ── Table ───────────────────────────────────────────────────────────── -->
+  <div class="table-wrapper">
+    <table mat-table [dataSource]="filteredLoans()" aria-label="Loan applications">
+
+      <!-- Emp Code -->
+      <ng-container matColumnDef="empCode">
+        <th mat-header-cell *matHeaderCellDef>Emp #</th>
+        <td mat-cell *matCellDef="let row" class="emp-code-cell">{{ row.empCode }}</td>
+      </ng-container>
+
+      <!-- Emp Name -->
+      <ng-container matColumnDef="empName">
+        <th mat-header-cell *matHeaderCellDef>Employee Name</th>
+        <td mat-cell *matCellDef="let row" class="emp-name-cell">{{ row.empName }}</td>
+      </ng-container>
+
+      <!-- Loan Type -->
+      <ng-container matColumnDef="loanType">
+        <th mat-header-cell *matHeaderCellDef>Loan Type</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="loan-type-badge">{{ row.loanName }}</span>
+        </td>
+      </ng-container>
+
+      <!-- Payroll Month -->
+      <ng-container matColumnDef="payrollMonth">
+        <th mat-header-cell *matHeaderCellDef>Payroll Month</th>
+        <td mat-cell *matCellDef="let row" class="month-cell">{{ formatMonth(row.payrollMonth) }}</td>
+      </ng-container>
+
+      <!-- Monthly Installment -->
+      <ng-container matColumnDef="monthlyInstallment">
+        <th mat-header-cell *matHeaderCellDef class="amount-col">Monthly Installment (LKR)</th>
+        <td mat-cell *matCellDef="let row" class="amount-col amount-cell">
+          {{ row.amount | number:'1.2-2' }}
+        </td>
+      </ng-container>
+
+      <!-- Status -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let row">
+          <mat-chip-set aria-label="Loan status">
+            <mat-chip
+              [class]="row.isProcessed ? 'status-chip status-processed' : 'status-chip status-pending'"
+              [disableRipple]="true">
+              {{ row.isProcessed ? 'Processed' : 'Pending' }}
+            </mat-chip>
+          </mat-chip-set>
+        </td>
+      </ng-container>
+
+      <!-- Processed Date -->
+      <ng-container matColumnDef="processedDate">
+        <th mat-header-cell *matHeaderCellDef>Processed Date</th>
+        <td mat-cell *matCellDef="let row" class="date-cell">
+          {{ row.processedDate ? (row.processedDate | date:'dd MMM yyyy') : '—' }}
+        </td>
+      </ng-container>
+
+      <!-- Actions -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let row" class="actions-cell">
+
+          @if (!row.isProcessed) {
+            <button mat-icon-button type="button"
+                    matTooltip="Mark as Processed"
+                    aria-label="Mark as processed"
+                    [disabled]="isFormOpen() || pendingDeleteId() !== null"
+                    (click)="markProcessed(row)">
+              <mat-icon class="icon-approve">check_circle_outline</mat-icon>
+            </button>
+          }
+
+          <button mat-icon-button type="button"
+                  matTooltip="Edit"
+                  aria-label="Edit loan application"
+                  [disabled]="isFormOpen() || pendingDeleteId() !== null || row.isProcessed"
+                  (click)="openEdit(row)">
+            <mat-icon>edit</mat-icon>
+          </button>
+
+          <button mat-icon-button type="button"
+                  class="btn-delete"
+                  matTooltip="Delete"
+                  aria-label="Delete loan application"
+                  [disabled]="isFormOpen() || pendingDeleteId() !== null || row.isProcessed"
+                  (click)="confirmDelete(row.id)">
+            <mat-icon>delete_outline</mat-icon>
+          </button>
+
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+          [class.row-processed]="row.isProcessed"
+          [class.row-pending-delete]="pendingDeleteId() === row.id"></tr>
+
+    </table>
+
+    @if (!loading() && filteredLoans().length === 0) {
+      <div class="empty-state" role="status">
+        <mat-icon aria-hidden="true">account_balance</mat-icon>
+        <p>No loan applications found.</p>
+        @if (hasActiveFilters()) {
+          <button mat-stroked-button (click)="clearFilters()">Clear filters</button>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- ── Footer ──────────────────────────────────────────────────────────── -->
+  <footer class="page-footer">
+    <div class="footer-summary" aria-live="polite">
+      @if (hasActiveFilters()) {
+        <span class="footer-stat">
+          Filtered total:
+          <strong>{{ filteredTotal() | number:'1.2-2' }} LKR</strong>
+        </span>
+        <span class="footer-divider" aria-hidden="true">|</span>
+      }
+      <span class="footer-stat">
+        All monthly deductions:
+        <strong>{{ totalAmount() | number:'1.2-2' }} LKR</strong>
+      </span>
+    </div>
+  </footer>
+
+</div>

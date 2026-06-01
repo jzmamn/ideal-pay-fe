@@ -1,13 +1,19 @@
 :host { display: block; }
 
-// ── Scrollable wrapper ────────────────────────────────────────────────────
-.pivot-wrapper {
+// ── Outer container (toolbar + scroll area) ───────────────────────────────
+.pivot-outer {
+  display: flex;
+  flex-direction: column;
+}
+
+// ── Scrollable area (table only) ──────────────────────────────────────────
+.pivot-scroll {
   overflow: auto;
-  max-height: calc(100vh - 300px);
+  max-height: calc(100vh - 340px);
   min-height: 200px;
 }
 
-// ── Toolbar ───────────────────────────────────────────────────────────────
+// ── Toolbar (outside scroll, always visible) ──────────────────────────────
 $toolbar-h: 40px;
 
 .table-toolbar {
@@ -19,9 +25,7 @@ $toolbar-h: 40px;
   padding: 0 16px 0 24px;
   background: #fff;
   border-bottom: 1px solid #e2e8f0;
-  position: sticky;
-  top: 0;
-  z-index: 5;
+  flex-shrink: 0;
 }
 
 .table-toolbar-left {
@@ -165,11 +169,15 @@ table {
     letter-spacing: 0.07em;
     white-space: nowrap;
     position: sticky;
-    top: $toolbar-h;
+    top: 0;
     z-index: 2;
     background: #f1f5f9;
     border-right: 1px solid #e8ecf4;
   }
+
+  // Corner-freeze cells: must beat the specificity of `table th { z-index:2 }` above
+  th.emp-id-col  { z-index: 6; }
+  th.emp-name-col { z-index: 6; }
 
   tbody tr {
     border-bottom: 1px solid #f1f5f9;
@@ -218,7 +226,7 @@ th.emp-id-col {
   max-width: 110px;
   position: sticky;
   left: 0;
-  background: inherit;
+  background: #fff;
   z-index: 1;
   font-weight: 600;
   font-size: 12px;
@@ -226,6 +234,9 @@ th.emp-id-col {
   white-space: nowrap;
   border-right: 1px solid #e8ecf4;
 }
+
+tr.row-even .emp-id-cell { background: #fafbfd; }
+tr:hover    .emp-id-cell { background: #eff6ff; }
 
 // ── Employee Name column (sticky col 2) ───────────────────────────────────
 .emp-name-col {
@@ -244,7 +255,7 @@ th.emp-id-col {
   min-height: 38px;
   position: sticky;
   left: 110px;
-  background: inherit;
+  background: #fff;
   z-index: 1;
   font-size: 13px;
   color: #1e293b;
@@ -252,6 +263,9 @@ th.emp-id-col {
   box-shadow: 3px 0 6px -1px rgba(0, 0, 0, 0.07);
   border-right: 1px solid #e8ecf4;
 }
+
+tr.row-even .emp-name-cell { background: #fafbfd; }
+tr:hover    .emp-name-cell { background: #eff6ff; }
 
 // ── Amount columns ────────────────────────────────────────────────────────
 .amount-col { min-width: 100px; text-align: right; }
@@ -354,5 +368,5 @@ th.emp-id-col {
 
 // ── Responsive ────────────────────────────────────────────────────────────
 @media (max-width: 640px) {
-  .pivot-wrapper { max-height: 50vh; }
+  .pivot-scroll { max-height: 50vh; }
 }

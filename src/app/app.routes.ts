@@ -71,6 +71,18 @@ export const routes: Routes = [
                             import('./features/payroll/batch/batch')
                                 .then(m => m.BatchComponent),
                     },
+                    {
+                        path: 'salary-advance',
+                        loadComponent: () =>
+                            import('./features/payroll/salary-advance/salary-advance')
+                                .then(m => m.SalaryAdvance),
+                    },
+                    {
+                        path: 'loan-application',
+                        loadComponent: () =>
+                            import('./features/payroll/loan-application/loan-application')
+                                .then(m => m.LoanApplication),
+                    },
                 ],
             },
 

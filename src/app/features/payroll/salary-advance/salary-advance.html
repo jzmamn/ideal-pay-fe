@@ -1,0 +1,260 @@
+<div class="page-shell">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="page-header-left">
+      <div class="page-header-icon" aria-hidden="true">
+        <mat-icon>monetization_on</mat-icon>
+      </div>
+      <h1 class="page-title">Salary Advances</h1>
+    </div>
+    <div class="page-header-right">
+      @if (!isFormOpen()) {
+        <button mat-flat-button (click)="openCreate()" aria-label="New salary advance">
+          <mat-icon>add</mat-icon>
+          <span>New Advance</span>
+        </button>
+      }
+    </div>
+  </header>
+
+  <!-- ── Loading bar ────────────────────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="loading-bar" aria-live="polite">
+      <mat-spinner diameter="16" />
+      <span>Loading…</span>
+    </div>
+  }
+
+  <!-- ── Create / Edit form panel ───────────────────────────────────────── -->
+  @if (isFormOpen()) {
+    <div class="form-panel" [formGroup]="form">
+      <h2 class="form-title">
+        {{ formMode() === 'create' ? 'New Salary Advance' : 'Edit Salary Advance' }}
+      </h2>
+
+      <div class="form-row-main">
+        <app-table-autocomplete
+          class="emp-autocomplete"
+          formControlName="employeeId"
+          label="Employee"
+          placeholder="Search by name or employee #…"
+          src="/employee?isActive=true"
+          [columns]="employeeCols"
+          [displayFn]="empDisplayFn"
+          (itemSelected)="onEmpSelected($event)"
+          aria-label="Select employee"
+        />
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Payroll Month</mat-label>
+          <mat-select formControlName="payrollMonth">
+            @for (m of monthOptions; track m.value) {
+              <mat-option [value]="m.value">{{ m.label }}</mat-option>
+            }
+          </mat-select>
+          @if (form.controls.payrollMonth.invalid && form.controls.payrollMonth.touched) {
+            <mat-error>Month is required</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Amount (LKR)</mat-label>
+          <input matInput type="number" min="0.01" step="0.01"
+                 formControlName="amount"
+                 placeholder="0.00"
+                 aria-label="Advance amount" />
+          @if (form.controls.amount.hasError('required') && form.controls.amount.touched) {
+            <mat-error>Amount is required</mat-error>
+          }
+          @if (form.controls.amount.hasError('min') && form.controls.amount.touched) {
+            <mat-error>Amount must be greater than 0</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="form-row-secondary">
+        <mat-checkbox formControlName="isProcessed">Processed</mat-checkbox>
+
+        @if (form.controls.isProcessed.value) {
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="processed-date-field">
+            <mat-label>Processed Date</mat-label>
+            <input matInput type="date" formControlName="processedDate" aria-label="Processed date" />
+          </mat-form-field>
+        }
+      </div>
+
+      @if (saveError()) {
+        <div class="save-error-banner" role="alert">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ saveError() }}</span>
+        </div>
+      }
+
+      <div class="form-actions">
+        <button mat-stroked-button type="button" (click)="cancelForm()" [disabled]="saving()">
+          Cancel
+        </button>
+        <button mat-flat-button type="button" (click)="submit()" [disabled]="saving()">
+          <span class="btn-content">
+            @if (saving()) {
+              <mat-spinner diameter="18" />
+              <span>Saving…</span>
+            } @else {
+              <mat-icon>save</mat-icon>
+              <span>Save</span>
+            }
+          </span>
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ── Delete confirmation banner ─────────────────────────────────────── -->
+  @if (pendingDeleteId() !== null) {
+    <div class="delete-banner" role="alertdialog" aria-label="Confirm deletion">
+      <mat-icon class="delete-warn-icon">warning_amber</mat-icon>
+      <span>Delete this advance? This cannot be undone.</span>
+      <div class="delete-banner-actions">
+        <button mat-stroked-button type="button" (click)="cancelDelete()" [disabled]="deleting()">
+          Cancel
+        </button>
+        <button mat-flat-button type="button" class="btn-danger"
+                (click)="executeDelete()" [disabled]="deleting()">
+          @if (deleting()) {
+            <mat-spinner diameter="16" />
+          } @else {
+            Delete
+          }
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ── Filter bar ──────────────────────────────────────────────────────── -->
+  <div class="filter-bar">
+    <mat-form-field appearance="outline" class="filter-month" subscriptSizing="dynamic">
+      <mat-label>Month</mat-label>
+      <mat-select [value]="monthFilter()"
+                  (selectionChange)="monthFilter.set($event.value)"
+                  aria-label="Filter by payroll month">
+        <mat-option [value]="null">All Months</mat-option>
+        @for (m of monthOptions; track m.value) {
+          <mat-option [value]="m.value">{{ m.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <div class="search-field">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input class="search-input"
+             [value]="searchFilter()"
+             (input)="searchFilter.set($any($event.target).value)"
+             placeholder="Search employees…"
+             aria-label="Filter by employee" />
+      @if (searchFilter()) {
+        <button class="search-clear" (click)="searchFilter.set('')" aria-label="Clear search">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </div>
+
+    <span class="filter-count" aria-live="polite">
+      {{ filteredAdvances().length }} record(s)
+    </span>
+  </div>
+
+  <!-- ── Table ───────────────────────────────────────────────────────────── -->
+  <div class="table-wrapper">
+    <table mat-table [dataSource]="filteredAdvances()" aria-label="Salary advances">
+
+      <!-- Emp Code -->
+      <ng-container matColumnDef="empCode">
+        <th mat-header-cell *matHeaderCellDef>Emp #</th>
+        <td mat-cell *matCellDef="let row" class="emp-code-cell">{{ row.empCode }}</td>
+      </ng-container>
+
+      <!-- Emp Name -->
+      <ng-container matColumnDef="empName">
+        <th mat-header-cell *matHeaderCellDef>Employee Name</th>
+        <td mat-cell *matCellDef="let row">{{ row.empName }}</td>
+      </ng-container>
+
+      <!-- Payroll Month -->
+      <ng-container matColumnDef="payrollMonth">
+        <th mat-header-cell *matHeaderCellDef>Payroll Month</th>
+        <td mat-cell *matCellDef="let row">{{ formatMonth(row.payrollMonth) }}</td>
+      </ng-container>
+
+      <!-- Amount -->
+      <ng-container matColumnDef="amount">
+        <th mat-header-cell *matHeaderCellDef class="amount-col">Amount (LKR)</th>
+        <td mat-cell *matCellDef="let row" class="amount-col">
+          {{ row.amount | number:'1.2-2' }}
+        </td>
+      </ng-container>
+
+      <!-- Status -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let row">
+          <mat-chip-set aria-label="Advance status">
+            <mat-chip [class]="row.isProcessed ? 'status-chip status-processed' : 'status-chip status-pending'"
+                      [disableRipple]="true">
+              {{ row.isProcessed ? 'Processed' : 'Pending' }}
+            </mat-chip>
+          </mat-chip-set>
+        </td>
+      </ng-container>
+
+      <!-- Processed Date -->
+      <ng-container matColumnDef="processedDate">
+        <th mat-header-cell *matHeaderCellDef>Processed Date</th>
+        <td mat-cell *matCellDef="let row">
+          {{ row.processedDate ? (row.processedDate | date:'dd MMM yyyy') : '—' }}
+        </td>
+      </ng-container>
+
+      <!-- Actions -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let row" class="actions-cell">
+          <button mat-icon-button type="button"
+                  matTooltip="Edit"
+                  aria-label="Edit advance"
+                  [disabled]="isFormOpen() || pendingDeleteId() !== null"
+                  (click)="openEdit(row)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button type="button" class="btn-delete"
+                  matTooltip="Delete"
+                  aria-label="Delete advance"
+                  [disabled]="isFormOpen() || pendingDeleteId() !== null"
+                  (click)="confirmDelete(row.id)">
+            <mat-icon>delete_outline</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+          [class.row-pending-delete]="pendingDeleteId() === row.id"></tr>
+
+    </table>
+
+    @if (!loading() && filteredAdvances().length === 0) {
+      <div class="empty-state" role="status">
+        <mat-icon aria-hidden="true">monetization_on</mat-icon>
+        <p>No salary advances found.</p>
+      </div>
+    }
+  </div>
+
+  <!-- ── Footer ──────────────────────────────────────────────────────────── -->
+  <footer class="page-footer">
+    <span class="grand-total-chip">
+      Total: <strong>{{ grandTotal() | number:'1.2-2' }}</strong>
+    </span>
+  </footer>
+
+</div>

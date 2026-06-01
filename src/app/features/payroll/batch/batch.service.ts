@@ -12,6 +12,7 @@ import { ApiResponse } from '../../../shared/models/api-response.model';
  * FA/FD/VA/VD dynamic fields: {code} → amount
  * OT dynamic fields:          {code}_hours, {code}_amount
  * NoPay dynamic fields:       {code}_days,  {code}_amount
+ * SalAdv fixed fields:        sal_adv_amount, sal_adv_label, is_processed, processed_date
  */
 export type PivotRow = Record<string, number | string | null>;
 
@@ -23,6 +24,10 @@ export interface BatchLoadResponse {
   variableDeductions: PivotRow[];
   overtimes:          PivotRow[];
   nopays:             PivotRow[];
+  salaryAdvances:     PivotRow[];
+  bonuses:            PivotRow[];
+  loans:              PivotRow[];
+  salaryIncrements:   PivotRow[];
 }
 
 // ── Save payload types ────────────────────────────────────────────────────
@@ -30,7 +35,7 @@ export interface BatchLoadResponse {
 export interface BatchSaveEntry {
   /** Component code matching master table code column e.g. FA_001 */
   componentCode: string;
-  /** FA | FD | VA | VD | OT | NOPAY */
+  /** FA | FD | VA | VD | OT | NOPAY | SAL_ADV | BONUS | LOAN | SAL_INCR */
   componentType: string;
   employeeId:    number;
   /** amount = 0 triggers a delete on the backend */
