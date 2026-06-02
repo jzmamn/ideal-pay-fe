@@ -83,6 +83,12 @@ export const routes: Routes = [
                             import('./features/payroll/loan-application/loan-application')
                                 .then(m => m.LoanApplication),
                     },
+                    {
+                        path: 'salary-increment',
+                        loadComponent: () =>
+                            import('./features/payroll/salary-increment/salary-increment')
+                                .then(m => m.SalaryIncrementComponent),
+                    },
                 ],
             },
 

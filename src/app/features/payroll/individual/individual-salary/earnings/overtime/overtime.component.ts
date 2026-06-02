@@ -1,5 +1,5 @@
 import {
-  ChangeDetectionStrategy, Component, DestroyRef,
+  ChangeDetectionStrategy, Component,
   computed, inject, signal,
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
@@ -39,7 +39,6 @@ const MOCK_OVERTIME_TYPES: OvertimeItem[] = [
 })
 export class OvertimeComponent {
   private readonly overtimeSvc = inject(OvertimeService);
-  private readonly destroyRef  = inject(DestroyRef);
 
   readonly items        = signal<OvertimeItem[]>([]);
   readonly editingIndex = signal<number | null>(null);
@@ -52,7 +51,7 @@ export class OvertimeComponent {
 
   constructor() {
     this.overtimeSvc.getAll()
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(takeUntilDestroyed())
       .subscribe({
         next: types => {
           const active = types.filter(t => t.isActive);

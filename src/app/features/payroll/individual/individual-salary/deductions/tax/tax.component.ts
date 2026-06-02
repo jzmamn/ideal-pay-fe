@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { IndividualSalaryService } from '../../shared/individual-salary.service';
 import { PayrollEmployeeGridComponent } from '../../shared/payroll-employee-grid/payroll-employee-grid.component';
@@ -29,11 +29,6 @@ import { GridColumnDef } from '../../payroll.models';
 })
 export class TaxComponent {
   readonly svc = inject(IndividualSalaryService);
-
-  private readonly regimeOptions = signal([
-    { value: 'OLD', label: 'Old Regime' },
-    { value: 'NEW', label: 'New Regime' },
-  ]);
 
   readonly columns: GridColumnDef[] = [
     { field: 'empCode',               header: 'Employee',                type: 'display' },

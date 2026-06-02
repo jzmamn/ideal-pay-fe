@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 @Component({
   selector: 'app-grid-skeleton',
@@ -31,6 +31,6 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   `],
 })
 export class GridSkeletonComponent {
-  rows   = input<number>(10);
-  rowArr = () => Array.from({ length: this.rows() });
+  readonly rows   = input<number>(10);
+  readonly rowArr = computed(() => Array.from({ length: this.rows() }));
 }

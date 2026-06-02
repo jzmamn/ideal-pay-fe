@@ -35,13 +35,13 @@ export interface BulkActionEvent {
   styleUrl: './payroll-employee-grid.component.scss',
 })
 export class PayrollEmployeeGridComponent {
-  columns    = input.required<GridColumnDef[]>();
-  rows       = input.required<PayrollEntryRow[]>();
-  loading    = input<boolean>(false);
-  readonlyFn = input<(row: PayrollEntryRow) => boolean>(() => false);
+  readonly columns    = input.required<GridColumnDef[]>();
+  readonly rows       = input.required<PayrollEntryRow[]>();
+  readonly loading    = input<boolean>(false);
+  readonly readonlyFn = input<(row: PayrollEntryRow) => boolean>(() => false);
 
-  rowChanged = output<RowChangedEvent>();
-  bulkAction = output<BulkActionEvent>();
+  readonly rowChanged = output<RowChangedEvent>();
+  readonly bulkAction = output<BulkActionEvent>();
 
   readonly searchCtrl      = new FormControl('', { nonNullable: true });
   readonly deptFilter      = new FormControl('', { nonNullable: true });

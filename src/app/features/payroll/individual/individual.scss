@@ -42,17 +42,28 @@
   font-size: 12px;
   color: #16a34a;
   margin-left: auto;
-
   mat-icon { font-size: 16px; width: 16px; height: 16px; }
 }
 
-// ── Prepare: two-column layout ────────────────────────────────────────────
+// ── Loading bar ───────────────────────────────────────────────────────────
+.loading-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 20px;
+  background: #eff6ff;
+  border-bottom: 1px solid #bfdbfe;
+  font-size: 12px;
+  color: #1d4ed8;
+  flex-shrink: 0;
+}
+
+// ── Two-column layout ─────────────────────────────────────────────────────
 .content-layout {
   display: grid;
   grid-template-columns: 75% 25%;
   align-items: start;
   flex: 1;
-
   @media (max-width: 900px) { grid-template-columns: 1fr; }
 }
 
@@ -60,92 +71,282 @@
   display: flex;
   flex-direction: column;
   border-right: 1px solid #e2e8f0;
+  min-height: 0;
 }
 
-.workspace {
-  padding: 16px 24px;
-  overflow: auto;
-  min-width: 0;
+// ── Category tabs ─────────────────────────────────────────────────────────
+.category-tabs {
+  flex: 1;
+  background: #fff;
+
+  ::ng-deep {
+    .mat-mdc-tab-header {
+      background: #fff;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .mat-mdc-tab-body-content { padding: 0; overflow: visible; }
+    .mat-mdc-tab-label-container { padding: 0 12px; }
+    .mdc-tab { height: 44px; min-width: 110px; }
+    .mdc-tab__text-label { font-size: 12px; font-weight: 500; letter-spacing: 0.01em; }
+    .mdc-tab--active .mdc-tab__text-label { font-weight: 600; color: #1d4ed8; }
+    .mdc-tab-indicator__content--underline { border-color: #1d4ed8; }
+  }
 }
 
-.tab-wrap { padding-top: 16px; }
+// ── Component flat table ──────────────────────────────────────────────────
+.comp-table-wrap {
+  padding: 16px 20px;
+  overflow-x: auto;
+}
 
-// ── Employee summary sidebar ──────────────────────────────────────────────
+.comp-empty {
+  padding: 32px 0;
+  text-align: center;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.comp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  color: #0f172a;
+
+  thead tr { background: #f1f5f9; }
+
+  th {
+    padding: 9px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    color: #475569;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+
+  tbody tr:hover td { background: #f8fafc; }
+
+  .col-code   { width: 100px; color: #64748b; font-family: monospace; font-size: 12px; }
+  .col-name   { min-width: 180px; }
+  .col-amount { width: 130px; }
+  .col-hours  { width: 100px; }
+  .col-days   { width: 100px; }
+  .col-month  { width: 110px; font-size: 12px; color: #64748b; }
+}
+
+.comp-readonly {
+  font-size: 13px;
+  color: #64748b;
+  font-style: italic;
+}
+
+.comp-input {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #0f172a;
+  background: #fff;
+  outline: none;
+  text-align: right;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+
+  &:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px #bfdbfe; }
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button { opacity: 1; }
+}
+
+// ── Empty state ───────────────────────────────────────────────────────────
+.comp-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 24px;
+  color: #94a3b8;
+  mat-icon { font-size: 40px; width: 40px; height: 40px; }
+  p { margin: 0; font-size: 13px; }
+}
+
+// ── Employee sidebar ──────────────────────────────────────────────────────
 .emp-summary {
   background: #f8fafc;
   display: flex;
   flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
 }
 
+// Empty / placeholder state
+.emp-summary-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 20px;
+  color: #cbd5e1;
+  text-align: center;
+  flex: 1;
+
+  mat-icon { font-size: 40px; width: 40px; height: 40px; }
+  p { margin: 0; font-size: 12.5px; color: #94a3b8; line-height: 1.5; }
+}
+
+// Header row: avatar + name block
 .emp-summary-header {
-  padding: 16px 16px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.emp-avatar {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #1d4ed8;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.emp-header-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.emp-full-name   { margin: 0; font-size: 13.5px; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.emp-no          { margin: 0; font-size: 11.5px; color: #94a3b8; }
+
+// Detail fields block
+.emp-summary-details {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 12px 16px;
   border-bottom: 1px solid #e2e8f0;
 }
 
-.emp-full-name {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
+.emp-field       { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.emp-field-label { font-size: 11px; color: #94a3b8; white-space: nowrap; flex-shrink: 0; }
+.emp-field-value { font-size: 12px; color: #334155; text-align: right; }
+
+// ── Pay summary card ──────────────────────────────────────────────────────
+.emp-pay-summary {
+  display: flex;
+  flex-direction: column;
+  margin: 12px 12px 4px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.emp-pay-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 5px 12px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.emp-pay-label { color: #64748b; }
+
+.emp-pay-value {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
   color: #1e293b;
 }
 
-.emp-no {
-  margin: 3px 0 0;
-  font-size: 12px;
-  color: #94a3b8;
-}
+.emp-pay-positive { color: #16a34a; }
+.emp-pay-negative { color: #dc2626; }
 
-.emp-summary-body {
-  display: flex;
-  flex-direction: column;
-  padding: 12px 16px;
-  gap: 12px;
-}
-
-.emp-field {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.emp-field-label {
-  font-size: 10.5px;
+.emp-pay-gross {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 7px;
+  margin-top: 2px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #94a3b8;
+  .emp-pay-label { color: #334155; font-weight: 600; }
+  .emp-pay-value { color: #1e293b; font-weight: 600; }
 }
 
-.emp-field-value { font-size: 13px; color: #334155; }
-.emp-salary      { font-weight: 600; color: #3b82f6; }
+.emp-pay-net {
+  border-top: 2px solid #1d4ed8;
+  background: #eff6ff;
+  padding: 8px 12px;
+  margin-top: 2px;
+  .emp-pay-label { font-size: 12px; font-weight: 700; color: #1e293b; }
+  .emp-pay-value { font-size: 13px; font-weight: 700; color: #1d4ed8; }
+}
 
+// ── Assigned component sections ───────────────────────────────────────────
 .emp-section {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0;
   border-top: 1px solid #e2e8f0;
-  padding-top: 10px;
 }
 
 .emp-section-title {
-  font-size: 10.5px;
+  display: block;
+  padding: 6px 16px 5px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #94a3b8;
-  margin-bottom: 2px;
+  letter-spacing: 0.07em;
+  color: #64748b;
+  background: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .emp-line-item {
   display: flex;
   justify-content: space-between;
-  font-size: 12.5px;
-  color: #475569;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 16px;
+  font-size: 12px;
+  color: #334155;
+  font-variant-numeric: tabular-nums;
+  border-bottom: 1px solid #f8fafc;
+
+  span:first-child {
+    color: #475569;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  span:last-child {
+    flex-shrink: 0;
+    text-align: right;
+    font-size: 12px;
+    color: #1e293b;
+    font-weight: 500;
+  }
 }
 
-.emp-deduction { color: #dc2626; }
+span.emp-deduction { color: #dc2626 !important; }
 
-// ── Shared step wrapper ───────────────────────────────────────────────────
+// ── Step wrapper ──────────────────────────────────────────────────────────
 .step-body {
   display: flex;
   flex-direction: column;
@@ -155,13 +356,9 @@
   flex: 1;
 }
 
-.step-desc {
-  margin: 0;
-  font-size: 13.5px;
-  color: #64748b;
-}
+.step-desc { margin: 0; font-size: 13.5px; color: #64748b; }
 
-// ── Review step ───────────────────────────────────────────────────────────
+// ── Review ────────────────────────────────────────────────────────────────
 .review-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -188,7 +385,6 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: #64748b;
-
   mat-icon { font-size: 16px; width: 16px; height: 16px; }
 }
 
@@ -198,7 +394,6 @@
   align-items: baseline;
   font-size: 13px;
   color: #475569;
-
   &.highlight { font-weight: 700; color: #1e293b; padding-top: 4px; }
 }
 
@@ -208,13 +403,12 @@
 
 mat-divider { margin: 3px 0; }
 
-// ── Approve step ──────────────────────────────────────────────────────────
+// ── Approve ───────────────────────────────────────────────────────────────
 .approve-layout {
   display: grid;
   grid-template-columns: 240px 1fr;
   gap: 24px;
   align-items: start;
-
   @media (max-width: 720px) { grid-template-columns: 1fr; }
 }
 
@@ -228,40 +422,22 @@ mat-divider { margin: 3px 0; }
   gap: 10px;
 }
 
-.approve-emp-name {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.approve-emp-sub {
-  margin: 2px 0 0;
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.approve-amounts { display: flex; flex-direction: column; gap: 6px; }
+.approve-emp-name { margin: 0; font-size: 15px; font-weight: 600; color: #1e293b; }
+.approve-emp-sub  { margin: 2px 0 0; font-size: 12px; color: #94a3b8; }
+.approve-amounts  { display: flex; flex-direction: column; gap: 6px; }
 
 .approve-row {
   display: flex;
   justify-content: space-between;
   font-size: 13px;
   color: #475569;
-
   &.net { font-weight: 700; color: #1e293b; padding-top: 4px; strong { color: #3b82f6; } }
 }
 
-.approve-form-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-top: 4px;
-}
-
+.approve-form-wrap { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
 .full-width { width: 100%; }
 
-// ── Disburse step ─────────────────────────────────────────────────────────
+// ── Disburse ──────────────────────────────────────────────────────────────
 .disburse-confirm {
   background: #fff;
   border: 1px solid #e2e8f0;
@@ -272,9 +448,9 @@ mat-divider { margin: 3px 0; }
   gap: 16px;
 }
 
-.disburse-emp   { display: flex; align-items: center; gap: 12px; }
-.disburse-icon  { font-size: 36px; width: 36px; height: 36px; color: #3b82f6; }
-.disburse-name  { margin: 0; font-size: 15px; font-weight: 600; color: #1e293b; }
+.disburse-emp    { display: flex; align-items: center; gap: 12px; }
+.disburse-icon   { font-size: 36px; width: 36px; height: 36px; color: #3b82f6; }
+.disburse-name   { margin: 0; font-size: 15px; font-weight: 600; color: #1e293b; }
 .disburse-period { margin: 2px 0 0; font-size: 12.5px; color: #94a3b8; }
 
 .disburse-net {
@@ -285,13 +461,12 @@ mat-divider { margin: 3px 0; }
   color: #475569;
   border-top: 1px dashed #e2e8f0;
   padding-top: 12px;
-
   strong { font-size: 18px; color: #3b82f6; }
 }
 
 .btn-disburse { background: #1d4ed8; color: #fff; }
 
-// ── Success state ─────────────────────────────────────────────────────────
+// ── Success ───────────────────────────────────────────────────────────────
 .success-state {
   display: flex;
   flex-direction: column;
@@ -305,7 +480,6 @@ mat-divider { margin: 3px 0; }
 }
 
 .success-icon { font-size: 56px; width: 56px; height: 56px; color: #16a34a; }
-
 .success-state h3 { margin: 0; font-size: 18px; font-weight: 700; color: #15803d; }
 .success-state p  { margin: 0; font-size: 13.5px; color: #166534; }
 
@@ -315,11 +489,10 @@ mat-divider { margin: 3px 0; }
   align-items: baseline;
   font-size: 14px;
   color: #15803d;
-
   strong { font-size: 20px; color: #16a34a; }
 }
 
-// ── Footer action bar ─────────────────────────────────────────────────────
+// ── Action bar ────────────────────────────────────────────────────────────
 .action-bar {
   display: flex;
   align-items: center;
@@ -331,14 +504,13 @@ mat-divider { margin: 3px 0; }
   bottom: 0;
   z-index: 10;
   flex-shrink: 0;
-
   button:last-child { margin-left: auto; }
 }
 
 // ── Responsive ────────────────────────────────────────────────────────────
 @media (max-width: 768px) {
-  .content-layout { grid-template-columns: 1fr; }
-  .workspace      { padding: 12px; }
-  .action-bar     { flex-wrap: wrap; button { flex: 1; } }
-  .review-grid    { grid-template-columns: 1fr; }
+  .content-layout  { grid-template-columns: 1fr; }
+  .action-bar      { flex-wrap: wrap; button { flex: 1; } }
+  .review-grid     { grid-template-columns: 1fr; }
+  .comp-table-wrap { padding: 12px; }
 }

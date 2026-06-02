@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -13,7 +14,7 @@ import { GridColumnDef, PayrollEntryRow } from '../../payroll.models';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule, MatButtonModule, MatFormFieldModule,
-    MatInputModule, MatSelectModule, PayrollEmployeeGridComponent,
+    MatInputModule, MatSelectModule, MatIconModule, PayrollEmployeeGridComponent,
   ],
   template: `
     <div class="inc-controls">
@@ -36,6 +37,16 @@ import { GridColumnDef, PayrollEntryRow } from '../../payroll.models';
         </mat-form-field>
         <button mat-stroked-button (click)="applyBulk()">Apply to all</button>
       </div>
+      <div class="inc-io-actions">
+        <button mat-stroked-button type="button" (click)="exportCsv()" aria-label="Export salary increment data as CSV">
+          <mat-icon>download</mat-icon> Export
+        </button>
+        <button mat-stroked-button type="button" (click)="importInput.click()" aria-label="Import salary increment data from CSV">
+          <mat-icon>upload</mat-icon> Import
+        </button>
+        <input #importInput type="file" accept=".csv" style="display:none"
+               aria-hidden="true" (change)="importCsv($event)">
+      </div>
     </div>
     <app-payroll-employee-grid
       [columns]="columns"
@@ -47,6 +58,7 @@ import { GridColumnDef, PayrollEntryRow } from '../../payroll.models';
   styles: [`
     .inc-controls { display: flex; gap: 16px; flex-wrap: wrap; padding: 12px 0; align-items: flex-end; }
     .bulk-fill { display: flex; gap: 8px; align-items: flex-end; }
+    .inc-io-actions { display: flex; gap: 8px; align-items: center; margin-left: auto; }
   `],
 })
 export class SalaryIncrementComponent {
@@ -110,5 +122,38 @@ export class SalaryIncrementComponent {
       if (!confirm(`Increment of ${evt.value}% is above 30%. Confirm?`)) return;
     }
     this.svc.updateRow(evt.row.id, evt.field, evt.value);
+  }
+
+  exportCsv(): void {
+    const header = 'Employee,Increment %,Effective Date';
+    const rows = this.svc.entries().map(r => {
+      const pct = (r as unknown as { incrementPct: number }).incrementPct ?? 0;
+      const date = (r as unknown as { effectiveDate: string }).effectiveDate ?? '';
+      return `${r.empCode},${pct},${date}`;
+    });
+    const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'salary-increment.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  importCsv(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const lines = (reader.result as string).split('\n').slice(1);
+      for (const line of lines) {
+        const [empCode, pctStr, date] = line.split(',');
+        const row = this.svc.entries().find(r => r.empCode === empCode?.trim());
+        if (!row) continue;
+        const pct = Number(pctStr);
+        if (!isNaN(pct)) this.svc.updateRow(row.id, 'incrementPct', pct);
+        if (date?.trim()) this.svc.updateRow(row.id, 'effectiveDate', date.trim());
+      }
+    };
+    reader.readAsText(file);
+    (event.target as HTMLInputElement).value = '';
   }
 }

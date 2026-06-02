@@ -5,6 +5,16 @@
       <mat-icon aria-hidden="true">card_giftcard</mat-icon>
       <span id="bonus-heading" class="panel-title">Bonus</span>
     </div>
+    <div class="panel-actions">
+      <button mat-stroked-button type="button" (click)="exportCsv()" aria-label="Export bonus data as CSV">
+        <mat-icon>download</mat-icon> Export
+      </button>
+      <button mat-stroked-button type="button" (click)="importInput.click()" aria-label="Import bonus data from CSV">
+        <mat-icon>upload</mat-icon> Import
+      </button>
+      <input #importInput type="file" accept=".csv" class="hidden-input"
+             aria-hidden="true" (change)="importCsv($event)">
+    </div>
   </div>
 
   @if (items().length > 0) {

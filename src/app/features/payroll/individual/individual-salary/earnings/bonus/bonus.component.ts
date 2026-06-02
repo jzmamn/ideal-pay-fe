@@ -60,4 +60,33 @@ export class BonusComponent {
   }
 
   cancelEdit(): void { this.editingIndex.set(null); }
+
+  exportCsv(): void {
+    const header = 'Code,Bonus Type,Amount';
+    const rows = this.items().map(i => `${i.code},${i.name},${i.amount}`);
+    const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'bonus.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  importCsv(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const lines = (reader.result as string).split('\n').slice(1); // skip header
+      this.items.update(list =>
+        list.map(item => {
+          const match = lines.find(l => l.startsWith(item.code + ','));
+          if (!match) return item;
+          const amount = Number(match.split(',')[2]);
+          return isNaN(amount) ? item : { ...item, amount };
+        })
+      );
+    };
+    reader.readAsText(file);
+    (event.target as HTMLInputElement).value = '';
+  }
 }

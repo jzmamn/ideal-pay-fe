@@ -1,6 +1,6 @@
 import {
-  ChangeDetectionStrategy, Component, DestroyRef,
-  computed, inject, signal,
+  ChangeDetectionStrategy, Component,
+  computed, effect, inject, signal,
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -9,7 +9,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { IndividualSalaryService } from '../../shared/individual-salary.service';
 
 interface VariableAllowanceItem {
@@ -31,8 +30,7 @@ interface VariableAllowanceItem {
   styleUrl: './variable-allowance.component.scss',
 })
 export class VariableAllowanceComponent {
-  private readonly svc        = inject(IndividualSalaryService);
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly svc = inject(IndividualSalaryService);
 
   readonly items        = signal<VariableAllowanceItem[]>([]);
   readonly editingIndex = signal<number | null>(null);
@@ -44,13 +42,12 @@ export class VariableAllowanceComponent {
   });
 
   constructor() {
-    toObservable(this.svc.entries)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(entries => {
-        if (entries.length) {
-          this.items.set(entries.map(e => ({ id: e.id, code: e.empCode, name: e.fullName, amount: 0 })));
-        }
-      });
+    effect(() => {
+      const entries = this.svc.entries();
+      if (entries.length) {
+        this.items.set(entries.map(e => ({ id: e.id, code: e.empCode, name: e.fullName, amount: 0 })));
+      }
+    });
   }
 
   startEdit(index: number): void {

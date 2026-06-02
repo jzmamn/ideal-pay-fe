@@ -9,8 +9,8 @@ import { DecimalPipe } from '@angular/common';
   styleUrl: './payroll-summary-bar.component.scss',
 })
 export class PayrollSummaryBarComponent {
-  employeeCount = input.required<number>();
-  grossTotal    = input.required<number>();
-  dedTotal      = input.required<number>();
-  netTotal      = input.required<number>();
+  readonly employeeCount = input.required<number>();
+  readonly grossTotal    = input.required<number>();
+  readonly dedTotal      = input.required<number>();
+  readonly netTotal      = input.required<number>();
 }
