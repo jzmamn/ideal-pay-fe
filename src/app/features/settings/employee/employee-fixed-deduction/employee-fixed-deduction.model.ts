@@ -1,4 +1,5 @@
 export interface EmployeeFixedDeductionRequest {
+  id?: number;
   empId: number;
   fdId: number;
   amount: number;

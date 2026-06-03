@@ -1,76 +1,54 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { API_BASE_URL } from '../../../api-url.token';
 import { ApiResponse } from '../../../shared/models/api-response.model';
 
-export interface EmployeeSalaryAdvanceRequest {
-  empId: number;
-  amount: number;
-  payrollMonth: string;
-  isProcessed?: boolean;
-  processedDate?: string;
-  createdBy: number;
-  modifiedBy: number;
-}
+export type SalAdvStatus = 'DRAFT' | 'LOCKED';
 
-export interface EmployeeSalaryAdvanceResponse {
-  id: number;
-  amount: number;
-  payrollMonth: string;
-  isProcessed: boolean;
-  processedDate: string | null;
-
-  empId: number;
-  empCode: string;
-  empName: string;
-
-  createdById: number;
-  createdByCode: string;
-  createdByUserName: string;
-  createdDate: string;
-  modifiedById: number;
-  modifiedByCode: string;
-  modifiedByUserName: string;
-  modifiedDate: string;
+export interface SalAdvEntry {
+  id:           number;
+  empId:        number;
+  empCode:      string;
+  empName:      string;
+  amount:       number;
+  status:       SalAdvStatus;
+  lockedDate:   string | null;
+  lockedByName: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
 export class SalaryAdvanceService {
   private readonly http    = inject(HttpClient);
-  private readonly baseUrl = `${inject(API_BASE_URL)}/emp-sal-adv`;
+  private readonly baseUrl = `${inject(API_BASE_URL)}/salary-advance`;
 
-  getAll(): Observable<EmployeeSalaryAdvanceResponse[]> {
+  getByPeriod(month: number, year: number): Observable<SalAdvEntry[]> {
     return this.http
-      .get<ApiResponse<EmployeeSalaryAdvanceResponse[]>>(`${this.baseUrl}?showDefaultRow=false`)
+      .get<ApiResponse<SalAdvEntry[]>>(`${this.baseUrl}?month=${month}&year=${year}`)
       .pipe(map(r => r.data));
   }
 
-  getByMonth(payrollMonth: string): Observable<EmployeeSalaryAdvanceResponse[]> {
+  lockEntry(entryId: number, lockedBy: number): Observable<SalAdvEntry> {
     return this.http
-      .get<ApiResponse<EmployeeSalaryAdvanceResponse[]>>(`${this.baseUrl}/month/${payrollMonth}`)
+      .post<ApiResponse<SalAdvEntry>>(
+        `${this.baseUrl}/lock/${entryId}`,
+        null,
+        { params: new HttpParams().set('lockedBy', lockedBy) },
+      )
       .pipe(map(r => r.data));
   }
 
-  getByEmployee(empId: number): Observable<EmployeeSalaryAdvanceResponse[]> {
+  lockAll(month: number, year: number, lockedBy: number): Observable<void> {
     return this.http
-      .get<ApiResponse<EmployeeSalaryAdvanceResponse[]>>(`${this.baseUrl}/employee/${empId}`)
-      .pipe(map(r => r.data));
-  }
-
-  create(body: EmployeeSalaryAdvanceRequest): Observable<EmployeeSalaryAdvanceResponse> {
-    return this.http
-      .post<ApiResponse<EmployeeSalaryAdvanceResponse>>(this.baseUrl, body)
-      .pipe(map(r => r.data));
-  }
-
-  update(id: number, body: EmployeeSalaryAdvanceRequest): Observable<EmployeeSalaryAdvanceResponse> {
-    return this.http
-      .put<ApiResponse<EmployeeSalaryAdvanceResponse>>(`${this.baseUrl}/${id}`, body)
-      .pipe(map(r => r.data));
-  }
-
-  delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+      .post<void>(
+        `${this.baseUrl}/lock-all`,
+        null,
+        {
+          params: new HttpParams()
+            .set('month', month)
+            .set('year', year)
+            .set('lockedBy', lockedBy),
+        },
+      );
   }
 }

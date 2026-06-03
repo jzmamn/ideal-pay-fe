@@ -1,4 +1,5 @@
 export interface EmployeeFixedAllowanceRequest {
+  id?: number;
   empId: number;
   faId: number;
   amount: number;

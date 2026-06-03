@@ -1,22 +1,22 @@
 <div class="si-shell">
 
-  <!-- ── Top bar ───────────────────────────────────────────────────────────── -->
+  <input #csvFileInput type="file" accept=".csv" style="display:none"
+         (change)="onCsvFileSelected($event)"/>
+
+  <!-- ── Top bar ─────────────────────────────────────────────────────────── -->
   <div class="si-topbar">
     <h2 class="si-title">Salary Increment</h2>
-    <div class="si-filters">
-      <select class="si-filter-select" (change)="filterType.set($any($event.target).value)">
-        <option value="">All Types</option>
-        <option value="BATCH">Batch</option>
-        <option value="INDIVIDUAL">Individual</option>
-      </select>
-      <select class="si-filter-select" (change)="filterStatus.set($any($event.target).value)">
-        <option value="">All Statuses</option>
-        <option value="DRAFT">Draft</option>
-        <option value="APPROVED">Approved</option>
-        <option value="EXPORTED">Exported</option>
-        <option value="CANCELLED">Cancelled</option>
-      </select>
-    </div>
+
+    <!-- Filter: Status -->
+    <select class="si-filter-select" (change)="filterStatus.set($any($event.target).value)">
+      <option value="">All Statuses</option>
+      <option value="DRAFT">Draft</option>
+      <option value="APPROVED">Approved</option>
+      <option value="EXPORTED">Exported</option>
+      <option value="POSTED">Posted</option>
+      <option value="CANCELLED">Cancelled</option>
+    </select>
+
     <button mat-flat-button (click)="openCreate()">
       <mat-icon>add</mat-icon> New Increment
     </button>
@@ -24,60 +24,36 @@
 
   <div class="si-body">
 
-    <!-- ── Left: List ────────────────────────────────────────────────────── -->
+    <!-- ── Left: list ──────────────────────────────────────────────────── -->
     <div class="si-list-panel">
-
       @if (loading()) {
         <div class="si-list-loading"><mat-spinner diameter="18"/><span>Loading…</span></div>
       }
-
-      @if (batchList().length) {
-        <div class="si-list-group-label">Batch</div>
-        @for (inc of batchList(); track inc.id) {
-          <div class="si-list-item" [class.active]="selected()?.id === inc.id" (click)="select(inc)">
-            <div class="si-item-row1">
-              <span class="si-item-code">{{ inc.code }}</span>
-              <span class="si-chip" [ngClass]="statusClass(inc.status)">{{ inc.status }}</span>
-            </div>
-            <div class="si-item-name">{{ inc.name }}</div>
-            <div class="si-item-meta">{{ inc.effectiveMonth }} · {{ inc.details?.length ?? 0 }} employee(s)</div>
+      @for (inc of filtered(); track inc.id) {
+        <div class="si-list-item" [class.active]="selected()?.id === inc.id" (click)="select(inc)">
+          <div class="si-item-row1">
+            <span class="si-item-code">{{ inc.code }}</span>
+            <span class="si-chip" [ngClass]="statusClass(inc.status)">{{ inc.status }}</span>
           </div>
-        }
+          <div class="si-item-name">{{ inc.name }}</div>
+          <div class="si-item-meta">{{ inc.effectiveMonth }} · {{ inc.details.length }} employee(s)</div>
+        </div>
       }
-
-      @if (individualList().length) {
-        <div class="si-list-group-label">Individual</div>
-        @for (inc of individualList(); track inc.id) {
-          <div class="si-list-item" [class.active]="selected()?.id === inc.id" (click)="select(inc)">
-            <div class="si-item-row1">
-              <span class="si-item-code">{{ inc.code }}</span>
-              <span class="si-chip" [ngClass]="statusClass(inc.status)">{{ inc.status }}</span>
-            </div>
-            <div class="si-item-name">{{ inc.name }}</div>
-            <div class="si-item-meta">{{ inc.effectiveMonth }}
-              @if (inc.details?.[0]) { · {{ inc.details[0].empName }} }
-            </div>
-          </div>
-        }
-      }
-
       @if (!loading() && !filtered().length) {
         <div class="si-list-empty">
           <mat-icon>trending_up</mat-icon>
-          <p>No increments yet.<br>Click <strong>New Increment</strong> to start.</p>
+          <p>No increments found.</p>
         </div>
       }
     </div>
 
-    <!-- ── Right: Form / Detail ──────────────────────────────────────────── -->
+    <!-- ── Right panel ─────────────────────────────────────────────────── -->
     <div class="si-right-panel">
 
-      <!-- ═══════════════ CREATE / EDIT FORM ════════════════════════════════ -->
+      <!-- ════════ FORM ════════════════════════════════════════════════════ -->
       @if (isFormMode()) {
+        <div class="si-form-wrap">
 
-        <div class="si-form-container" [formGroup]="form">
-
-          <!-- Form header -->
           <div class="si-form-topbar">
             <h3>{{ panelMode() === 'edit' ? 'Edit Increment' : 'New Salary Increment' }}</h3>
             <button mat-icon-button matTooltip="Cancel" (click)="cancelForm()">
@@ -85,199 +61,207 @@
             </button>
           </div>
 
-          <!-- ── Section 1: Header fields ── -->
-          <div class="si-form-section">
-            <div class="si-section-title">Increment Details</div>
+          <!-- ── 1. Header ── -->
+          <div class="si-section">
+            <div class="si-section-label">Increment Details</div>
             <div class="si-form-grid">
 
-              <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                <mat-label>Code</mat-label>
-                <input matInput formControlName="code" placeholder="SI-2026-01"/>
-                @if (form.controls.code.invalid && form.controls.code.touched) {
-                  <mat-error>Required</mat-error>
-                }
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                <mat-label>Effective Month</mat-label>
-                <input matInput formControlName="effectiveMonth" placeholder="2026-01"/>
-                @if (form.controls.effectiveMonth.invalid && form.controls.effectiveMonth.touched) {
-                  <mat-error>Enter YYYY-MM</mat-error>
-                }
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="span-2">
-                <mat-label>Name / Description</mat-label>
-                <input matInput formControlName="name" placeholder="Annual increment 2026"/>
-                @if (form.controls.name.invalid && form.controls.name.touched) {
-                  <mat-error>Required</mat-error>
-                }
-              </mat-form-field>
-
-              <!-- Type toggle -->
-              <div class="si-type-toggle span-2">
-                <span class="si-toggle-label">Type</span>
-                <button type="button"
-                        class="si-toggle-btn"
-                        [class.active]="form.controls.type.value === 'INDIVIDUAL'"
-                        (click)="form.controls.type.setValue('INDIVIDUAL'); editDetails.set([])">
-                  <mat-icon>person</mat-icon> Individual
-                </button>
-                <button type="button"
-                        class="si-toggle-btn"
-                        [class.active]="form.controls.type.value === 'BATCH'"
-                        (click)="form.controls.type.setValue('BATCH'); editDetails.set([])">
-                  <mat-icon>groups</mat-icon> Batch
-                </button>
+              <!-- Code: read-only, auto-generated -->
+              <div class="si-readonly-field">
+                <span class="si-readonly-label">Code (auto-generated)</span>
+                <span class="si-readonly-val">{{ generatedCode() || '—' }}</span>
               </div>
 
-              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="span-2">
-                <mat-label>Remarks</mat-label>
-                <input matInput formControlName="remarks" placeholder="Optional note…"/>
-              </mat-form-field>
+              <!-- Effective Month: two dropdowns -->
+              <div class="si-month-picker">
+                <span class="si-readonly-label">Effective Month</span>
+                <div class="si-month-selects">
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="si-month-field">
+                    <mat-label>Month</mat-label>
+                    <mat-select [value]="formMonth()" (valueChange)="onMonthChange($event)">
+                      @for (m of MONTHS; track m.value) {
+                        <mat-option [value]="m.value">{{ m.label }}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="si-year-field">
+                    <mat-label>Year</mat-label>
+                    <mat-select [value]="formYear()" (valueChange)="onYearChange($event)">
+                      @for (y of YEARS; track y) {
+                        <mat-option [value]="y">{{ y }}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <!-- Name -->
+              <div class="si-input-field span-2">
+                <label class="si-input-label">Name</label>
+                <input class="si-text-input"
+                       [value]="formName()"
+                       (input)="formName.set($any($event.target).value)"
+                       placeholder="Annual increment 2026"/>
+              </div>
+
+              <!-- Remarks -->
+              <div class="si-input-field span-2">
+                <label class="si-input-label">Remarks</label>
+                <input class="si-text-input"
+                       [value]="formRemarks()"
+                       (input)="formRemarks.set($any($event.target).value)"
+                       placeholder="Optional note…"/>
+              </div>
 
             </div>
           </div>
 
-          <!-- ── Section 2a: INDIVIDUAL employee picker ── -->
-          @if (formType() === 'INDIVIDUAL') {
-            <div class="si-form-section">
-              <div class="si-section-title">Employee</div>
+          <!-- ── 2. Employee section ── -->
+          <div class="si-section">
+            <div class="si-section-label">Employees</div>
 
-              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="si-emp-select-field">
-                <mat-label>Select Employee</mat-label>
-                <mat-select (selectionChange)="onIndividualEmpChange($event.value)">
-                  @for (emp of employees(); track emp.id) {
-                    <mat-option [value]="emp.id">
-                      {{ emp.payrollName }} — {{ emp.employeeNo }}
-                    </mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+            <div class="si-emp-toolbar">
+              <!-- Table autocomplete search -->
+              <app-table-autocomplete
+                class="si-emp-autocomplete"
+                [formControl]="addEmpCtrl"
+                label="Add Employee"
+                placeholder="Search by name or employee #…"
+                src="/employee?isActive=true"
+                [columns]="employeeCols"
+                [displayFn]="empDisplayFn"
+                (itemSelected)="onEmpSelected($event)"
+              />
 
-              @if (loadingEmp()) {
-                <div class="si-emp-loading"><mat-spinner diameter="16"/><span>Loading employee data…</span></div>
-              }
-            </div>
-          }
+              <div class="si-emp-divider">or</div>
 
-          <!-- ── Section 2b: BATCH employee list ── -->
-          @if (formType() === 'BATCH') {
-            <div class="si-form-section">
-              <div class="si-section-title-row">
-                <span class="si-section-title">Employees</span>
-                <div class="si-batch-add-row">
-                  <select class="si-native-select"
-                          [value]="selectedBatchEmpId()"
-                          (change)="selectedBatchEmpId.set(+$any($event.target).value)">
-                    <option value="0" disabled>Select employee to add…</option>
-                    @for (emp of availableEmps(); track emp.id) {
-                      <option [value]="emp.id">{{ emp.payrollName }} — {{ emp.employeeNo }}</option>
-                    }
-                  </select>
-                  <button mat-stroked-button [disabled]="!selectedBatchEmpId() || loadingEmp()"
-                          (click)="addBatchEmployee(selectedBatchEmpId()); selectedBatchEmpId.set(0)">
-                    <mat-icon>person_add</mat-icon> Add
-                  </button>
-                </div>
+              <div class="si-csv-row">
+                <button mat-stroked-button (click)="triggerCsvUpload()" [disabled]="loadingEmp()">
+                  <mat-icon>upload_file</mat-icon> Import CSV
+                </button>
+                <button mat-stroked-button (click)="exportCsv()" [disabled]="!editDetails().length">
+                  <mat-icon>download</mat-icon> Export CSV
+                </button>
+                <button mat-stroked-button (click)="downloadTemplate()" matTooltip="Blank CSV template">
+                  <mat-icon>description</mat-icon> Template
+                </button>
               </div>
-              @if (loadingEmp()) {
-                <div class="si-emp-loading"><mat-spinner diameter="16"/><span>Loading employee data…</span></div>
-              }
             </div>
-          }
 
-          <!-- ── Section 3: Per-employee increment entry ── -->
-          @for (detail of editDetails(); track trackIdx($index); let di = $index) {
-            <div class="si-emp-card">
+            @if (loadingEmp()) {
+              <div class="si-loading-row"><mat-spinner diameter="16"/><span>Loading employee data…</span></div>
+            }
+            @if (importError()) {
+              <div class="si-import-error">{{ importError() }}</div>
+            }
+          </div>
 
-              <!-- Employee card header -->
-              <div class="si-emp-card-header">
-                <div class="si-emp-avatar">{{ detail.empName?.charAt(0) }}</div>
-                <div>
-                  <div class="si-emp-card-name">{{ detail.empName }}</div>
-                  <div class="si-emp-card-code">{{ detail.empCode }}</div>
-                </div>
-                @if (formType() === 'BATCH') {
-                  <button mat-icon-button class="si-remove-emp" matTooltip="Remove"
-                          (click)="removeEmployee(di)">
+          <!-- ── 3. Detail filter bar ── -->
+          @if (editDetails().length > 1) {
+            <div class="si-detail-filter-bar">
+              <div class="si-detail-search-wrap">
+                <mat-icon class="si-detail-search-icon">search</mat-icon>
+                <input class="si-detail-search"
+                       placeholder="Search employee…"
+                       [value]="detailEmpSearch()"
+                       (input)="detailEmpSearch.set($any($event.target).value)"/>
+                @if (detailEmpSearch()) {
+                  <button mat-icon-button class="si-clear-search"
+                          (click)="detailEmpSearch.set('')">
                     <mat-icon>close</mat-icon>
                   </button>
                 }
               </div>
 
-              <!-- Basic salary increment -->
-              <div class="si-inc-block">
-                <div class="si-inc-block-title">
+              <span class="si-detail-count">
+                {{ filteredEditDetails().length }} / {{ editDetails().length }} employee(s)
+              </span>
+            </div>
+          }
+
+          <!-- ── Per-employee increment rows ── -->
+          @for (detail of filteredEditDetails(); track detail.empId; let fi = $index) {
+            <div class="si-emp-block">
+
+              <div class="si-emp-block-header">
+                <div class="si-emp-avatar">{{ (detail.empName || detail.empCode)?.charAt(0) }}</div>
+                <div class="si-emp-info">
+                  <span class="si-emp-name">{{ detail.empName || detail.empCode }}</span>
+                  <span class="si-emp-code">{{ detail.empCode }}</span>
+                </div>
+                <button mat-icon-button class="si-remove-btn" matTooltip="Remove"
+                        (click)="removeEmployee(detail.empId)">
+                  <mat-icon>person_remove</mat-icon>
+                </button>
+              </div>
+
+              <!-- Basic salary -->
+              <div class="si-basic-section">
+                <div class="si-subsection-label">
                   <mat-icon>account_balance_wallet</mat-icon> Basic Salary
                 </div>
-                <div class="si-inc-row">
-                  <div class="si-inc-field">
-                    <span class="si-inc-label">Current Basic</span>
-                    <span class="si-inc-static">{{ detail.currentBasic | number:'1.2-2' }}</span>
+                <div class="si-basic-row">
+                  <div class="si-amt-field">
+                    <span class="si-amt-label">Current</span>
+                    <span class="si-amt-val">{{ detail.currentBasic | number:'1.2-2' }}</span>
                   </div>
-                  <div class="si-inc-field">
-                    <span class="si-inc-label">Increment Amount</span>
-                    <input class="si-inc-input" type="number" min="0" step="500"
-                           placeholder="0.00"
-                           [value]="detail.incrementBasic || ''"
-                           (change)="updateBasicIncrement(di, +$any($event.target).value)"/>
+                  <mat-icon class="si-op-icon">add</mat-icon>
+                  <div class="si-amt-field">
+                    <span class="si-amt-label">Increment</span>
+                    <input class="si-num-input" type="number" min="0" step="500"
+                           placeholder="0.00" [value]="detail.incrementBasic || ''"
+                           (change)="updateBasicIncrement(detail.empId, +$any($event.target).value)"/>
                   </div>
-                  <div class="si-inc-field">
-                    <span class="si-inc-label">New Basic</span>
-                    <span class="si-inc-static si-inc-new">{{ detail.newBasic | number:'1.2-2' }}</span>
+                  <mat-icon class="si-op-icon">drag_handle</mat-icon>
+                  <div class="si-amt-field">
+                    <span class="si-amt-label">New Basic</span>
+                    <span class="si-amt-val si-new">{{ detail.newBasic | number:'1.2-2' }}</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Fixed Allowance increments -->
-              <div class="si-fa-block">
-                <div class="si-fa-block-header">
-                  <div class="si-inc-block-title">
+              <!-- Fixed Allowances -->
+              <div class="si-fa-section">
+                <div class="si-fa-header">
+                  <div class="si-subsection-label">
                     <mat-icon>add_card</mat-icon> Fixed Allowances
                   </div>
-                  <button mat-stroked-button class="si-add-fa-btn" (click)="addFaRow(di)">
+                  <button mat-stroked-button class="si-fa-add-btn" (click)="addFaRow(detail.empId)">
                     <mat-icon>add</mat-icon> Add Row
                   </button>
                 </div>
 
                 @if (detail.faIncrements.length) {
                   <table class="si-fa-table">
-                    <thead>
-                      <tr>
-                        <th>Allowance</th>
-                        <th>Current Amount</th>
-                        <th>Increment</th>
-                        <th>New Amount</th>
-                        <th></th>
-                      </tr>
-                    </thead>
+                    <thead><tr>
+                      <th>Allowance</th><th>Current</th><th>Increment</th><th>New Amount</th><th></th>
+                    </tr></thead>
                     <tbody>
-                      @for (fa of detail.faIncrements; track trackIdx($index); let fi = $index) {
+                      @for (fa of detail.faIncrements; track trackIdx($index); let fai = $index) {
                         <tr>
                           <td>
-                            <select class="si-native-select si-fa-select"
+                            <select class="si-native-select"
                                     [value]="fa.faId || 0"
-                                    (change)="updateFaField(di, fi, 'faId', $any($event.target).value)">
-                              <option value="0" disabled>Select…</option>
+                                    (change)="updateFaField(detail.empId, fai, 'faId', $any($event.target).value)">
+                              <option value="0" disabled>Select allowance…</option>
                               @for (opt of faOptions(); track opt.id) {
                                 <option [value]="opt.id">{{ opt.code }} – {{ opt.name }}</option>
                               }
                             </select>
                           </td>
                           <td>
-                            <input class="si-inc-input" type="number" min="0" step="100"
+                            <input class="si-num-input si-num-sm" type="number" min="0" step="100"
                                    placeholder="0.00" [value]="fa.currentAmount || ''"
-                                   (change)="updateFaField(di, fi, 'currentAmount', $any($event.target).value)"/>
+                                   (change)="updateFaField(detail.empId, fai, 'currentAmount', $any($event.target).value)"/>
                           </td>
                           <td>
-                            <input class="si-inc-input" type="number" min="0" step="100"
+                            <input class="si-num-input si-num-sm" type="number" min="0" step="100"
                                    placeholder="0.00" [value]="fa.incrementAmount || ''"
-                                   (change)="updateFaField(di, fi, 'incrementAmount', $any($event.target).value)"/>
+                                   (change)="updateFaField(detail.empId, fai, 'incrementAmount', $any($event.target).value)"/>
                           </td>
                           <td class="si-fa-new">{{ fa.newAmount | number:'1.2-2' }}</td>
                           <td>
-                            <button mat-icon-button class="si-del-fa" (click)="removeFaRow(di, fi)">
+                            <button mat-icon-button class="si-del-fa" (click)="removeFaRow(detail.empId, fai)">
                               <mat-icon>delete_outline</mat-icon>
                             </button>
                           </td>
@@ -286,49 +270,53 @@
                     </tbody>
                   </table>
                 } @else {
-                  <p class="si-fa-empty">No FA increments added. Click <strong>Add Row</strong> to include one.</p>
+                  <p class="si-fa-empty">No FA increments. Click <strong>Add Row</strong> to add one.</p>
                 }
               </div>
 
             </div>
           }
 
-          <!-- ── Save bar ── -->
+          @if (!editDetails().length && !loadingEmp()) {
+            <div class="si-no-emp-hint">
+              <mat-icon>group_add</mat-icon>
+              <p>Search and add employees above, or import a CSV file.</p>
+            </div>
+          }
+
+          <!-- Save bar -->
           <div class="si-save-bar">
             <button mat-stroked-button (click)="cancelForm()">Cancel</button>
-            <button mat-flat-button [disabled]="saving() || !editDetails().length" (click)="save()">
-              @if (saving()) { <mat-spinner diameter="16"/> Saving… }
-              @else { <mat-icon>save</mat-icon> Save as Draft }
+            <button mat-flat-button [disabled]="saving() || !editDetails().length || !formName().trim()"
+                    (click)="save()">
+              @if (saving()) { <mat-spinner diameter="16"/> } @else { <mat-icon>save</mat-icon> }
+              {{ saving() ? 'Saving…' : 'Save Draft' }}
             </button>
           </div>
 
         </div>
-
       }
 
-      <!-- ═══════════════ DETAIL / VIEW MODE ═══════════════════════════════ -->
+      <!-- ════════ VIEW MODE ════════════════════════════════════════════════ -->
       @else if (panelMode() === 'view' && selected(); as inc) {
+        <div class="si-view-wrap">
 
-        <div class="si-view-container">
-
-          <!-- View header -->
           <div class="si-view-header">
-            <div>
+            <div class="si-view-title-block">
               <div class="si-view-title-row">
                 <h3 class="si-view-title">{{ inc.name }}</h3>
                 <span class="si-chip si-chip-lg" [ngClass]="statusClass(inc.status)">{{ inc.status }}</span>
               </div>
               <div class="si-view-meta">
-                <span>{{ inc.code }}</span>
-                <span>·</span>
-                <span>{{ inc.type }}</span>
+                <span class="si-view-code">{{ inc.code }}</span>
                 <span>·</span>
                 <span>Effective: <strong>{{ inc.effectiveMonth }}</strong></span>
+                <span>·</span>
+                <span>{{ inc.details.length }} employee(s)</span>
               </div>
               @if (inc.remarks) { <p class="si-view-remarks">{{ inc.remarks }}</p> }
             </div>
 
-            <!-- Action buttons -->
             <div class="si-view-actions">
               @if (canEdit()) {
                 <button mat-stroked-button (click)="openEdit()">
@@ -345,10 +333,15 @@
                   <mat-icon>upload</mat-icon> Export to Payroll
                 </button>
               }
-              @if (!isExported()) {
-                <button mat-stroked-button [disabled]="acting()" (click)="importPayroll()"
-                        matTooltip="Refresh current values from payroll">
-                  <mat-icon>download</mat-icon> Import from Payroll
+              @if (canPost()) {
+                <button mat-flat-button class="btn-post" [disabled]="acting()" (click)="postIncrement()">
+                  <mat-icon>lock</mat-icon> Post
+                </button>
+              }
+              @if (!isPosted() && inc.status !== 'CANCELLED') {
+                <button mat-stroked-button [disabled]="acting()" (click)="syncPayroll()"
+                        matTooltip="Refresh current values from live payroll data">
+                  <mat-icon>sync</mat-icon>
                 </button>
               }
               @if (canCancel()) {
@@ -367,8 +360,18 @@
 
           <mat-divider/>
 
-          <!-- Exported banner -->
-          @if (isExported()) {
+          @if (isPosted()) {
+            <div class="si-posted-banner">
+              <mat-icon>lock</mat-icon>
+              Increment posted for <strong>{{ inc.effectiveMonth }}</strong> — no further edits allowed.
+              <a mat-stroked-button routerLink="/payroll/pay-slip" class="si-banner-link">
+                <mat-icon>receipt_long</mat-icon> Payslips
+              </a>
+              <a mat-stroked-button routerLink="/payroll/batch" class="si-banner-link">
+                <mat-icon>grid_on</mat-icon> Summary
+              </a>
+            </div>
+          } @else if (inc.status === 'EXPORTED') {
             <div class="si-exported-banner">
               <mat-icon>check_circle</mat-icon>
               Exported to payroll for <strong>{{ inc.effectiveMonth }}</strong>
@@ -376,58 +379,79 @@
                 <mat-icon>receipt_long</mat-icon> Payslips
               </a>
               <a mat-stroked-button routerLink="/payroll/batch" class="si-banner-link">
-                <mat-icon>grid_on</mat-icon> Batch Summary
+                <mat-icon>grid_on</mat-icon> Summary
               </a>
             </div>
           }
 
-          <!-- Employee detail cards -->
+          <!-- Detail filter bar -->
+          @if (inc.details.length > 1) {
+            <div class="si-detail-filter-bar">
+              <div class="si-detail-search-wrap">
+                <mat-icon class="si-detail-search-icon">search</mat-icon>
+                <input class="si-detail-search"
+                       placeholder="Search employee…"
+                       [value]="detailEmpSearch()"
+                       (input)="detailEmpSearch.set($any($event.target).value)"/>
+                @if (detailEmpSearch()) {
+                  <button mat-icon-button class="si-clear-search"
+                          (click)="detailEmpSearch.set('')">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                }
+              </div>
+
+              <span class="si-detail-count">
+                {{ filteredViewDetails().length }} / {{ inc.details.length }} employee(s)
+              </span>
+            </div>
+          }
+
+          <!-- Detail cards -->
           <div class="si-view-cards">
-            @for (detail of inc.details; track detail.id) {
+            @for (d of filteredViewDetails(); track d.id) {
               <div class="si-view-card">
-                <div class="si-view-card-header">
-                  <div class="si-emp-avatar">{{ detail.empName?.charAt(0) }}</div>
+                <div class="si-view-card-top">
+                  <div class="si-emp-avatar">{{ d.empName.charAt(0) }}</div>
                   <div>
-                    <div class="si-emp-card-name">{{ detail.empName }}</div>
-                    <div class="si-emp-card-code">
-                      {{ detail.empCode }}
-                      @if (detail.designationName) { · {{ detail.designationName }} }
-                      @if (detail.branchName) { · {{ detail.branchName }} }
+                    <div class="si-emp-name">{{ d.empName }}</div>
+                    <div class="si-emp-code">{{ d.empCode }}
+                      @if (d.designationName) { · {{ d.designationName }} }
+                      @if (d.branchName)      { · {{ d.branchName }} }
                     </div>
                   </div>
-                  @if (detail.isExported) {
+                  @if (d.isExported) {
                     <span class="si-exp-badge"><mat-icon>check</mat-icon> Exported</span>
                   }
                 </div>
 
-                <!-- Basic salary summary -->
-                <div class="si-view-inc-row">
+                <!-- Basic row -->
+                <div class="si-view-basic-row">
                   <div class="si-view-col">
                     <span class="si-view-col-label">Current Basic</span>
-                    <span class="si-view-col-val">{{ detail.currentBasic | number:'1.2-2' }}</span>
+                    <span class="si-view-col-val">{{ d.currentBasic | number:'1.2-2' }}</span>
                   </div>
-                  <mat-icon class="si-arrow">arrow_forward</mat-icon>
+                  <mat-icon class="si-arrow">add</mat-icon>
                   <div class="si-view-col">
                     <span class="si-view-col-label">Increment</span>
-                    <span class="si-view-col-val si-positive">+ {{ detail.incrementBasic | number:'1.2-2' }}</span>
+                    <span class="si-view-col-val si-positive">{{ d.incrementBasic | number:'1.2-2' }}</span>
                   </div>
-                  <mat-icon class="si-arrow">arrow_forward</mat-icon>
+                  <mat-icon class="si-arrow">drag_handle</mat-icon>
                   <div class="si-view-col">
                     <span class="si-view-col-label">New Basic</span>
-                    <span class="si-view-col-val si-new">{{ detail.newBasic | number:'1.2-2' }}</span>
+                    <span class="si-view-col-val si-new">{{ d.newBasic | number:'1.2-2' }}</span>
                   </div>
                 </div>
 
-                <!-- FA increments table -->
-                @if (detail.faIncrements?.length) {
-                  <div class="si-view-fa">
-                    <div class="si-view-fa-title">Fixed Allowance Increments</div>
-                    <table class="si-fa-view-table">
+                @if (d.faIncrements.length) {
+                  <div class="si-view-fa-wrap">
+                    <div class="si-view-fa-label">Fixed Allowance Increments</div>
+                    <table class="si-view-fa-table">
                       <thead><tr>
                         <th>Allowance</th><th>Current</th><th>Increment</th><th>New Amount</th>
                       </tr></thead>
                       <tbody>
-                        @for (fa of detail.faIncrements; track fa.id) {
+                        @for (fa of d.faIncrements; track fa.id) {
                           <tr>
                             <td>{{ fa.faCode }} – {{ fa.faName }}</td>
                             <td>{{ fa.currentAmount | number:'1.2-2' }}</td>
@@ -443,17 +467,14 @@
             }
           </div>
         </div>
-
       }
 
-      <!-- ═══════════════ EMPTY STATE ═══════════════════════════════════════ -->
+      <!-- ════════ EMPTY ════════════════════════════════════════════════════ -->
       @else {
         <div class="si-empty-state">
           <mat-icon>trending_up</mat-icon>
           <p>Select an increment from the list<br>or click <strong>New Increment</strong> to create one.</p>
-          <button mat-flat-button (click)="openCreate()">
-            <mat-icon>add</mat-icon> New Increment
-          </button>
+          <button mat-flat-button (click)="openCreate()"><mat-icon>add</mat-icon> New Increment</button>
         </div>
       }
 

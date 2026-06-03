@@ -19,6 +19,9 @@ export interface EmployeeRequest {
   designationId: number;
   branchId: number;
   gradeId: number;
+  bankId?: number;
+  bankBranchId?: number;
+  accountNo?: string;
   statusId: number;
   statDate?: string;
   statFrom?: string;
@@ -78,6 +81,14 @@ export interface EmployeeResponse {
   gradeId: number;
   gradeCode: string;
   gradeName: string;
+
+  bankId?: number;
+  bankCode?: string;
+  bankName?: string;
+  bankBranchId?: number;
+  bankBranchCode?: string;
+  bankBranchName?: string;
+  accountNo?: string;
 
   statusId: number;
   statusCode: string;

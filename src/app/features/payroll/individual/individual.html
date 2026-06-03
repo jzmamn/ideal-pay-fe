@@ -78,7 +78,7 @@
                             {{ selectedEmployee() ? 'No fixed allowances assigned.' : 'Select an employee to load components.' }}
                           </td></tr>
                         } @else {
-                          @for (row of fixedAllowances(); track row.id; let i = $index) {
+                          @for (row of fixedAllowances(); track $index; let i = $index) {
                             <tr>
                               <td class="col-code">{{ row.faCode }}</td>
                               <td class="col-name">{{ row.faName }}</td>
@@ -113,7 +113,7 @@
                             {{ selectedEmployee() ? 'No variable allowances assigned.' : 'Select an employee to load components.' }}
                           </td></tr>
                         } @else {
-                          @for (row of variableAllowances(); track row.id; let i = $index) {
+                          @for (row of variableAllowances(); track $index; let i = $index) {
                             <tr>
                               <td class="col-code">{{ row.vaCode }}</td>
                               <td class="col-name">{{ row.vaName }}</td>
@@ -149,7 +149,7 @@
                             {{ selectedEmployee() ? 'No overtime assigned.' : 'Select an employee to load components.' }}
                           </td></tr>
                         } @else {
-                          @for (row of overtimes(); track row.id; let i = $index) {
+                          @for (row of overtimes(); track $index; let i = $index) {
                             <tr>
                               <td class="col-code">{{ row.overtimeCode }}</td>
                               <td class="col-name">{{ row.overtimeName }}</td>
@@ -190,7 +190,7 @@
                             {{ selectedEmployee() ? 'No fixed deductions assigned.' : 'Select an employee to load components.' }}
                           </td></tr>
                         } @else {
-                          @for (row of fixedDeductions(); track row.id; let i = $index) {
+                          @for (row of fixedDeductions(); track $index; let i = $index) {
                             <tr>
                               <td class="col-code">{{ row.fdCode }}</td>
                               <td class="col-name">{{ row.fdName }}</td>
@@ -225,7 +225,7 @@
                             {{ selectedEmployee() ? 'No variable deductions assigned.' : 'Select an employee to load components.' }}
                           </td></tr>
                         } @else {
-                          @for (row of variableDeductions(); track row.id; let i = $index) {
+                          @for (row of variableDeductions(); track $index; let i = $index) {
                             <tr>
                               <td class="col-code">{{ row.vdCode }}</td>
                               <td class="col-name">{{ row.vdName }}</td>
@@ -261,7 +261,7 @@
                             {{ selectedEmployee() ? 'No NoPay entries for this period.' : 'Select an employee to load components.' }}
                           </td></tr>
                         } @else {
-                          @for (row of nopays(); track row.id; let i = $index) {
+                          @for (row of nopays(); track $index; let i = $index) {
                             <tr>
                               <td class="col-code">{{ row.nopayCode }}</td>
                               <td class="col-name comp-readonly">{{ $any(row).nopayMasterDays }}</td>
@@ -321,7 +321,7 @@
 
             <!-- ── Header ── -->
             <div class="emp-summary-header">
-              <div class="emp-avatar">{{ emp.firstName?.charAt(0) }}{{ emp.lastName?.charAt(0) }}</div>
+              <div class="emp-avatar">{{ emp.firstName.charAt(0) }}{{ emp.lastName.charAt(0) }}</div>
               <div class="emp-header-info">
                 <p class="emp-full-name">{{ emp.firstName }} {{ emp.lastName }}</p>
                 <p class="emp-no">{{ emp.employeeNo }}</p>
@@ -500,17 +500,34 @@
       </div>
 
       <footer class="action-bar">
-        <button mat-stroked-button [disabled]="saving()" (click)="saveDraft()">
-          @if (saving()) { Saving… } @else { Save Draft }
-        </button>
-        <button mat-stroked-button (click)="recalculate()">
-          <mat-icon>refresh</mat-icon> Recalculate
-        </button>
         <button mat-flat-button
                 [disabled]="submitting() || !selectedEmployee()"
                 (click)="submitForReview()">
-          @if (submitting()) { Submitting… } @else { Submit for Review }
+          @if (submitting()) { Processing… } @else { Process }
           <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+        </button>
+      </footer>
+    }
+
+    <!-- ══ Draft ═════════════════════════════════════════════════════════ -->
+    @case ('draft') {
+      <div class="step-body">
+        @if (submitting()) {
+          <div class="loading-bar" aria-live="polite">
+            <mat-spinner diameter="16" />
+            <span>Processing payroll…</span>
+          </div>
+        }
+        <app-payroll-draft-view
+          [run]="draftRun()"
+          [periodLabel]="periodLabel()"
+          (reprocess)="reprocessIndividual()"
+          (locked)="onRunLocked($event)"
+        />
+      </div>
+      <footer class="action-bar">
+        <button mat-stroked-button (click)="workflowStep.set('prepare')">
+          <mat-icon>arrow_back</mat-icon> Back
         </button>
       </footer>
     }

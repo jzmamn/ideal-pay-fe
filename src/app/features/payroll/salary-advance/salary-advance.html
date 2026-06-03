@@ -1,6 +1,132 @@
-<div class="page-shell">
+<div class="page-shell" [formGroup]="periodForm">
 
-  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <!-- ══ Draft View ═══════════════════════════════════════════════════════ -->
+  @if (showDraft()) {
+    <div class="draft-shell">
+      <div class="draft-shell-header">
+        <button mat-stroked-button (click)="backToEntry()">
+          <mat-icon>arrow_back</mat-icon> Back to Entry
+        </button>
+        <h2 class="draft-shell-title">Salary Advance Draft — {{ periodLabel }}</h2>
+      </div>
+
+      @if (lockError()) {
+        <div class="sa-draft-error" role="alert">
+          <mat-icon>error_outline</mat-icon> {{ lockError() }}
+        </div>
+      }
+
+      @if (draftEntries().length === 0) {
+        <div class="sa-draft-empty">
+          <mat-icon>info_outline</mat-icon>
+          <p>No salary advance entries for this period.</p>
+        </div>
+      }
+
+      @if (draftEntries().length > 0) {
+
+        <!-- Summary chips -->
+        <div class="sa-draft-chips">
+          <div class="sa-chip">
+            <span class="sa-chip-label">Employees</span>
+            <span class="sa-chip-value">{{ draftEntries().length }}</span>
+          </div>
+          <div class="sa-chip sa-chip--net">
+            <span class="sa-chip-label">Total SA</span>
+            <span class="sa-chip-value">LKR {{ draftTotal() | number:'1.2-2' }}</span>
+          </div>
+          <div class="sa-chip">
+            <span class="sa-chip-label">Draft</span>
+            <span class="sa-chip-value">{{ draftDraftCount() }}</span>
+          </div>
+          <div class="sa-chip sa-chip--locked">
+            <span class="sa-chip-label">Locked</span>
+            <span class="sa-chip-value">{{ draftLockedCount() }}</span>
+          </div>
+        </div>
+
+        <!-- Draft table -->
+        <div class="sa-draft-table-wrap">
+          <table class="sa-draft-table">
+            <thead>
+              <tr>
+                <th>Emp #</th>
+                <th>Name</th>
+                <th class="num">Amount</th>
+                <th class="center">Status</th>
+                @if (!draftReadOnly()) { <th class="center">Action</th> }
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of draftEntries(); track entry.id) {
+                <tr [class.row--locked]="entry.status === 'LOCKED'">
+                  <td class="code-cell">{{ entry.empCode }}</td>
+                  <td>{{ entry.empName }}</td>
+                  <td class="num deduction">{{ entry.amount | number:'1.2-2' }}</td>
+                  <td class="center">
+                    <span class="run-badge" [class.run-badge--locked]="entry.status === 'LOCKED'">
+                      {{ entry.status }}
+                    </span>
+                  </td>
+                  @if (!draftReadOnly()) {
+                    <td class="center">
+                      @if (entry.status === 'LOCKED') {
+                        <mat-icon class="icon-locked" matTooltip="Locked">lock</mat-icon>
+                      } @else {
+                        <button mat-icon-button
+                                matTooltip="Lock this entry"
+                                [disabled]="lockingId() === entry.id || lockingAll()"
+                                (click)="lockEntry(entry.id)">
+                          @if (lockingId() === entry.id) {
+                            <mat-spinner diameter="18" />
+                          } @else {
+                            <mat-icon>lock_open</mat-icon>
+                          }
+                        </button>
+                      }
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2" class="total-label">Total</td>
+                <td class="num total-amount">{{ draftTotal() | number:'1.2-2' }}</td>
+                <td [attr.colspan]="draftReadOnly() ? 1 : 2"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        @if (!draftReadOnly() && draftDraftCount() > 0) {
+          <div class="sa-draft-footer">
+            <button mat-flat-button [disabled]="lockingAll()" (click)="lockAll()">
+              <span class="btn-content">
+                @if (lockingAll()) {
+                  <mat-spinner diameter="18" />
+                  <span>Locking…</span>
+                } @else {
+                  <mat-icon>lock</mat-icon>
+                  <span>Lock All ({{ draftDraftCount() }} remaining)</span>
+                }
+              </span>
+            </button>
+            <span class="lock-hint">
+              Once locked, salary advances are finalised and will be deducted from gross pay during payroll run.
+            </span>
+          </div>
+        }
+
+      }
+
+    </div>
+  }
+
+  <!-- ══ Entry View ═══════════════════════════════════════════════════════ -->
+  @if (!showDraft()) {
+
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
   <header class="page-header">
     <div class="page-header-left">
       <div class="page-header-icon" aria-hidden="true">
@@ -8,17 +134,44 @@
       </div>
       <h1 class="page-title">Salary Advances</h1>
     </div>
+
     <div class="page-header-right">
-      @if (!isFormOpen()) {
-        <button mat-flat-button (click)="openCreate()" aria-label="New salary advance">
-          <mat-icon>add</mat-icon>
-          <span>New Advance</span>
-        </button>
-      }
+      <mat-form-field appearance="outline" class="period-month" subscriptSizing="dynamic">
+        <mat-label>Month</mat-label>
+        <mat-select formControlName="month" (selectionChange)="onPeriodChange()">
+          @for (m of months; track m.value) {
+            <mat-option [value]="m.value">{{ m.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="period-year" subscriptSizing="dynamic">
+        <mat-label>Year</mat-label>
+        <mat-select formControlName="year" (selectionChange)="onPeriodChange()">
+          @for (y of years; track y) {
+            <mat-option [value]="y">{{ y }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-stroked-button
+              [disabled]="draftLoading() || periodForm.invalid"
+              (click)="viewDraft()"
+              aria-label="View draft for selected period">
+        <span class="btn-content">
+          @if (draftLoading()) {
+            <mat-spinner diameter="16" />
+            <span>Loading…</span>
+          } @else {
+            <mat-icon>visibility</mat-icon>
+            <span>View Draft</span>
+          }
+        </span>
+      </button>
     </div>
   </header>
 
-  <!-- ── Loading bar ────────────────────────────────────────────────────── -->
+  <!-- ── Loading bar ─────────────────────────────────────────────────────── -->
   @if (loading()) {
     <div class="loading-bar" aria-live="polite">
       <mat-spinner diameter="16" />
@@ -26,235 +179,159 @@
     </div>
   }
 
-  <!-- ── Create / Edit form panel ───────────────────────────────────────── -->
-  @if (isFormOpen()) {
-    <div class="form-panel" [formGroup]="form">
-      <h2 class="form-title">
-        {{ formMode() === 'create' ? 'New Salary Advance' : 'Edit Salary Advance' }}
-      </h2>
+  <!-- ── Salary Advance table ────────────────────────────────────────────── -->
+  <div class="np-wrapper sa-wrapper">
 
-      <div class="form-row-main">
-        <app-table-autocomplete
-          class="emp-autocomplete"
-          formControlName="employeeId"
-          label="Employee"
-          placeholder="Search by name or employee #…"
-          src="/employee?isActive=true"
-          [columns]="employeeCols"
-          [displayFn]="empDisplayFn"
-          (itemSelected)="onEmpSelected($event)"
-          aria-label="Select employee"
-        />
-
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Payroll Month</mat-label>
-          <mat-select formControlName="payrollMonth">
-            @for (m of monthOptions; track m.value) {
-              <mat-option [value]="m.value">{{ m.label }}</mat-option>
-            }
-          </mat-select>
-          @if (form.controls.payrollMonth.invalid && form.controls.payrollMonth.touched) {
-            <mat-error>Month is required</mat-error>
+    <div class="table-toolbar">
+      <div class="table-toolbar-left">
+        <span class="table-label">Salary Advance</span>
+        <div class="toolbar-sep" aria-hidden="true"></div>
+        <div class="search-field">
+          <mat-icon class="search-icon">search</mat-icon>
+          <input class="search-input"
+                 [value]="salAdvFilter()"
+                 (input)="salAdvFilter.set($any($event.target).value)"
+                 placeholder="Search employees…"
+                 aria-label="Filter employees" />
+          @if (salAdvFilter()) {
+            <button class="search-clear" (click)="salAdvFilter.set('')" aria-label="Clear filter">
+              <mat-icon>close</mat-icon>
+            </button>
           }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Amount (LKR)</mat-label>
-          <input matInput type="number" min="0.01" step="0.01"
-                 formControlName="amount"
-                 placeholder="0.00"
-                 aria-label="Advance amount" />
-          @if (form.controls.amount.hasError('required') && form.controls.amount.touched) {
-            <mat-error>Amount is required</mat-error>
-          }
-          @if (form.controls.amount.hasError('min') && form.controls.amount.touched) {
-            <mat-error>Amount must be greater than 0</mat-error>
-          }
-        </mat-form-field>
-      </div>
-
-      <div class="form-row-secondary">
-        <mat-checkbox formControlName="isProcessed">Processed</mat-checkbox>
-
-        @if (form.controls.isProcessed.value) {
-          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="processed-date-field">
-            <mat-label>Processed Date</mat-label>
-            <input matInput type="date" formControlName="processedDate" aria-label="Processed date" />
-          </mat-form-field>
-        }
-      </div>
-
-      @if (saveError()) {
-        <div class="save-error-banner" role="alert">
-          <mat-icon>error_outline</mat-icon>
-          <span>{{ saveError() }}</span>
         </div>
-      }
-
-      <div class="form-actions">
-        <button mat-stroked-button type="button" (click)="cancelForm()" [disabled]="saving()">
-          Cancel
-        </button>
-        <button mat-flat-button type="button" (click)="submit()" [disabled]="saving()">
-          <span class="btn-content">
-            @if (saving()) {
-              <mat-spinner diameter="18" />
-              <span>Saving…</span>
-            } @else {
-              <mat-icon>save</mat-icon>
-              <span>Save</span>
-            }
-          </span>
-        </button>
-      </div>
-    </div>
-  }
-
-  <!-- ── Delete confirmation banner ─────────────────────────────────────── -->
-  @if (pendingDeleteId() !== null) {
-    <div class="delete-banner" role="alertdialog" aria-label="Confirm deletion">
-      <mat-icon class="delete-warn-icon">warning_amber</mat-icon>
-      <span>Delete this advance? This cannot be undone.</span>
-      <div class="delete-banner-actions">
-        <button mat-stroked-button type="button" (click)="cancelDelete()" [disabled]="deleting()">
-          Cancel
-        </button>
-        <button mat-flat-button type="button" class="btn-danger"
-                (click)="executeDelete()" [disabled]="deleting()">
-          @if (deleting()) {
-            <mat-spinner diameter="16" />
-          } @else {
-            Delete
+        <span class="filter-count" aria-live="polite">
+          @if (salAdvFilter()) {
+            {{ filteredSalAdvRows().length }} / {{ salAdvRowsCount() }}
           }
+        </span>
+      </div>
+      <div class="table-toolbar-right">
+        <button mat-stroked-button aria-label="Import">
+          <mat-icon>upload</mat-icon>
+          <span>Import</span>
+        </button>
+        <button mat-stroked-button aria-label="Export">
+          <mat-icon>download</mat-icon>
+          <span>Export</span>
         </button>
       </div>
     </div>
-  }
 
-  <!-- ── Filter bar ──────────────────────────────────────────────────────── -->
-  <div class="filter-bar">
-    <mat-form-field appearance="outline" class="filter-month" subscriptSizing="dynamic">
-      <mat-label>Month</mat-label>
-      <mat-select [value]="monthFilter()"
-                  (selectionChange)="monthFilter.set($event.value)"
-                  aria-label="Filter by payroll month">
-        <mat-option [value]="null">All Months</mat-option>
-        @for (m of monthOptions; track m.value) {
-          <mat-option [value]="m.value">{{ m.label }}</mat-option>
+    <table aria-label="Salary Advance">
+      <thead>
+        <tr>
+          <th scope="col" class="emp-id-col">Emp ID</th>
+          <th scope="col" class="emp-name-col">Employee Name</th>
+          <th scope="col" class="amount-col">Amount</th>
+          <th scope="col" class="status-col">Status</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @if (filteredSalAdvRows().length === 0) {
+          <tr>
+            <td colspan="4" class="np-empty">No salary advance entries for this period.</td>
+          </tr>
+        } @else {
+          @for (item of filteredSalAdvRows(); track item.idx; let even = $even) {
+            <tr [class.row-even]="even">
+
+              <td class="emp-id-cell">{{ item.row.employeeNo }}</td>
+              <td class="emp-name-cell">{{ item.row.payrollName }}</td>
+
+              <td class="value-cell"
+                  [class.cell-editing]="isSalAdvEditing(item.idx)"
+                  [class.readonly-cell]="item.row.isProcessed"
+                  (click)="startSalAdvEdit(item.idx)"
+                  [attr.aria-label]="item.row.payrollName + ' amount'">
+                @if (isSalAdvEditing(item.idx)) {
+                  <input type="number" min="0" step="0.01"
+                         class="cell-input"
+                         [formControl]="salAdvEditCtrl"
+                         (blur)="saveSalAdvEdit()"
+                         (keydown.enter)="saveSalAdvEdit()"
+                         (keydown.escape)="cancelSalAdvEdit()"
+                         [attr.aria-label]="item.row.payrollName + ' amount input'" />
+                } @else {
+                  <span class="cell-value">{{ item.row.amount | number:'1.2-2' }}</span>
+                }
+              </td>
+
+              <td class="status-cell">
+                @if (item.row.isProcessed) {
+                  <span class="badge badge--processed">Locked</span>
+                } @else {
+                  <span class="badge badge--pending">Draft</span>
+                }
+              </td>
+
+            </tr>
+          }
         }
-      </mat-select>
-    </mat-form-field>
+      </tbody>
 
-    <div class="search-field">
-      <mat-icon class="search-icon">search</mat-icon>
-      <input class="search-input"
-             [value]="searchFilter()"
-             (input)="searchFilter.set($any($event.target).value)"
-             placeholder="Search employees…"
-             aria-label="Filter by employee" />
-      @if (searchFilter()) {
-        <button class="search-clear" (click)="searchFilter.set('')" aria-label="Clear search">
-          <mat-icon>close</mat-icon>
-        </button>
-      }
-    </div>
-
-    <span class="filter-count" aria-live="polite">
-      {{ filteredAdvances().length }} record(s)
-    </span>
-  </div>
-
-  <!-- ── Table ───────────────────────────────────────────────────────────── -->
-  <div class="table-wrapper">
-    <table mat-table [dataSource]="filteredAdvances()" aria-label="Salary advances">
-
-      <!-- Emp Code -->
-      <ng-container matColumnDef="empCode">
-        <th mat-header-cell *matHeaderCellDef>Emp #</th>
-        <td mat-cell *matCellDef="let row" class="emp-code-cell">{{ row.empCode }}</td>
-      </ng-container>
-
-      <!-- Emp Name -->
-      <ng-container matColumnDef="empName">
-        <th mat-header-cell *matHeaderCellDef>Employee Name</th>
-        <td mat-cell *matCellDef="let row">{{ row.empName }}</td>
-      </ng-container>
-
-      <!-- Payroll Month -->
-      <ng-container matColumnDef="payrollMonth">
-        <th mat-header-cell *matHeaderCellDef>Payroll Month</th>
-        <td mat-cell *matCellDef="let row">{{ formatMonth(row.payrollMonth) }}</td>
-      </ng-container>
-
-      <!-- Amount -->
-      <ng-container matColumnDef="amount">
-        <th mat-header-cell *matHeaderCellDef class="amount-col">Amount (LKR)</th>
-        <td mat-cell *matCellDef="let row" class="amount-col">
-          {{ row.amount | number:'1.2-2' }}
-        </td>
-      </ng-container>
-
-      <!-- Status -->
-      <ng-container matColumnDef="status">
-        <th mat-header-cell *matHeaderCellDef>Status</th>
-        <td mat-cell *matCellDef="let row">
-          <mat-chip-set aria-label="Advance status">
-            <mat-chip [class]="row.isProcessed ? 'status-chip status-processed' : 'status-chip status-pending'"
-                      [disableRipple]="true">
-              {{ row.isProcessed ? 'Processed' : 'Pending' }}
-            </mat-chip>
-          </mat-chip-set>
-        </td>
-      </ng-container>
-
-      <!-- Processed Date -->
-      <ng-container matColumnDef="processedDate">
-        <th mat-header-cell *matHeaderCellDef>Processed Date</th>
-        <td mat-cell *matCellDef="let row">
-          {{ row.processedDate ? (row.processedDate | date:'dd MMM yyyy') : '—' }}
-        </td>
-      </ng-container>
-
-      <!-- Actions -->
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let row" class="actions-cell">
-          <button mat-icon-button type="button"
-                  matTooltip="Edit"
-                  aria-label="Edit advance"
-                  [disabled]="isFormOpen() || pendingDeleteId() !== null"
-                  (click)="openEdit(row)">
-            <mat-icon>edit</mat-icon>
-          </button>
-          <button mat-icon-button type="button" class="btn-delete"
-                  matTooltip="Delete"
-                  aria-label="Delete advance"
-                  [disabled]="isFormOpen() || pendingDeleteId() !== null"
-                  (click)="confirmDelete(row.id)">
-            <mat-icon>delete_outline</mat-icon>
-          </button>
-        </td>
-      </ng-container>
-
-      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns;"
-          [class.row-pending-delete]="pendingDeleteId() === row.id"></tr>
-
+      <tfoot>
+        <tr class="total-row">
+          <td colspan="2" class="total-label">Total</td>
+          <td class="amount-col total-amount">{{ salAdvAmountTotal() | number:'1.2-2' }}</td>
+          <td></td>
+        </tr>
+      </tfoot>
     </table>
 
-    @if (!loading() && filteredAdvances().length === 0) {
-      <div class="empty-state" role="status">
-        <mat-icon aria-hidden="true">monetization_on</mat-icon>
-        <p>No salary advances found.</p>
-      </div>
-    }
   </div>
 
-  <!-- ── Footer ──────────────────────────────────────────────────────────── -->
+  <!-- ── Footer ─────────────────────────────────────────────────────────── -->
   <footer class="page-footer">
     <span class="grand-total-chip">
-      Total: <strong>{{ grandTotal() | number:'1.2-2' }}</strong>
+      Total SA: <strong>{{ salAdvAmountTotal() | number:'1.2-2' }}</strong>
     </span>
+
+    @if (saveSuccess()) {
+      <div class="status-banner status-banner--success" role="status" aria-live="polite">
+        <mat-icon>check_circle</mat-icon>
+        <span>Saved for {{ periodLabel }}</span>
+      </div>
+    }
+    @if (saveError()) {
+      <div class="status-banner status-banner--error" role="alert">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ saveError() }}</span>
+      </div>
+    }
+
+    <button mat-stroked-button
+            [disabled]="saving() || periodForm.invalid"
+            (click)="save()"
+            aria-label="Save salary advances">
+      <span class="btn-content">
+        @if (saving()) {
+          <mat-spinner diameter="18" />
+          <span>Saving…</span>
+        } @else {
+          <mat-icon>save</mat-icon>
+          <span>Save</span>
+        }
+      </span>
+    </button>
+
+    <button mat-flat-button
+            [disabled]="saving() || periodForm.invalid"
+            (click)="saveAndLock()"
+            aria-label="Save and lock salary advances">
+      <span class="btn-content">
+        @if (saving()) {
+          <mat-spinner diameter="18" />
+          <span>Saving…</span>
+        } @else {
+          <mat-icon>lock</mat-icon>
+          <span>Save &amp; Lock</span>
+        }
+      </span>
+    </button>
+
   </footer>
+
+  } <!-- end @if (!showDraft()) -->
 
 </div>

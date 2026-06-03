@@ -3,6 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import {
+  Bank,
+  BankBranch,
   Branch,
   Company,
   Country,
@@ -17,6 +19,8 @@ import {
   NoPayDays,
 } from '../models/master-data.models';
 import { BranchService } from '../../features/infrastructure/branches/branch.service';
+import { BankService } from '../../features/infrastructure/banks/bank.service';
+import { BankBranchService } from '../../features/infrastructure/banks/bank-branch.service';
 import { CompanyService } from '../../features/infrastructure/company/company.service';
 import { DepartmentService } from '../../features/infrastructure/department/department.service';
 import { GradeService } from '../../features/infrastructure/grades/grade.service';
@@ -39,7 +43,9 @@ export type EntitySlug =
   | 'designations'
   | 'nopay'
   | 'employee-types'
-  | 'statuses';
+  | 'statuses'
+  | 'banks'
+  | 'bank-branches';
 
 @Injectable({ providedIn: 'root' })
 export class MasterDataService {
@@ -47,6 +53,8 @@ export class MasterDataService {
   private readonly companySvc      = inject(CompanyService);
   private readonly departmentSvc   = inject(DepartmentService);
   private readonly branchSvc       = inject(BranchService);
+  private readonly bankSvc         = inject(BankService);
+  private readonly bankBranchSvc   = inject(BankBranchService);
   private readonly gradeSvc        = inject(GradeService);
   private readonly designationSvc  = inject(DesignationService);
   private readonly employeeTypeSvc = inject(EmployeeTypeService);
@@ -56,6 +64,8 @@ export class MasterDataService {
   private readonly districtSvc     = inject(DistrictService);
   private readonly statusSvc       = inject(StatusService);
 
+  private readonly _banks         = signal<Bank[]>([]);
+  private readonly _bankBranches  = signal<BankBranch[]>([]);
   private readonly _countries     = signal<Country[]>([]);
   private readonly _companies     = signal<Company[]>([]);
   private readonly _departments   = signal<Department[]>([]);
@@ -68,6 +78,8 @@ export class MasterDataService {
   private readonly _employeeTypes = signal<EmployeeType[]>([]);
   private readonly _statuses      = signal<EmployeeStatus[]>([]);
 
+  readonly banks         = this._banks.asReadonly();
+  readonly bankBranches  = this._bankBranches.asReadonly();
   readonly countries     = this._countries.asReadonly();
   readonly companies     = this._companies.asReadonly();
   readonly departments   = this._departments.asReadonly();
@@ -80,6 +92,8 @@ export class MasterDataService {
   readonly employeeTypes = this._employeeTypes.asReadonly();
   readonly statuses      = this._statuses.asReadonly();
 
+  readonly activeBanks         = computed(() => this._banks().filter(x => x.isActive));
+  readonly activeBankBranches  = computed(() => this._bankBranches().filter(x => x.isActive));
   readonly activeCountries     = computed(() => this._countries().filter(x => x.isActive));
   readonly activeCompanies     = computed(() => this._companies().filter(x => x.isActive));
   readonly activeDepartments   = computed(() => this._departments().filter(x => x.isActive));
@@ -93,6 +107,8 @@ export class MasterDataService {
   readonly activeStatuses      = this._statuses.asReadonly();
 
   private readonly reloadFns: Record<EntitySlug, () => void> = {
+    'banks':          () => this.bankSvc.getAll().subscribe({ next: d => this._banks.set(d), error: () => {} }),
+    'bank-branches':  () => this.bankBranchSvc.getAll().subscribe({ next: d => this._bankBranches.set(d), error: () => {} }),
     'countries':      () => this.countrySvc.getAll().subscribe({ next: d => this._countries.set(d), error: () => {} }),
     'companies':      () => this.companySvc.getAll().subscribe({ next: d => this._companies.set(d), error: () => {} }),
     'departments':    () => this.departmentSvc.getAll().subscribe({ next: d => this._departments.set(d), error: () => {} }),

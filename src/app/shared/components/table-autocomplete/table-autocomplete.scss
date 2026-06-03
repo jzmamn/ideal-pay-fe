@@ -14,7 +14,8 @@
   position: absolute;
   top: 100%;
   left: 0;
-  right: 0;
+  width: max-content;
+  min-width: 100%;
   z-index: 1000;
   margin-top: 2px;
   background: var(--mat-sys-surface);
@@ -26,7 +27,8 @@
 }
 
 .tac-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
 

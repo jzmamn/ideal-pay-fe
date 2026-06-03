@@ -1,0 +1,268 @@
+.draft-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+/* ── Status bar ────────────────────────────────────────────────────── */
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+
+  &--draft  { background: #fff8e1; color: #e65100; border: 1px solid #ffe082; }
+  &--locked { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+
+  mat-icon { font-size: 18px; height: 18px; width: 18px; }
+
+  .reprocess-btn { margin-left: auto; }
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+/* ── Individual layout ──────────────────────────────────────────────── */
+.individual-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.run-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.run-emp-name { font-size: 1.1rem; font-weight: 600; display: block; }
+.run-emp-meta { font-size: 0.8rem; color: #666; }
+
+/* ── Pay cards ──────────────────────────────────────────────────────── */
+.pay-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pay-card {
+  flex: 1 1 140px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+
+  &--positive { background: #e8f5e9; border-color: #a5d6a7; }
+  &--negative { background: #ffebee; border-color: #ef9a9a; }
+  &--gross    { background: #e3f2fd; border-color: #90caf9; }
+  &--net      { background: #1a237e; border-color: #1a237e; color: #fff; }
+}
+
+.pay-card-label { font-size: 0.75rem; opacity: 0.8; display: block; margin-bottom: 4px; }
+.pay-card-value { font-size: 1rem; font-weight: 700; }
+
+/* ── Detail grid ────────────────────────────────────────────────────── */
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.detail-section {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+
+  &--statutory { grid-column: 1 / -1; }
+}
+
+.detail-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: #fafafa;
+  border-bottom: 1px solid #e0e0e0;
+  mat-icon { font-size: 16px; height: 16px; width: 16px; }
+}
+
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+
+  th, td { padding: 7px 14px; text-align: left; }
+  th { background: #f5f5f5; font-weight: 600; color: #555; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.deduction { color: #c62828; }
+  td.code-cell { color: #888; font-size: 0.75rem; }
+  .meta { color: #888; font-size: 0.72rem; margin-left: 4px; }
+
+  tr:not(:last-child) td { border-bottom: 1px solid #f0f0f0; }
+
+  .subtotal-row td {
+    font-weight: 700;
+    border-top: 2px solid #e0e0e0;
+    background: #fafafa;
+  }
+}
+
+/* ── Status badge ───────────────────────────────────────────────────── */
+.run-badge {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: #fff3e0;
+  color: #e65100;
+  border: 1px solid #ffe0b2;
+
+  &--locked { background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; }
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────── */
+.draft-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid #e0e0e0;
+
+  .lock-hint { margin: 0; font-size: 0.78rem; color: #888; }
+}
+
+.locked-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+  border-top: 1px solid #e0e0e0;
+  color: #2e7d32;
+  font-size: 0.85rem;
+  .locked-icon { font-size: 18px; height: 18px; width: 18px; }
+}
+
+/* ── Detail nav (Back to Summary) ───────────────────────────────────── */
+.detail-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 8px;
+}
+
+.detail-nav-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.loading-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+/* ── Clickable batch rows ────────────────────────────────────────────── */
+.row-clickable {
+  cursor: pointer;
+  &:hover td { background: #f0f4ff; }
+}
+
+/* ── Batch empty state ──────────────────────────────────────────────── */
+.batch-empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 16px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  color: #666;
+  font-size: 0.875rem;
+  mat-icon { color: #aaa; }
+  p { margin: 0; }
+}
+
+/* ── Batch ───────────────────────────────────────────────────────────── */
+.batch-summary-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.batch-chip {
+  flex: 1 1 120px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+
+  &--positive { background: #e8f5e9; border-color: #a5d6a7; }
+  &--negative { background: #ffebee; border-color: #ef9a9a; }
+  &--net      { background: #1a237e; color: #fff; border-color: #1a237e; }
+  &--locked   { background: #e8f5e9; border-color: #c8e6c9; }
+}
+
+.chip-label { font-size: 0.72rem; opacity: 0.75; display: block; }
+.chip-value { font-size: 1rem; font-weight: 700; }
+
+.batch-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+.batch-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.83rem;
+
+  th, td { padding: 9px 14px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+  th { background: #f5f5f5; font-weight: 600; color: #555; }
+
+  td.num    { text-align: right; font-variant-numeric: tabular-nums; }
+  td.center { text-align: center; }
+  td.deduction { color: #c62828; }
+  td.net       { font-weight: 700; }
+  td.code-cell { color: #888; font-size: 0.75rem; }
+
+  .row--locked td { background: #f9fdf9; color: #777; }
+
+  .icon-locked { color: #2e7d32; font-size: 18px; height: 18px; width: 18px; vertical-align: middle; }
+
+  td.positive  { color: #2e7d32; }
+  td.statutory { color: #1565c0; }
+}
+
+/* ── Run type badge ─────────────────────────────────────────────────── */
+.type-badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: #e3f2fd;
+  color: #1565c0;
+  &--correction { background: #fff3e0; color: #e65100; }
+}

@@ -181,6 +181,21 @@
               label="Designation"
               [options]="masterSvc.activeDesignations()" />
 
+            <app-searchable-dropdown
+              formControlName="bankId"
+              label="Bank"
+              [options]="masterSvc.activeBanks()" />
+
+            <app-searchable-dropdown
+              formControlName="bankBranchId"
+              label="Bank Branch"
+              [options]="bankBranchOptions()" />
+
+            <mat-form-field appearance="outline">
+              <mat-label>Account No</mat-label>
+              <input matInput formControlName="accountNo">
+            </mat-form-field>
+
             <mat-form-field appearance="outline">
               <mat-label>EPF No</mat-label>
               <input matInput formControlName="epfNo">

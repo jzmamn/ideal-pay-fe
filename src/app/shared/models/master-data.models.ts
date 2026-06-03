@@ -15,6 +15,12 @@ export interface Branch extends MasterEntity {
   location?: string;
 }
 
+export interface Bank extends MasterEntity {}
+
+export interface BankBranch extends MasterEntity {
+  bankId: number;
+}
+
 export interface Grade extends MasterEntity {
   amount?: number;
   description?: string;

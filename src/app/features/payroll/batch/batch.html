@@ -1,5 +1,34 @@
 <div class="page-shell" [formGroup]="periodForm">
 
+  <!-- ══ Draft View ═══════════════════════════════════════════════════ -->
+  @if (showDraft()) {
+    <div class="draft-shell">
+      <div class="draft-shell-header">
+        <button mat-stroked-button (click)="backToEntry()">
+          <mat-icon>arrow_back</mat-icon> Back to Entry
+        </button>
+        <h2 class="draft-shell-title">Batch Payroll Draft — {{ periodLabel }}</h2>
+      </div>
+      @if (saving()) {
+        <div class="loading-bar" aria-live="polite">
+          <mat-spinner diameter="16" />
+          <span>Processing…</span>
+        </div>
+      }
+      <app-payroll-draft-view
+        mode="batch"
+        [batchRuns]="draftRuns()"
+        [periodLabel]="periodLabel"
+        [viewOnly]="draftReadOnly()"
+        (reprocess)="reprocessBatch()"
+        (batchLocked)="refreshBatchRuns()"
+      />
+    </div>
+  }
+
+  <!-- ══ Entry View ════════════════════════════════════════════════════ -->
+  @if (!showDraft()) {
+
   <header class="page-header">
     <div class="page-header-left">
       <div class="page-header-icon" aria-hidden="true">
@@ -26,6 +55,21 @@
           }
         </mat-select>
       </mat-form-field>
+
+      <button mat-stroked-button
+              [disabled]="draftLoading() || periodForm.invalid"
+              (click)="viewDraft()"
+              aria-label="View draft for selected period">
+        <span class="btn-content">
+          @if (draftLoading()) {
+            <mat-spinner diameter="16" />
+            <span>Loading…</span>
+          } @else {
+            <mat-icon>visibility</mat-icon>
+            <span>View Draft</span>
+          }
+        </span>
+      </button>
     </div>
   </header>
 
@@ -524,17 +568,19 @@
     <button mat-flat-button
             [disabled]="saving() || periodForm.invalid"
             (click)="save()"
-            aria-label="Save batch allowances">
+            aria-label="Process batch payroll">
       <span class="btn-content">
         @if (saving()) {
           <mat-spinner diameter="18" />
-          <span>Saving…</span>
+          <span>Processing…</span>
         } @else {
-          <mat-icon>save</mat-icon>
-          <span>Save Batch</span>
+          <mat-icon>play_arrow</mat-icon>
+          <span>Process</span>
         }
       </span>
     </button>
   </footer>
+
+  } <!-- end @if (!showDraft()) -->
 
 </div>

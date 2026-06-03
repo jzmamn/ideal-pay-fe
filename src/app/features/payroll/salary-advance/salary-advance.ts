@@ -3,262 +3,343 @@ import {
   computed, inject, signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { type EmployeeResponse } from '../../settings/employee/employee.model';
-import { TableAutocomplete, type TableColumn } from '../../../shared/components/table-autocomplete/table-autocomplete';
-import {
-  SalaryAdvanceService,
-  type EmployeeSalaryAdvanceRequest,
-  type EmployeeSalaryAdvanceResponse,
-} from './salary-advance.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { lastValueFrom } from 'rxjs';
+import { BatchService, BatchSaveEntry, BatchSavePayload } from '../batch/batch.service';
+import { SalaryAdvanceService, SalAdvEntry } from './salary-advance.service';
 
-// ── Month helpers ─────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────
 
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
-
-function buildMonthOptions(today: Date): { value: string; label: string }[] {
-  const opts: { value: string; label: string }[] = [];
-  for (let delta = -11; delta <= 12; delta++) {
-    const d = new Date(today.getFullYear(), today.getMonth() + delta, 1);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    opts.push({ value: `${y}-${m}`, label: `${MONTH_NAMES[d.getMonth()]} ${y}` });
-  }
-  return opts;
-}
-
-function formatMonthValue(value: string): string {
-  const [y, m] = value.split('-');
-  const idx = parseInt(m, 10) - 1;
-  return `${MONTH_NAMES[idx] ?? m} ${y}`;
+interface SalAdvFlatRow {
+  empId:       number;
+  employeeNo:  string;
+  payrollName: string;
+  amount:      number;
+  isProcessed: boolean;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────
-
-const CURRENT_USER_ID = 1; // TODO: replace with AuthService user id
 
 @Component({
   selector: 'app-salary-advance',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, DecimalPipe,
-    ReactiveFormsModule,
-    MatButtonModule,
-    MatCheckboxModule,
-    MatChipsModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatTableModule,
-    MatTooltipModule,
-    TableAutocomplete,
+    DecimalPipe, ReactiveFormsModule,
+    MatButtonModule, MatFormFieldModule,
+    MatIconModule, MatInputModule,
+    MatProgressSpinnerModule, MatSelectModule, MatTooltipModule,
   ],
   templateUrl: './salary-advance.html',
   styleUrl:    './salary-advance.scss',
 })
 export class SalaryAdvance {
-  private readonly fb         = inject(FormBuilder);
-  private readonly svc        = inject(SalaryAdvanceService);
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly fb          = inject(FormBuilder);
+  private readonly batchSvc    = inject(BatchService);
+  private readonly salAdvSvc   = inject(SalaryAdvanceService);
+  private readonly destroyRef  = inject(DestroyRef);
 
-  // ── Employee autocomplete ──────────────────────────────────────────────
-  readonly employeeCols: TableColumn<EmployeeResponse>[] = [
-    { key: 'employeeNo', label: 'Emp #'      },
-    { key: 'firstName',  label: 'First Name' },
-    { key: 'lastName',   label: 'Last Name'  },
+  // ── Period form ────────────────────────────────────────────────────────
+  private readonly _today = new Date();
+
+  readonly months = [
+    { value:  1, label: 'January'   }, { value:  2, label: 'February'  },
+    { value:  3, label: 'March'     }, { value:  4, label: 'April'     },
+    { value:  5, label: 'May'       }, { value:  6, label: 'June'      },
+    { value:  7, label: 'July'      }, { value:  8, label: 'August'    },
+    { value:  9, label: 'September' }, { value: 10, label: 'October'   },
+    { value: 11, label: 'November'  }, { value: 12, label: 'December'  },
   ];
 
-  readonly empDisplayFn = (item: EmployeeResponse): string =>
-    `${item.payrollName} — ${item.employeeNo}`;
+  readonly years = [
+    this._today.getFullYear() - 1,
+    this._today.getFullYear(),
+    this._today.getFullYear() + 1,
+  ];
 
-  // ── Month options ──────────────────────────────────────────────────────
-  private readonly _today = new Date();
-  readonly monthOptions   = buildMonthOptions(this._today);
+  readonly periodForm = this.fb.group({
+    month: this.fb.nonNullable.control(this._today.getMonth() + 1, [Validators.required, Validators.min(1)]),
+    year:  this.fb.nonNullable.control(this._today.getFullYear(), Validators.required),
+  });
 
-  private get _currentMonth(): string {
-    return `${this._today.getFullYear()}-${String(this._today.getMonth() + 1).padStart(2, '0')}`;
+  get periodLabel(): string {
+    const { month, year } = this.periodForm.getRawValue();
+    return `${this.months.find(x => x.value === month)?.label ?? ''} ${year}`;
   }
 
-  // ── State ──────────────────────────────────────────────────────────────
-  readonly loading   = signal(false);
-  readonly saving    = signal(false);
-  readonly saveError = signal<string | null>(null);
-  readonly deleting  = signal(false);
+  // ── Entry view state ───────────────────────────────────────────────────
+  readonly loading      = signal(false);
+  readonly saving       = signal(false);
+  readonly saveError    = signal<string | null>(null);
+  readonly saveSuccess  = signal(false);
 
-  private readonly _advances = signal<EmployeeSalaryAdvanceResponse[]>([]);
+  private readonly _rows           = signal<SalAdvFlatRow[]>([]);
+  readonly salAdvFilter            = signal('');
+  readonly salAdvEditCtrl          = this.fb.nonNullable.control(0);
+  private readonly _salAdvEditCell = signal<number | null>(null);
 
-  readonly formMode        = signal<'none' | 'create' | 'edit'>('none');
-  private readonly _editId = signal<number | null>(null);
-
-  readonly pendingDeleteId = signal<number | null>(null);
-
-  // Filters
-  readonly monthFilter  = signal<string | null>(null);
-  readonly searchFilter = signal('');
-
-  // ── Form ──────────────────────────────────────────────────────────────
-  readonly form = this.fb.group({
-    employeeId:    this.fb.control<number | null>(null, Validators.required),
-    amount:        this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01)]),
-    payrollMonth:  this.fb.nonNullable.control('', Validators.required),
-    isProcessed:   this.fb.nonNullable.control(false),
-    processedDate: this.fb.control<string | null>(null),
+  readonly filteredSalAdvRows = computed(() => {
+    const f = this.salAdvFilter().toLowerCase().trim();
+    return this._rows()
+      .map((row, idx) => ({ row, idx }))
+      .filter(({ row }) =>
+        !f ||
+        row.payrollName.toLowerCase().includes(f) ||
+        row.employeeNo.toLowerCase().includes(f),
+      );
   });
 
-  // ── Table columns ─────────────────────────────────────────────────────
-  readonly displayedColumns = [
-    'empCode', 'empName', 'payrollMonth', 'amount', 'status', 'processedDate', 'actions',
-  ];
+  readonly salAdvRowsCount   = computed(() => this._rows().length);
+  readonly salAdvAmountTotal = computed(() => this._rows().reduce((s, r) => s + r.amount, 0));
 
-  // ── Computed ──────────────────────────────────────────────────────────
-  readonly filteredAdvances = computed(() => {
-    let rows = this._advances();
-    const month = this.monthFilter();
-    if (month) rows = rows.filter(r => r.payrollMonth === month);
-    const q = this.searchFilter().trim().toLowerCase();
-    if (q) rows = rows.filter(r =>
-      r.empCode.toLowerCase().includes(q) ||
-      r.empName.toLowerCase().includes(q)
-    );
-    return rows;
-  });
+  // ── Draft view state ───────────────────────────────────────────────────
+  readonly showDraft     = signal(false);
+  readonly draftReadOnly = signal(false);
+  readonly draftLoading  = signal(false);
+  readonly draftEntries  = signal<SalAdvEntry[]>([]);
+  readonly lockingId     = signal<number | null>(null);
+  readonly lockingAll    = signal(false);
+  readonly lockError     = signal<string | null>(null);
 
-  readonly grandTotal = computed(() =>
-    this.filteredAdvances().reduce((s, r) => s + r.amount, 0)
-  );
+  readonly draftDraftCount  = computed(() => this.draftEntries().filter(e => e.status === 'DRAFT').length);
+  readonly draftLockedCount = computed(() => this.draftEntries().filter(e => e.status === 'LOCKED').length);
+  readonly draftTotal       = computed(() => this.draftEntries().reduce((s, e) => s + e.amount, 0));
 
-  readonly isFormOpen = computed(() => this.formMode() !== 'none');
-
-  // ── Lifecycle ─────────────────────────────────────────────────────────
+  // ── Lifecycle ──────────────────────────────────────────────────────────
   constructor() { this._load(); }
 
-  // ── Template helpers ──────────────────────────────────────────────────
-  formatMonth(value: string): string { return formatMonthValue(value); }
-
-  onEmpSelected(item: unknown): void {
-    // item is emitted for side-effects; the form already holds the id via CVA
-    void item;
+  // ── Period change ──────────────────────────────────────────────────────
+  onPeriodChange(): void {
+    this._rows.set([]);
+    this.salAdvFilter.set('');
+    this._salAdvEditCell.set(null);
+    this.saveSuccess.set(false);
+    this.saveError.set(null);
+    this._load();
   }
 
-  // ── Form actions ──────────────────────────────────────────────────────
-  openCreate(): void {
-    this._editId.set(null);
-    this.form.reset({
-      employeeId:    null,
-      amount:        null,
-      payrollMonth:  this._currentMonth,
-      isProcessed:   false,
-      processedDate: null,
+  // ── Inline edit ────────────────────────────────────────────────────────
+  isSalAdvEditing(idx: number): boolean { return this._salAdvEditCell() === idx; }
+
+  startSalAdvEdit(idx: number): void {
+    const row = this._rows()[idx];
+    if (!row || row.isProcessed) return;
+    this.salAdvEditCtrl.setValue(row.amount);
+    this._salAdvEditCell.set(idx);
+  }
+
+  saveSalAdvEdit(): void {
+    const idx = this._salAdvEditCell();
+    if (idx === null) return;
+    const value = this.salAdvEditCtrl.value;
+    this._rows.update(rows => {
+      const updated = [...rows];
+      updated[idx] = { ...updated[idx], amount: isNaN(value) ? 0 : value };
+      return updated;
     });
-    this.saveError.set(null);
-    this.formMode.set('create');
+    this._salAdvEditCell.set(null);
   }
 
-  openEdit(row: EmployeeSalaryAdvanceResponse): void {
-    this._editId.set(row.id);
-    this.form.reset({
-      employeeId:    row.empId,
-      amount:        row.amount,
-      payrollMonth:  row.payrollMonth,
-      isProcessed:   row.isProcessed,
-      processedDate: row.processedDate ?? null,
-    });
-    this.saveError.set(null);
-    this.formMode.set('edit');
+  cancelSalAdvEdit(): void { this._salAdvEditCell.set(null); }
+
+  // ── Draft view navigation ──────────────────────────────────────────────
+  backToEntry(): void {
+    this.showDraft.set(false);
+    this.saveSuccess.set(false);
+    this.lockError.set(null);
   }
 
-  cancelForm(): void {
-    this.formMode.set('none');
+  /** Load SA entries for the period and show the draft (read-only). */
+  viewDraft(): void {
+    if (this.draftLoading() || this.periodForm.invalid) return;
+    const { month, year } = this.periodForm.getRawValue();
+    this.draftLoading.set(true);
     this.saveError.set(null);
-  }
-
-  submit(): void {
-    this.form.markAllAsTouched();
-    if (this.form.invalid || this.saving()) return;
-
-    const raw  = this.form.getRawValue();
-    const body: EmployeeSalaryAdvanceRequest = {
-      empId:         raw.employeeId!,
-      amount:        raw.amount!,
-      payrollMonth:  raw.payrollMonth,
-      isProcessed:   raw.isProcessed,
-      processedDate: raw.isProcessed && raw.processedDate ? raw.processedDate : undefined,
-      createdBy:     CURRENT_USER_ID,
-      modifiedBy:    CURRENT_USER_ID,
-    };
-
-    this.saving.set(true);
-    this.saveError.set(null);
-
-    const mode   = this.formMode();
-    const editId = this._editId();
-    const call$  = mode === 'edit' && editId != null
-      ? this.svc.update(editId, body)
-      : this.svc.create(body);
-
-    call$
+    this.salAdvSvc.getByPeriod(month, year)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: saved => {
-          this.saving.set(false);
-          if (mode === 'edit' && editId != null) {
-            this._advances.update(rows => rows.map(r => r.id === editId ? saved : r));
-          } else {
-            this._advances.update(rows => [saved, ...rows]);
-          }
-          this.formMode.set('none');
+        next: entries => {
+          this.draftLoading.set(false);
+          this.draftEntries.set(entries);
+          this.draftReadOnly.set(true);
+          this.showDraft.set(true);
         },
         error: (err: unknown) => {
-          this.saving.set(false);
-          this.saveError.set(err instanceof Error ? err.message : 'Save failed. Please try again.');
+          this.draftLoading.set(false);
+          this.saveError.set(this._extractError(err, 'Failed to load draft.'));
         },
       });
   }
 
-  // ── Delete ────────────────────────────────────────────────────────────
-  confirmDelete(id: number): void  { this.pendingDeleteId.set(id); }
-  cancelDelete(): void             { this.pendingDeleteId.set(null); }
+  // ── Save ───────────────────────────────────────────────────────────────
+  save(): void {
+    if (this.saving() || this.periodForm.invalid) return;
+    this.saveSalAdvEdit();
+    this.saving.set(true);
+    this.saveError.set(null);
+    this.saveSuccess.set(false);
 
-  executeDelete(): void {
-    const id = this.pendingDeleteId();
-    if (id == null || this.deleting()) return;
-    this.deleting.set(true);
-    this.svc.delete(id)
+    const { month, year } = this.periodForm.getRawValue();
+    const modifiedBy = 1; // TODO: replace with AuthService user id
+
+    const entries: BatchSaveEntry[] = this._rows()
+      .filter(r => !r.isProcessed && r.empId > 0)
+      .map(r => ({
+        componentCode: 'SAL_ADV',
+        componentType: 'SAL_ADV',
+        employeeId:    r.empId,
+        amount:        r.amount,
+      }));
+
+    this.batchSvc
+      .save({ periodMonth: month, periodYear: year, entries } satisfies BatchSavePayload, modifiedBy)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next:  ()             => { this.saving.set(false); this.saveSuccess.set(true); },
+        error: (err: unknown) => {
+          this.saving.set(false);
+          this.saveError.set(this._extractError(err, 'Save failed. Please try again.'));
+        },
+      });
+  }
+
+  /** Save entries then lock the entire period — shows draft view after. */
+  saveAndLock(): void {
+    if (this.saving() || this.periodForm.invalid) return;
+    this.saveSalAdvEdit();
+    this.saving.set(true);
+    this.saveError.set(null);
+    this.saveSuccess.set(false);
+
+    const { month, year } = this.periodForm.getRawValue();
+    const modifiedBy = 1; // TODO: replace with AuthService user id
+
+    const entries: BatchSaveEntry[] = this._rows()
+      .filter(r => !r.isProcessed && r.empId > 0)
+      .map(r => ({
+        componentCode: 'SAL_ADV',
+        componentType: 'SAL_ADV',
+        employeeId:    r.empId,
+        amount:        r.amount,
+      }));
+
+    this.batchSvc
+      .save({ periodMonth: month, periodYear: year, entries } satisfies BatchSavePayload, modifiedBy)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          this._advances.update(rows => rows.filter(r => r.id !== id));
-          this.pendingDeleteId.set(null);
-          this.deleting.set(false);
+          this.saving.set(false);
+          this._lockAllAndShowDraft(month, year, modifiedBy);
         },
-        error: () => this.deleting.set(false),
+        error: (err: unknown) => {
+          this.saving.set(false);
+          this.saveError.set(this._extractError(err, 'Save failed. Please try again.'));
+        },
       });
   }
 
-  // ── Private ───────────────────────────────────────────────────────────
-  private _load(): void {
-    this.loading.set(true);
-    this.svc.getAll()
+  // ── Draft-view lock actions ────────────────────────────────────────────
+  async lockEntry(entryId: number): Promise<void> {
+    this.lockingId.set(entryId);
+    this.lockError.set(null);
+    try {
+      const updated = await lastValueFrom(this.salAdvSvc.lockEntry(entryId, 1));
+      this.draftEntries.update(entries =>
+        entries.map(e => e.id === entryId ? updated : e),
+      );
+    } catch {
+      this.lockError.set('Lock failed. Please try again.');
+    } finally {
+      this.lockingId.set(null);
+    }
+  }
+
+  async lockAll(): Promise<void> {
+    if (this.lockingAll()) return;
+    const { month, year } = this.periodForm.getRawValue();
+    this.lockingAll.set(true);
+    this.lockError.set(null);
+    try {
+      await lastValueFrom(this.salAdvSvc.lockAll(month, year, 1));
+      await this._refreshDraftEntries(month, year);
+    } catch {
+      this.lockError.set('Lock failed. Please try again.');
+    } finally {
+      this.lockingAll.set(false);
+    }
+  }
+
+  // ── Private ────────────────────────────────────────────────────────────
+  private _lockAllAndShowDraft(month: number, year: number, lockedBy: number): void {
+    this.salAdvSvc.lockAll(month, year, lockedBy)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next:  rows => { this._advances.set(rows); this.loading.set(false); },
-        error: ()   => this.loading.set(false),
+        next: () => {
+          this.salAdvSvc.getByPeriod(month, year)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: entries => {
+                this.draftEntries.set(entries);
+                this.draftReadOnly.set(false);
+                this.showDraft.set(true);
+              },
+              error: (err: unknown) => {
+                this.saveError.set(this._extractError(err, 'Failed to load draft after lock.'));
+              },
+            });
+        },
+        error: (err: unknown) => {
+          this.saveError.set(this._extractError(err, 'Lock failed. Please try again.'));
+        },
       });
+  }
+
+  private async _refreshDraftEntries(month: number, year: number): Promise<void> {
+    const entries = await lastValueFrom(this.salAdvSvc.getByPeriod(month, year));
+    this.draftEntries.set(entries);
+  }
+
+  private _load(): void {
+    const { month, year } = this.periodForm.getRawValue();
+    this.loading.set(true);
+    this.batchSvc.load(month, year)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: resp => {
+          this.loading.set(false);
+          const rows = (resp.salaryAdvances ?? [])
+            .filter((row: Record<string, unknown>) => Number(row['id'] ?? row['ID']) > 0)
+            .map((raw: Record<string, unknown>) => {
+              const row = Object.fromEntries(
+                Object.entries(raw).map(([k, v]) => [k.toLowerCase(), v]),
+              );
+              return {
+                empId:       Number(row['id']),
+                employeeNo:  String(row['employee_no'] ?? ''),
+                payrollName: String(row['payroll_name'] || `${row['first_name'] ?? ''} ${row['last_name'] ?? ''}`.trim()),
+                amount:      Number(row['sal_adv_amount'] ?? 0),
+                isProcessed: String(row['is_processed']) === 'Y',
+              } as SalAdvFlatRow;
+            });
+          this._rows.set(rows);
+        },
+        error: () => this.loading.set(false),
+      });
+  }
+
+  private _extractError(err: unknown, fallback: string): string {
+    if (err instanceof HttpErrorResponse) {
+      return err.error?.message ?? err.error?.error ?? err.message ?? fallback;
+    }
+    if (err instanceof Error) return err.message;
+    return fallback;
   }
 }

@@ -12,10 +12,14 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   BatchService, BatchLoadResponse, BatchSaveEntry, BatchSavePayload, PivotRow,
 } from './batch.service';
 import { PivotComponent, PivotAmountChange } from '../../../shared/components/pivot/pivot';
+import { PayrollRunService } from '../shared/payroll-run.service';
+import { PayrollRunSummary } from '../shared/payroll-run.model';
+import { PayrollDraftViewComponent } from '../shared/payroll-draft-view/payroll-draft-view';
 
 // ── Constants ─────────────────────────────────────────────────────────────
 
@@ -183,14 +187,16 @@ function buildSimpleFlatRows(rows: PivotRow[], amountKey: string): SimpleFlatRow
     MatInputModule, MatSelectModule, MatProgressSpinnerModule,
     MatTabsModule,
     PivotComponent,
+    PayrollDraftViewComponent,
   ],
   templateUrl: './batch.html',
   styleUrl:    './batch.scss',
 })
 export class BatchComponent {
-  private readonly fb         = inject(FormBuilder);
-  private readonly batchSvc   = inject(BatchService);
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly fb           = inject(FormBuilder);
+  private readonly batchSvc     = inject(BatchService);
+  private readonly payrollRunSvc = inject(PayrollRunService);
+  private readonly destroyRef   = inject(DestroyRef);
 
   readonly SUB_STEPS = SECTION_CONFIG;
 
@@ -223,6 +229,12 @@ export class BatchComponent {
   readonly saveSuccess     = signal(false);
   readonly loading         = signal(false);
   readonly selectedSubStep = signal(0);
+
+  // Draft view state
+  readonly showDraft       = signal(false);
+  readonly draftLoading    = signal(false);
+  readonly draftReadOnly   = signal(false);
+  readonly draftRuns       = signal<PayrollRunSummary[]>([]);
 
   private readonly _employees   = signal<BatchEmployee[]>([]);
   private readonly _matrices    = signal<Record<string, AmountMatrix>>({});
@@ -520,6 +532,7 @@ export class BatchComponent {
         const code = codeMap[name];
         if (!code) continue;
         for (let i = 0; i < emps.length; i++) {
+          if (emps[i].id <= 0) continue; // skip ghost/default SP rows
           const amount = mats[cfg.uiKey]?.[name]?.[i] ?? 0;
           const entry: BatchSaveEntry = {
             componentCode: code,
@@ -535,7 +548,7 @@ export class BatchComponent {
 
     // ── Flat nopay rows ────────────────────────────────────────────────
     for (const row of this._nopayRows()) {
-      if (!row.nopayCode) continue;
+      if (!row.nopayCode || row.empId <= 0) continue;
       entries.push({
         componentCode: row.nopayCode,
         componentType: 'NOPAY',
@@ -547,40 +560,132 @@ export class BatchComponent {
 
     // ── Salary advance rows ────────────────────────────────────────────
     for (const row of this._salAdvRows()) {
-      if (row.isProcessed) continue;
+      if (row.isProcessed || row.empId <= 0) continue;
       entries.push({ componentCode: 'SAL_ADV', componentType: 'SAL_ADV', employeeId: row.empId, amount: row.amount });
     }
 
     // ── Bonus rows ─────────────────────────────────────────────────────
     for (const row of this._bonusRows()) {
-      if (row.isProcessed) continue;
+      if (row.isProcessed || row.empId <= 0) continue;
       entries.push({ componentCode: 'BONUS', componentType: 'BONUS', employeeId: row.empId, amount: row.amount });
     }
 
-    // ── Loan rows (dynamic — loan code comes from pivot label) ─────────
+    // ── Loan rows — skip if no real loan code resolved ─────────────────
+    // (LOAN rows use a dynamic code from the pivot; 'DEFAULT' means no data)
     for (const row of this._loanRows()) {
-      if (row.isProcessed) continue;
-      entries.push({ componentCode: 'DEFAULT', componentType: 'LOAN', employeeId: row.empId, amount: row.amount });
+      if (row.isProcessed || row.empId <= 0 || row.amount <= 0) continue;
+      // loan componentCode must be resolved from the pivot label map, skip for now
+      // entries.push({ componentCode: 'LOAN', componentType: 'LOAN', employeeId: row.empId, amount: row.amount });
     }
 
     // ── Salary increment rows ──────────────────────────────────────────
     for (const row of this._salIncrRows()) {
-      if (row.isProcessed) continue;
+      if (row.isProcessed || row.empId <= 0) continue;
       entries.push({ componentCode: 'SAL_INCR', componentType: 'SAL_INCR', employeeId: row.empId, amount: row.amount });
     }
 
     const modifiedBy = 1; // TODO: replace with AuthService user id
 
+    const mm = String(month).padStart(2, '0');
+    const payrollMonth = `${year}-${mm}`;
+
     this.batchSvc
       .save({ periodMonth: month, periodYear: year, entries } satisfies BatchSavePayload, modifiedBy)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => { this.saving.set(false); this.saveSuccess.set(true); },
+        next: () => {
+          // After saving entries, call the payroll run engine for all employees
+          this.payrollRunSvc.processBatch(payrollMonth, modifiedBy)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: runs => {
+                this.saving.set(false);
+                this.saveSuccess.set(true);
+                this.draftRuns.set(runs);
+                this.draftReadOnly.set(false);
+                this.showDraft.set(true);
+              },
+              error: (err: unknown) => {
+                this.saving.set(false);
+                this.saveError.set(this.extractError(err, 'Payroll processing failed. Please try again.'));
+              },
+            });
+        },
         error: (err: unknown) => {
           this.saving.set(false);
-          this.saveError.set(err instanceof Error ? err.message : 'Save failed. Please try again.');
+          this.saveError.set(this.extractError(err, 'Save failed. Please try again.'));
         },
       });
+  }
+
+  /** Re-process batch from the draft view. */
+  reprocessBatch(): void {
+    const { month, year } = this.periodForm.getRawValue();
+    const mm = String(month).padStart(2, '0');
+    const payrollMonth = `${year}-${mm}`;
+    this.saving.set(true);
+    this.saveError.set(null);
+    this.payrollRunSvc.processBatch(payrollMonth, 1)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: runs => { this.saving.set(false); this.draftRuns.set(runs); },
+        error: (err: unknown) => {
+          this.saving.set(false);
+          this.saveError.set(this.extractError(err, 'Re-process failed. Please try again.'));
+        },
+      });
+  }
+
+  /** Refresh batch runs after a lock (called by draft view batchLocked event). */
+  refreshBatchRuns(): void {
+    const { month, year } = this.periodForm.getRawValue();
+    const mm = String(month).padStart(2, '0');
+    const payrollMonth = `${year}-${mm}`;
+    this.payrollRunSvc.getByMonth(payrollMonth)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: runs => this.draftRuns.set(runs) });
+  }
+
+  viewDraft(): void {
+    if (this.draftLoading() || this.periodForm.invalid) return;
+    const { month, year } = this.periodForm.getRawValue();
+    const mm = String(month).padStart(2, '0');
+    const payrollMonth = `${year}-${mm}`;
+    const modifiedBy = 1; // TODO: replace with AuthService user id
+    this.draftLoading.set(true);
+    this.saveError.set(null);
+    this.payrollRunSvc.processBatch(payrollMonth, modifiedBy)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: runs => {
+          this.draftLoading.set(false);
+          this.draftRuns.set(runs);
+          this.draftReadOnly.set(true);
+          this.showDraft.set(true);
+        },
+        error: (err: unknown) => {
+          this.draftLoading.set(false);
+          this.saveError.set(this.extractError(err, 'Payroll processing failed. Please try again.'));
+        },
+      });
+  }
+
+  backToEntry(): void {
+    this.showDraft.set(false);
+    this.saveSuccess.set(false);
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────
+
+  /** Extracts a user-friendly message from an HTTP or generic error. */
+  private extractError(err: unknown, fallback: string): string {
+    if (err instanceof HttpErrorResponse) {
+      // Backend ApiResponseDTO message
+      const msg = err.error?.message ?? err.error?.error ?? err.message;
+      return msg || fallback;
+    }
+    if (err instanceof Error) return err.message;
+    return fallback;
   }
 
   // ── Private ────────────────────────────────────────────────────────────

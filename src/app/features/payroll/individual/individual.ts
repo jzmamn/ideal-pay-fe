@@ -16,6 +16,9 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { IndividualSalaryService } from './individual-salary/shared/individual-salary.service';
 import { EmployeeProfileService } from '../../settings/employee/employee-profile.service';
+import { PayrollRunService } from '../shared/payroll-run.service';
+import { PayrollRunResponse } from '../shared/payroll-run.model';
+import { PayrollDraftViewComponent } from '../shared/payroll-draft-view/payroll-draft-view';
 import { TableAutocomplete, type TableColumn } from '../../../shared/components/table-autocomplete/table-autocomplete';
 import { type EmployeeResponse } from '../../settings/employee/employee.model';
 import type {
@@ -35,7 +38,7 @@ import type {
   EmployeeFixedDeductionRequest,
 } from '../../settings/employee/employee-fixed-deduction/employee-fixed-deduction.model';
 
-type WorkflowStep = 'prepare' | 'review' | 'approve' | 'disburse';
+type WorkflowStep = 'prepare' | 'draft' | 'review' | 'approve' | 'disburse';
 
 export const SUB_STEPS = [
   { uiKey: 'fixedAlw',  label: 'Fixed Allowance'    },
@@ -74,6 +77,7 @@ function calcIncomeTax(taxableIncome: number): number {
     MatIconModule, MatInputModule, MatProgressSpinnerModule,
     MatSelectModule, MatTabsModule,
     TableAutocomplete,
+    PayrollDraftViewComponent,
   ],
   templateUrl: './individual.html',
   styleUrl: './individual.scss',
@@ -81,6 +85,7 @@ function calcIncomeTax(taxableIncome: number): number {
 export class IndividualComponent implements OnInit {
   readonly svc             = inject(IndividualSalaryService);
   private readonly profileSvc  = inject(EmployeeProfileService);
+  private readonly payrollRunSvc = inject(PayrollRunService);
   private readonly destroyRef  = inject(DestroyRef);
   private readonly fb          = inject(FormBuilder);
 
@@ -97,6 +102,7 @@ export class IndividualComponent implements OnInit {
   readonly submitting       = signal(false);
   readonly isDisbursed      = signal(false);
   readonly lastSavedAt      = signal<Date | null>(null);
+  readonly draftRun         = signal<PayrollRunResponse | null>(null);
 
   readonly lastSavedLabel = computed(() => {
     const d = this.lastSavedAt();
@@ -305,9 +311,10 @@ export class IndividualComponent implements OnInit {
     const MODIFIED_BY = 1; // TODO: replace with auth user id
 
     const fixedAllowances: EmployeeFixedAllowanceRequest[] = p.fixedAllowances.map(r => ({
+      id:            r.id,
       empId,
       faId:          r.faId,
-      amount:        r.amount,
+      amount:        r.amount ?? 0,
       payrollMonth:  r.payrollMonth ?? payrollMonth,
       isProcessed:   r.isProcessed,
       processedDate: r.processedDate,
@@ -316,9 +323,10 @@ export class IndividualComponent implements OnInit {
     }));
 
     const fixedDeductions: EmployeeFixedDeductionRequest[] = p.fixedDeductions.map(r => ({
+      id:            r.id,
       empId,
       fdId:          r.fdId,
-      amount:        r.amount,
+      amount:        r.amount ?? 0,
       payrollMonth:  r.payrollMonth ?? payrollMonth,
       isProcessed:   r.isProcessed,
       processedDate: r.processedDate,
@@ -327,9 +335,10 @@ export class IndividualComponent implements OnInit {
     }));
 
     const variableAllowances = p.variableAllowances.map(r => ({
+      id:            r.id,
       empId,
       vaId:          r.vaId,
-      amount:        r.amount,
+      amount:        r.amount ?? 0,
       payrollMonth:  r.payrollMonth ?? payrollMonth,
       isProcessed:   r.isProcessed,
       processedDate: r.processedDate,
@@ -338,9 +347,10 @@ export class IndividualComponent implements OnInit {
     }));
 
     const variableDeductions = p.variableDeductions.map(r => ({
+      id:            r.id,
       empId,
       vdId:          r.vdId,
-      amount:        r.amount,
+      amount:        r.amount ?? 0,
       payrollMonth:  r.payrollMonth ?? payrollMonth,
       isProcessed:   r.isProcessed,
       processedDate: r.processedDate,
@@ -349,10 +359,11 @@ export class IndividualComponent implements OnInit {
     }));
 
     const nopays = p.nopays.map(r => ({
+      id:            r.id,
       empId,
       nopayId:       r.nopayId,
-      days:          r.days,
-      amount:        r.amount,
+      days:          r.days   ?? 0,
+      amount:        r.amount ?? 0,
       payrollMonth:  r.payrollMonth ?? payrollMonth,
       isProcessed:   r.isProcessed,
       processedDate: r.processedDate,
@@ -361,10 +372,11 @@ export class IndividualComponent implements OnInit {
     }));
 
     const overtimes = p.overtimes.map(r => ({
+      id:            r.id,
       empId,
       overtimeId:    r.overtimeId,
-      hours:         r.hours,
-      amount:        r.amount,
+      hours:         r.hours  ?? 0,
+      amount:        r.amount ?? 0,
       payrollMonth:  r.payrollMonth ?? payrollMonth,
       isProcessed:   r.isProcessed,
       processedDate: r.processedDate,
@@ -399,13 +411,48 @@ export class IndividualComponent implements OnInit {
   }
 
   async submitForReview(): Promise<void> {
+    const emp = this.selectedEmployee();
+    if (!emp) return;
     this.submitting.set(true);
     try {
+      // 1. Save component entries first
       await this.saveDraft();
-      this.workflowStep.set('review');
+
+      // 2. Call the payroll run engine
+      const month = this.svc.periodMonth().toString().padStart(2, '0');
+      const payrollMonth = `${this.svc.periodYear()}-${month}`;
+      const run = await lastValueFrom(
+        this.payrollRunSvc.processIndividual(emp.id, payrollMonth, 1) // TODO: real userId
+      );
+
+      // 3. Show the draft view
+      this.draftRun.set(run);
+      this.workflowStep.set('draft');
     } finally {
       this.submitting.set(false);
     }
+  }
+
+  /** Called from draft view when user clicks Re-process. */
+  async reprocessIndividual(): Promise<void> {
+    const emp = this.selectedEmployee();
+    if (!emp) return;
+    this.submitting.set(true);
+    try {
+      const month = this.svc.periodMonth().toString().padStart(2, '0');
+      const payrollMonth = `${this.svc.periodYear()}-${month}`;
+      const run = await lastValueFrom(
+        this.payrollRunSvc.processIndividual(emp.id, payrollMonth, 1)
+      );
+      this.draftRun.set(run);
+    } finally {
+      this.submitting.set(false);
+    }
+  }
+
+  /** Called when draft view emits locked event. */
+  onRunLocked(run: PayrollRunResponse): void {
+    this.draftRun.set(run);
   }
 
   confirmReview(): void { this.workflowStep.set('approve'); }

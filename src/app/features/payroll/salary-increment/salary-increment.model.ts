@@ -1,5 +1,5 @@
 export type IncrementType   = 'BATCH' | 'INDIVIDUAL';
-export type IncrementStatus = 'DRAFT' | 'APPROVED' | 'EXPORTED' | 'CANCELLED';
+export type IncrementStatus = 'DRAFT' | 'APPROVED' | 'EXPORTED' | 'POSTED' | 'CANCELLED';
 
 export interface SalaryIncrementFaResponse {
   id: number;

@@ -60,6 +60,14 @@ export class SalaryIncrementService {
     return this.unwrap(this.http.post<ApiResponse<SalaryIncrementResponse>>(`${this.base}/${id}/cancel`, {}));
   }
 
+  nextCode(month: string): Observable<string> {
+    return this.unwrap(this.http.get<ApiResponse<string>>(`${this.base}/next-code`, { params: { month } }));
+  }
+
+  post(id: number): Observable<SalaryIncrementResponse> {
+    return this.unwrap(this.http.post<ApiResponse<SalaryIncrementResponse>>(`${this.base}/${id}/post`, {}));
+  }
+
   exportToPayroll(id: number): Observable<SalaryIncrementResponse> {
     return this.unwrap(this.http.post<ApiResponse<SalaryIncrementResponse>>(`${this.base}/${id}/export`, {}));
   }

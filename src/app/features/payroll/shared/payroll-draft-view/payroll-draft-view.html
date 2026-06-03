@@ -1,0 +1,362 @@
+<div class="draft-view">
+
+  <!-- ── Status banner ──────────────────────────────────────────────── -->
+  @if (!viewOnly()) {
+    <div class="status-bar"
+         [class.status-bar--draft]="!allLocked()"
+         [class.status-bar--locked]="allLocked()">
+      <mat-icon>{{ allLocked() ? 'lock' : 'pending_actions' }}</mat-icon>
+      <span>
+        @if (allLocked()) { Payroll Locked — no further changes allowed }
+        @else { Draft — review and lock to finalise }
+      </span>
+      @if (!allLocked() && !showDetail()) {
+        <button mat-stroked-button class="reprocess-btn" (click)="onReprocess()">
+          <mat-icon>refresh</mat-icon> Re-process
+        </button>
+      }
+    </div>
+  }
+
+  @if (lockError()) {
+    <div class="error-banner" role="alert">
+      <mat-icon>error_outline</mat-icon> {{ lockError() }}
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- INDIVIDUAL MODE                                                    -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  @if (!isBatchMode() && run(); as r) {
+    <div class="individual-layout">
+      <div class="run-header">
+        <div class="run-emp-info">
+          <span class="run-emp-name">{{ r.empName }}</span>
+          <span class="run-emp-meta">{{ r.empCode }} · {{ r.payrollMonth }}</span>
+        </div>
+        <span class="run-badge" [class.run-badge--locked]="r.status === 'LOCKED'">{{ r.status }}</span>
+      </div>
+
+      <div class="pay-cards">
+        <div class="pay-card"><span class="pay-card-label">Basic Salary</span><span class="pay-card-value">{{ r.basicSalary | number:'1.2-2' }}</span></div>
+        <div class="pay-card pay-card--positive"><span class="pay-card-label">Total Allowances</span><span class="pay-card-value">+ {{ r.totalAllowances | number:'1.2-2' }}</span></div>
+        <div class="pay-card pay-card--gross"><span class="pay-card-label">Gross Pay</span><span class="pay-card-value">{{ r.grossPay | number:'1.2-2' }}</span></div>
+        <div class="pay-card pay-card--negative"><span class="pay-card-label">Total Deductions</span><span class="pay-card-value">− {{ r.totalDeductions | number:'1.2-2' }}</span></div>
+      </div>
+
+      <div class="net-salary-bar">
+        <span class="net-eq">
+          <span class="net-eq-part">{{ r.grossPay | number:'1.2-2' }}</span>
+          <span class="net-eq-op">−</span>
+          <span class="net-eq-part deduction">{{ r.totalDeductions | number:'1.2-2' }}</span>
+          <span class="net-eq-op">=</span>
+          <span class="net-eq-result">LKR {{ r.netPay | number:'1.2-2' }}</span>
+        </span>
+        <span class="net-eq-label">Gross Pay − Total Deductions = Net Salary</span>
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail-section">
+          <h4 class="detail-title"><mat-icon>trending_up</mat-icon> Earnings</h4>
+          <table class="detail-table">
+            <thead><tr><th>Component</th><th>Code</th><th class="num">Amount</th></tr></thead>
+            <tbody>
+              <tr><td>Basic Salary</td><td>BASIC</td><td class="num">{{ r.basicSalary | number:'1.2-2' }}</td></tr>
+              @for (line of earnings(); track line.componentCode) {
+                <tr>
+                  <td>{{ line.componentName }}</td>
+                  <td class="code-cell">{{ line.componentCode }}</td>
+                  <td class="num">{{ line.amount | number:'1.2-2' }}
+                    @if (line.hours) { <span class="meta">{{ line.hours }}h</span> }
+                  </td>
+                </tr>
+              }
+              <tr class="subtotal-row"><td colspan="2">Gross Pay</td><td class="num">{{ r.grossPay | number:'1.2-2' }}</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="detail-section">
+          <h4 class="detail-title"><mat-icon>trending_down</mat-icon> Deductions</h4>
+          <table class="detail-table">
+            <thead><tr><th>Component</th><th>Code</th><th class="num">Amount</th></tr></thead>
+            <tbody>
+              @for (line of deductions(); track line.componentCode) {
+                <tr>
+                  <td>{{ line.componentName }}</td>
+                  <td class="code-cell">{{ line.componentCode }}</td>
+                  <td class="num deduction">− {{ line.amount | number:'1.2-2' }}
+                    @if (line.days) { <span class="meta">{{ line.days }}d</span> }
+                  </td>
+                </tr>
+              }
+              <tr class="subtotal-row"><td colspan="2">Net Pay</td><td class="num">{{ r.netPay | number:'1.2-2' }}</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        @if (statutory().length) {
+          <div class="detail-section detail-section--statutory">
+            <h4 class="detail-title"><mat-icon>business</mat-icon> Employer Statutory Cost</h4>
+            <table class="detail-table">
+              <thead><tr><th>Component</th><th>Code</th><th class="num">Amount</th></tr></thead>
+              <tbody>
+                <tr><td>EPF Liable Base</td><td>—</td><td class="num">{{ r.epfLiableBase | number:'1.2-2' }}</td></tr>
+                @for (line of statutory(); track line.componentCode) {
+                  <tr><td>{{ line.componentName }}</td><td class="code-cell">{{ line.componentCode }}</td><td class="num">{{ line.amount | number:'1.2-2' }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      @if (!viewOnly()) {
+        @if (r.status !== 'LOCKED') {
+          <div class="draft-footer">
+            <button mat-flat-button [disabled]="locking()" (click)="lockRun()">
+              @if (locking()) { <mat-spinner diameter="18" /> } @else { <mat-icon>lock</mat-icon> }
+              {{ locking() ? 'Locking…' : 'Lock Payroll' }}
+            </button>
+            <p class="lock-hint">Once locked this run cannot be edited. Use a correction run for changes.</p>
+          </div>
+        } @else {
+          <div class="locked-footer">
+            <mat-icon class="locked-icon">lock</mat-icon>
+            <span>Locked on {{ r.processedDate | date:'dd MMM yyyy HH:mm' }} by {{ r.processedByUserName }}</span>
+          </div>
+        }
+      }
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- BATCH MODE                                                         -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  @if (isBatchMode()) {
+
+    <!-- ── Drill-down: full detail for one employee ── -->
+    @if (showDetail() && detailRun(); as r) {
+      <div class="detail-nav">
+        <button mat-stroked-button (click)="backToSummary()">
+          <mat-icon>arrow_back</mat-icon> Back to Summary
+        </button>
+        <span class="detail-nav-label">{{ r.empName }} · {{ r.empCode }}</span>
+      </div>
+
+      @if (detailLoading()) {
+        <div class="loading-bar"><mat-spinner diameter="16" /><span>Loading…</span></div>
+      }
+
+      <div class="individual-layout">
+        <div class="run-header">
+          <div class="run-emp-info">
+            <span class="run-emp-name">{{ r.empName }}</span>
+            <span class="run-emp-meta">{{ r.empCode }} · {{ r.payrollMonth }}</span>
+          </div>
+          <span class="run-badge" [class.run-badge--locked]="r.status === 'LOCKED'">{{ r.status }}</span>
+        </div>
+
+        <div class="pay-cards">
+          <div class="pay-card"><span class="pay-card-label">Basic Salary</span><span class="pay-card-value">{{ r.basicSalary | number:'1.2-2' }}</span></div>
+          <div class="pay-card pay-card--positive"><span class="pay-card-label">Total Allowances</span><span class="pay-card-value">+ {{ r.totalAllowances | number:'1.2-2' }}</span></div>
+          <div class="pay-card pay-card--gross"><span class="pay-card-label">Gross Pay</span><span class="pay-card-value">{{ r.grossPay | number:'1.2-2' }}</span></div>
+          <div class="pay-card pay-card--negative"><span class="pay-card-label">Total Deductions</span><span class="pay-card-value">− {{ r.totalDeductions | number:'1.2-2' }}</span></div>
+        </div>
+
+        <div class="net-salary-bar">
+          <span class="net-eq">
+            <span class="net-eq-part">{{ r.grossPay | number:'1.2-2' }}</span>
+            <span class="net-eq-op">−</span>
+            <span class="net-eq-part deduction">{{ r.totalDeductions | number:'1.2-2' }}</span>
+            <span class="net-eq-op">=</span>
+            <span class="net-eq-result">LKR {{ r.netPay | number:'1.2-2' }}</span>
+          </span>
+          <span class="net-eq-label">Gross Pay − Total Deductions = Net Salary</span>
+        </div>
+
+        <div class="detail-grid">
+          <div class="detail-section">
+            <h4 class="detail-title"><mat-icon>trending_up</mat-icon> Earnings</h4>
+            <table class="detail-table">
+              <thead><tr><th>Component</th><th>Code</th><th class="num">Amount</th></tr></thead>
+              <tbody>
+                <tr><td>Basic Salary</td><td>BASIC</td><td class="num">{{ r.basicSalary | number:'1.2-2' }}</td></tr>
+                @for (line of detailEarnings(); track line.componentCode) {
+                  <tr>
+                    <td>{{ line.componentName }}</td>
+                    <td class="code-cell">{{ line.componentCode }}</td>
+                    <td class="num">{{ line.amount | number:'1.2-2' }}
+                      @if (line.hours) { <span class="meta">{{ line.hours }}h</span> }
+                    </td>
+                  </tr>
+                }
+                <tr class="subtotal-row"><td colspan="2">Gross Pay</td><td class="num">{{ r.grossPay | number:'1.2-2' }}</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="detail-section">
+            <h4 class="detail-title"><mat-icon>trending_down</mat-icon> Deductions</h4>
+            <table class="detail-table">
+              <thead><tr><th>Component</th><th>Code</th><th class="num">Amount</th></tr></thead>
+              <tbody>
+                @for (line of detailDeductions(); track line.componentCode) {
+                  <tr>
+                    <td>{{ line.componentName }}</td>
+                    <td class="code-cell">{{ line.componentCode }}</td>
+                    <td class="num deduction">− {{ line.amount | number:'1.2-2' }}
+                      @if (line.days) { <span class="meta">{{ line.days }}d</span> }
+                    </td>
+                  </tr>
+                }
+                <tr class="subtotal-row"><td colspan="2">Net Pay</td><td class="num">{{ r.netPay | number:'1.2-2' }}</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          @if (detailStatutory().length) {
+            <div class="detail-section detail-section--statutory">
+              <h4 class="detail-title"><mat-icon>business</mat-icon> Employer Statutory Cost</h4>
+              <table class="detail-table">
+                <thead><tr><th>Component</th><th>Code</th><th class="num">Amount</th></tr></thead>
+                <tbody>
+                  <tr><td>EPF Liable Base</td><td>—</td><td class="num">{{ r.epfLiableBase | number:'1.2-2' }}</td></tr>
+                  @for (line of detailStatutory(); track line.componentCode) {
+                    <tr><td>{{ line.componentName }}</td><td class="code-cell">{{ line.componentCode }}</td><td class="num">{{ line.amount | number:'1.2-2' }}</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+
+        @if (!viewOnly()) {
+          @if (r.status !== 'LOCKED') {
+            <div class="draft-footer">
+              <button mat-flat-button [disabled]="lockingRunId() === r.id || locking()" (click)="lockBatchRun(r.id)">
+                @if (lockingRunId() === r.id) { <mat-spinner diameter="18" /> } @else { <mat-icon>lock</mat-icon> }
+                {{ lockingRunId() === r.id ? 'Locking…' : 'Lock Payroll' }}
+              </button>
+              <p class="lock-hint">Once locked this run cannot be edited.</p>
+            </div>
+          } @else {
+            <div class="locked-footer">
+              <mat-icon class="locked-icon">lock</mat-icon>
+              <span>Locked on {{ r.processedDate | date:'dd MMM yyyy HH:mm' }}</span>
+            </div>
+          }
+        }
+      </div>
+    }
+
+    <!-- ── Batch summary table ── -->
+    @if (!showDetail()) {
+
+      @if (batchRuns().length === 0) {
+        <div class="batch-empty">
+          <mat-icon>info_outline</mat-icon>
+          <p>No payroll runs were processed for this period. Check that employees have active component entries for this month.</p>
+        </div>
+      }
+
+      @if (batchRuns().length > 0) {
+        <div class="batch-summary-bar">
+          <div class="batch-chip"><span class="chip-label">Employees</span><span class="chip-value">{{ batchTotals().count }}</span></div>
+          <div class="batch-chip batch-chip--positive"><span class="chip-label">Gross Total</span><span class="chip-value">{{ batchTotals().grossTotal | number:'1.2-2' }}</span></div>
+          <div class="batch-chip batch-chip--negative"><span class="chip-label">Deductions</span><span class="chip-value">{{ batchTotals().dedTotal | number:'1.2-2' }}</span></div>
+          <div class="batch-chip batch-chip--net"><span class="chip-label">Net Total</span><span class="chip-value">LKR {{ batchTotals().netTotal | number:'1.2-2' }}</span></div>
+          <div class="batch-chip"><span class="chip-label">Draft</span><span class="chip-value">{{ batchTotals().draft }}</span></div>
+          <div class="batch-chip batch-chip--locked"><span class="chip-label">Locked</span><span class="chip-value">{{ batchTotals().locked }}</span></div>
+        </div>
+
+        <div class="batch-table-wrap">
+          <table class="batch-table">
+            <thead>
+              <tr>
+                <th>Emp ID</th>
+                <th>Emp #</th>
+                <th>Name</th>
+                <th class="center">Type</th>
+                <th class="num">Working Days</th>
+                <th class="num">Basic Salary</th>
+                <th class="num">Allowances</th>
+                <th class="num">Gross Pay</th>
+                <th class="num">EPF Base</th>
+                <th class="num">Emp EPF (8%)</th>
+                <th class="num">Er EPF (12%)</th>
+                <th class="num">ETF (3%)</th>
+                <th class="num">PAYE Tax</th>
+                <th class="num">Total Ded.</th>
+                <th class="num">Net Pay</th>
+                <th class="center">Status</th>
+                @if (!viewOnly()) { <th class="center">Action</th> }
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of batchRuns(); track row.id) {
+                <tr [class.row--locked]="row.status === 'LOCKED'"
+                    class="row-clickable"
+                    (click)="openDetail(row.id)">
+                  <td class="code-cell">{{ row.empId }}</td>
+                  <td class="code-cell">{{ row.empCode }}</td>
+                  <td>{{ row.empName }}</td>
+                  <td class="center">
+                    <span class="type-badge" [class.type-badge--correction]="row.runType === 'CORRECTION'">
+                      {{ row.runType }}
+                    </span>
+                  </td>
+                  <td class="num">{{ row.workingDays }}</td>
+                  <td class="num">{{ row.basicSalary     | number:'1.2-2' }}</td>
+                  <td class="num positive">{{ row.totalAllowances | number:'1.2-2' }}</td>
+                  <td class="num">{{ row.grossPay        | number:'1.2-2' }}</td>
+                  <td class="num">{{ row.epfLiableBase   | number:'1.2-2' }}</td>
+                  <td class="num deduction">{{ row.employeeEpf    | number:'1.2-2' }}</td>
+                  <td class="num statutory">{{ row.employerEpf   | number:'1.2-2' }}</td>
+                  <td class="num statutory">{{ row.etf            | number:'1.2-2' }}</td>
+                  <td class="num deduction">{{ row.payeTax        | number:'1.2-2' }}</td>
+                  <td class="num deduction">{{ row.totalDeductions | number:'1.2-2' }}</td>
+                  <td class="num net">{{ row.netPay       | number:'1.2-2' }}</td>
+                  <td class="center">
+                    <span class="run-badge" [class.run-badge--locked]="row.status === 'LOCKED'">{{ row.status }}</span>
+                  </td>
+                  @if (!viewOnly()) {
+                    <td class="center" (click)="$event.stopPropagation()">
+                      @if (row.status === 'LOCKED') {
+                        <mat-icon class="icon-locked" matTooltip="Locked">lock</mat-icon>
+                      } @else {
+                        <button mat-icon-button
+                                matTooltip="Lock this run"
+                                [disabled]="lockingRunId() === row.id || locking()"
+                                (click)="lockBatchRun(row.id)">
+                          @if (lockingRunId() === row.id) {
+                            <mat-spinner diameter="18" />
+                          } @else {
+                            <mat-icon>lock_open</mat-icon>
+                          }
+                        </button>
+                      }
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (!viewOnly() && batchTotals().draft > 0) {
+          <div class="draft-footer">
+            <button mat-flat-button [disabled]="locking()" (click)="lockAll()">
+              @if (locking()) { <mat-spinner diameter="18" /> } @else { <mat-icon>lock</mat-icon> }
+              {{ locking() ? 'Locking all…' : 'Lock All (' + batchTotals().draft + ' remaining)' }}
+            </button>
+            <p class="lock-hint">Locks all DRAFT runs at once. This cannot be undone.</p>
+          </div>
+        }
+      }
+
+    } <!-- end @if (!showDetail()) -->
+
+  }
+
+</div>

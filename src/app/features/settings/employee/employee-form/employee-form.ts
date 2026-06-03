@@ -1,12 +1,13 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
   signal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -86,9 +87,10 @@ function orUndef(s: string): string | undefined {
   styleUrl: './employee-form.scss',
 })
 export class EmployeeForm {
-  private readonly router   = inject(Router);
-  private readonly fb       = inject(FormBuilder);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly router     = inject(Router);
+  private readonly fb         = inject(FormBuilder);
+  private readonly snackBar   = inject(MatSnackBar);
+  private readonly destroyRef = inject(DestroyRef);
   readonly service          = inject(EmployeeService);
   readonly masterSvc        = inject(MasterDataService);
 
@@ -122,6 +124,9 @@ export class EmployeeForm {
     designationId: [null as number | null, Validators.required],
     branchId:      [null as number | null, Validators.required],
     gradeId:       [null as number | null],
+    bankId:        [null as number | null],
+    bankBranchId:  [null as number | null],
+    accountNo:     [''],
     basicSalary:   [0, [Validators.required, Validators.min(0)]],
 
     statusId:      [null as number | null, Validators.required],
@@ -140,6 +145,17 @@ export class EmployeeForm {
   readonly nopayDaysOptions = computed(() =>
     this.masterSvc.activeNopayDays().map(n => ({ id: n.id, name: `${n.name} (${n.days}d)` }))
   );
+
+  private readonly _bankId = toSignal(
+    this.form.controls.bankId.valueChanges,
+    { initialValue: this.form.controls.bankId.value },
+  );
+
+  readonly bankBranchOptions = computed(() => {
+    const bankId = this._bankId();
+    if (!bankId) return [];
+    return this.masterSvc.activeBankBranches().filter(b => b.bankId === bankId);
+  });
 
   readonly gradeLookupConfig = computed<LookupConfig<Grade>>(() => ({
     title: 'Select Grade',
@@ -226,6 +242,9 @@ export class EmployeeForm {
         designationId: emp.designationId,
         branchId:      emp.branchId,
         gradeId:       emp.gradeId,
+        bankId:        emp.bankId ?? null,
+        bankBranchId:  emp.bankBranchId ?? null,
+        accountNo:     emp.accountNo ?? '',
         basicSalary:   emp.basicSalary,
 
         statusId:  emp.statusId,
@@ -241,6 +260,12 @@ export class EmployeeForm {
         cpContactNumber: emp.cpContactNumber,
       });
     }
+
+    this.form.controls.bankId.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.form.controls.bankBranchId.setValue(null, { emitEvent: false });
+      });
   }
 
   private navigateToFirstInvalidTab(): void {
@@ -287,6 +312,9 @@ export class EmployeeForm {
       designationId: v.designationId!,
       branchId:      v.branchId!,
       gradeId:       v.gradeId!,
+      bankId:        v.bankId ?? undefined,
+      bankBranchId:  v.bankBranchId ?? undefined,
+      accountNo:     orUndef(v.accountNo ?? ''),
 
       statusId:  v.statusId!,
       statDate:  orUndef(formatDate(v.statDate)),

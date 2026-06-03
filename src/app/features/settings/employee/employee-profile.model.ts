@@ -9,6 +9,7 @@ import type { EmployeeFixedDeductionRequest, EmployeeFixedDeductionResponse } fr
 // ── Variable allowance ────────────────────────────────────────────────────────
 
 export interface EmployeeVariableAllowanceRequest {
+  id?: number;
   empId: number;
   vaId: number;
   amount: number;
@@ -44,6 +45,7 @@ export interface EmployeeVariableAllowanceResponse {
 // ── Variable deduction ────────────────────────────────────────────────────────
 
 export interface EmployeeVariableDeductionRequest {
+  id?: number;
   empId: number;
   vdId: number;
   amount: number;
@@ -79,6 +81,7 @@ export interface EmployeeVariableDeductionResponse {
 // ── Nopay ─────────────────────────────────────────────────────────────────────
 
 export interface EmployeeNopayRequest {
+  id?: number;
   empId: number;
   nopayId: number;
   days: number;
@@ -116,6 +119,7 @@ export interface EmployeeNopayResponse {
 // ── Overtime ──────────────────────────────────────────────────────────────────
 
 export interface EmployeeOvertimeRequest {
+  id?: number;
   empId: number;
   overtimeId: number;
   hours: number;
