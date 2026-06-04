@@ -191,6 +191,13 @@ export const routes: Routes = [
             },
 
             {
+                path: 'email-settings',
+                loadComponent: () =>
+                    import('./features/settings/email-settings/email-settings')
+                        .then(m => m.EmailSettings)
+            },
+
+            {
                 path: 'nopay',
                 loadComponent: () =>
                     import('./features/settings/nopay/nopay-days')

@@ -1,100 +1,328 @@
-<div class="bank-transfer-page" [formGroup]="form">
+<div class="bank-transfer-page">
 
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
   <div class="page-header">
-    <h2 class="page-title">Bank Transfer</h2>
-
-    <div class="add-row">
-      <app-table-autocomplete
-        formControlName="employeeId"
-        label="Employee"
-        placeholder="Search by name or employee #…"
-        src="/employee?isActive=true"
-        [columns]="employeeCols"
-        [displayFn]="empDisplayFn"
-        (itemSelected)="onItemSelected($event)"
-      />
-      <button mat-flat-button type="button" [disabled]="!selectedEmployee()" (click)="addToTransfer()">
-        <mat-icon>add</mat-icon>
-        Add to Transfer
+    <div class="title-row">
+      <h2 class="page-title">Bank Transfer</h2>
+      <button mat-stroked-button type="button"
+              [disabled]="refLoading()"
+              (click)="openTemplateManager()"
+              aria-label="Manage bank file templates">
+        <mat-icon>settings</mat-icon>
+        Manage Templates
       </button>
+    </div>
+
+    <!-- Period + Type selectors -->
+    <div class="controls-row" [formGroup]="periodForm">
+      <mat-form-field appearance="outline" class="period-field">
+        <mat-label>Month</mat-label>
+        <mat-select formControlName="month">
+          @for (m of MONTHS; track m.value) {
+            <mat-option [value]="m.value">{{ m.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="period-field">
+        <mat-label>Year</mat-label>
+        <mat-select formControlName="year">
+          @for (y of years; track y) {
+            <mat-option [value]="y">{{ y }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Transfer type — single selection -->
+      <mat-button-toggle-group [value]="selectedType()"
+                               (change)="selectedType.set($event.value)"
+                               aria-label="Transfer type"
+                               hideSingleSelectionIndicator>
+        @for (type of TRANSFER_TYPES; track type.value) {
+          <mat-button-toggle [value]="type.value">{{ type.label }}</mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+
+      <button mat-flat-button type="button"
+              [disabled]="loading() || periodForm.invalid"
+              (click)="load()">
+        @if (loading()) { <mat-spinner diameter="18" /> } @else { <mat-icon>search</mat-icon> }
+        Load
+      </button>
+    </div>
+
+    <!-- Mode toggle -->
+    <div class="mode-row">
+      <span class="mode-label">Transfer mode</span>
+      <mat-button-toggle-group [value]="mode()" (change)="setMode($event.value)"
+                               aria-label="Transfer mode" hideSingleSelectionIndicator>
+        <mat-button-toggle value="by-bank">
+          <mat-icon>account_balance</mat-icon>
+          By Employee Bank
+        </mat-button-toggle>
+        <mat-button-toggle value="single-bank">
+          <mat-icon>payments</mat-icon>
+          Single Bank (All Employees)
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+
+      <!-- Single-bank selector — shown only in single-bank mode -->
+      @if (mode() === 'single-bank') {
+        <mat-form-field appearance="outline" class="single-bank-field">
+          <mat-label>Select Template Bank</mat-label>
+          <mat-select [value]="singleBankId()"
+                      (valueChange)="singleBankId.set($event)"
+                      aria-label="Select bank for single-bank transfer">
+            @for (b of banks(); track b.id) {
+              <mat-option [value]="b.id">{{ b.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        @if (singleBankId() && !singleBankTemplate()) {
+          <span class="no-tmpl-warn" aria-live="polite">
+            <mat-icon>warning</mat-icon>
+            No template configured for this bank
+          </span>
+        }
+      }
     </div>
   </div>
 
-  @if (transfers().length > 0) {
+  <!-- ── Load error ─────────────────────────────────────────────────────── -->
+  @if (loadError()) {
+    <p class="error-banner" role="alert">{{ loadError() }}</p>
+  }
 
-    <div class="transfer-table-wrap">
-      <table mat-table [dataSource]="transfers()" aria-label="Bank transfer list">
+  <!-- ── Results ────────────────────────────────────────────────────────── -->
+  @if (hasRows()) {
 
-        <ng-container matColumnDef="employeeNo">
-          <th mat-header-cell *matHeaderCellDef>Emp #</th>
-          <td mat-cell *matCellDef="let row">{{ row.employeeNo }}</td>
-        </ng-container>
+    <!-- Summary bar -->
+    <div class="summary-bar">
+      <span class="summary-chip pending">
+        <mat-icon aria-hidden="true">schedule</mat-icon>
+        {{ pendingCount() }} pending
+      </span>
+      <span class="summary-chip transferred">
+        <mat-icon aria-hidden="true">check_circle</mat-icon>
+        {{ transferredCount() }} transferred
+      </span>
+      <span class="summary-total">
+        Total: <strong>{{ grandTotal() | number:'1.2-2' }}</strong>
+      </span>
 
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Name</th>
-          <td mat-cell *matCellDef="let row">{{ row.name }}</td>
-        </ng-container>
+      <span class="spacer"></span>
 
-        <ng-container matColumnDef="bank">
-          <th mat-header-cell *matHeaderCellDef>Bank</th>
-          <td mat-cell *matCellDef="let row">{{ row.bank || '—' }}</td>
-        </ng-container>
+      @if (markError()) {
+        <span class="error-inline" role="alert">{{ markError() }}</span>
+      }
 
-        <ng-container matColumnDef="accountNo">
-          <th mat-header-cell *matHeaderCellDef>Account No.</th>
-          <td mat-cell *matCellDef="let row">{{ row.accountNo || '—' }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="netPay">
-          <th mat-header-cell *matHeaderCellDef class="amount-col">Net Pay (LKR)</th>
-          <td mat-cell *matCellDef="let row" class="amount-col">{{ row.netPay | number:'1.2-2' }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef>Status</th>
-          <td mat-cell *matCellDef="let row">
-            <mat-chip-set aria-label="Transfer status">
-              <mat-chip [class]="'status-chip status-' + row.status" [disableRipple]="true">
-                {{ row.status }}
-              </mat-chip>
-            </mat-chip-set>
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let row">
-            <button mat-icon-button type="button" class="btn-remove"
-                    aria-label="Remove from transfer"
-                    [disabled]="row.status === 'processed'"
-                    (click)="removeTransfer(row.employeeNo)">
-              <mat-icon>remove_circle_outline</mat-icon>
-            </button>
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-
-      </table>
-    </div>
-
-    <mat-divider />
-
-    <div class="footer-actions">
-      <span class="transfer-count">{{ transfers().length }} employee(s) queued</span>
-      <button mat-flat-button type="button" color="primary" (click)="processAll()">
-        <mat-icon>send</mat-icon>
-        Process All Transfers
+      <button mat-stroked-button type="button"
+              [disabled]="!pendingCount() || !!markingIds().size"
+              (click)="markAllTransferred()"
+              aria-label="Mark all pending as transferred">
+        <mat-icon>done_all</mat-icon>
+        Mark All Transferred
       </button>
     </div>
 
-  }
+    <!-- ═══ SINGLE-BANK MODE ════════════════════════════════════════════════ -->
+    @if (mode() === 'single-bank') {
 
-  @if (transfers().length === 0) {
+      @if (!singleBankId()) {
+        <div class="empty-state" role="status">
+          <mat-icon aria-hidden="true">account_balance</mat-icon>
+          <p>Select a bank above to use its template for all employees.</p>
+        </div>
+      } @else {
+        <div class="single-bank-panel">
+          <div class="single-bank-header">
+            <div>
+              <h3 class="single-bank-title">{{ singleBank()?.name }}</h3>
+              <span class="bank-code-badge">{{ singleBank()?.code }}</span>
+            </div>
+            <div class="panel-actions">
+              <button mat-stroked-button type="button"
+                      [disabled]="!singleBankTemplate()"
+                      [matTooltip]="!singleBankTemplate() ? 'Configure a template first' : 'Download bank file'"
+                      (click)="generateFile(singleBankGroup()!)"
+                      aria-label="Generate and download bank transfer file">
+                <mat-icon>download</mat-icon>
+                Generate File
+              </button>
+              <button mat-flat-button type="button"
+                      [disabled]="!pendingCount() || !!markingIds().size"
+                      (click)="markAllTransferred()"
+                      aria-label="Mark all as transferred">
+                <mat-icon>check</mat-icon>
+                Mark Transferred
+              </button>
+            </div>
+          </div>
+
+          <table mat-table [dataSource]="rows()" aria-label="All employees transfer list"
+                 class="group-table">
+
+            <ng-container matColumnDef="employeeNo">
+              <th mat-header-cell *matHeaderCellDef>Emp #</th>
+              <td mat-cell *matCellDef="let row">{{ row.employeeNo }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="empName">
+              <th mat-header-cell *matHeaderCellDef>Name</th>
+              <td mat-cell *matCellDef="let row">{{ row.empName }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="accountNo">
+              <th mat-header-cell *matHeaderCellDef>Account No.</th>
+              <td mat-cell *matCellDef="let row">{{ row.accountNo || '—' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="branchCode">
+              <th mat-header-cell *matHeaderCellDef>Branch</th>
+              <td mat-cell *matCellDef="let row">{{ row.branchCode || '—' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="totalAmount">
+              <th mat-header-cell *matHeaderCellDef class="amount-col">Amount (LKR)</th>
+              <td mat-cell *matCellDef="let row" class="amount-col">
+                {{ row.totalAmount | number:'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let row">
+                @if (isMarking(row.runId)) {
+                  <mat-spinner diameter="16" />
+                } @else {
+                  <span [class]="'status-badge status-' + row.transferStatus.toLowerCase()">
+                    {{ row.transferStatus === 'TRANSFERRED' ? 'Transferred' : 'Pending' }}
+                  </span>
+                  @if (row.transferredAt) {
+                    <span class="transfer-date">{{ row.transferredAt | date:'dd MMM HH:mm' }}</span>
+                  }
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                [class.row-transferred]="row.transferStatus === 'TRANSFERRED'"></tr>
+          </table>
+        </div>
+      }
+
+    <!-- ═══ BY-BANK MODE ═════════════════════════════════════════════════════ -->
+    } @else {
+
+      <mat-accordion multi>
+        @for (group of bankGroups(); track group.bankCode) {
+          <mat-expansion-panel>
+
+            <mat-expansion-panel-header>
+              <mat-panel-title class="panel-title">
+                <mat-icon aria-hidden="true">account_balance</mat-icon>
+                {{ group.bankName }}
+                @if (group.bankCode) {
+                  <span class="bank-code-badge">{{ group.bankCode }}</span>
+                }
+              </mat-panel-title>
+              <mat-panel-description class="panel-desc">
+                {{ group.rows.length }} employee(s) &nbsp;·&nbsp;
+                LKR {{ group.total | number:'1.2-2' }}
+                @if (!group.template) {
+                  <span class="no-tmpl-warn"
+                        matTooltip="No file template configured for this bank">
+                    <mat-icon aria-label="No template">warning</mat-icon>
+                    No template
+                  </span>
+                }
+                @if (groupPendingCount(group) === 0) {
+                  <span class="all-done-badge">All transferred</span>
+                }
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+
+            <table mat-table [dataSource]="group.rows"
+                   [attr.aria-label]="'Transfer list for ' + group.bankName"
+                   class="group-table">
+
+              <ng-container matColumnDef="employeeNo">
+                <th mat-header-cell *matHeaderCellDef>Emp #</th>
+                <td mat-cell *matCellDef="let row">{{ row.employeeNo }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="empName">
+                <th mat-header-cell *matHeaderCellDef>Name</th>
+                <td mat-cell *matCellDef="let row">{{ row.empName }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="accountNo">
+                <th mat-header-cell *matHeaderCellDef>Account No.</th>
+                <td mat-cell *matCellDef="let row">{{ row.accountNo || '—' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="branchCode">
+                <th mat-header-cell *matHeaderCellDef>Branch</th>
+                <td mat-cell *matCellDef="let row">{{ row.branchCode || '—' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="totalAmount">
+                <th mat-header-cell *matHeaderCellDef class="amount-col">Amount (LKR)</th>
+                <td mat-cell *matCellDef="let row" class="amount-col">
+                  {{ row.totalAmount | number:'1.2-2' }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let row">
+                  @if (isMarking(row.runId)) {
+                    <mat-spinner diameter="16" />
+                  } @else {
+                    <span [class]="'status-badge status-' + row.transferStatus.toLowerCase()">
+                      {{ row.transferStatus === 'TRANSFERRED' ? 'Transferred' : 'Pending' }}
+                    </span>
+                    @if (row.transferredAt) {
+                      <span class="transfer-date">{{ row.transferredAt | date:'dd MMM HH:mm' }}</span>
+                    }
+                  }
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                  [class.row-transferred]="row.transferStatus === 'TRANSFERRED'"></tr>
+            </table>
+
+            <div class="panel-actions">
+              <button mat-stroked-button type="button"
+                      [disabled]="!group.template"
+                      [matTooltip]="!group.template ? 'Configure a template first' : 'Download bank file'"
+                      (click)="generateFile(group)"
+                      aria-label="Generate and download bank transfer file">
+                <mat-icon>download</mat-icon>
+                Generate File
+              </button>
+              <button mat-flat-button type="button"
+                      [disabled]="groupPendingCount(group) === 0 || !!markingIds().size"
+                      (click)="markGroupTransferred(group)"
+                      aria-label="Mark this bank's pending rows as transferred">
+                <mat-icon>check</mat-icon>
+                Mark Transferred
+              </button>
+            </div>
+
+          </mat-expansion-panel>
+        }
+      </mat-accordion>
+    }
+
+  } @else if (!loading()) {
     <div class="empty-state" role="status">
       <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
-      <p>Add employees to queue bank transfers.</p>
+      <p>Select a period and transfer types, then click <strong>Load</strong> to view locked payroll runs ready for transfer.</p>
     </div>
   }
 

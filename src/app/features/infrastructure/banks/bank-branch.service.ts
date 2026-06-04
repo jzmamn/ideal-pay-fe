@@ -8,7 +8,6 @@ import { BankBranch } from '../../../shared/models/master-data.models';
 
 interface ApiBankBranch {
   id: number;
-  bankId: number;
   bankCode: string;
   bankName: string;
   branchCode: string;
@@ -23,13 +22,23 @@ export class BankBranchService {
 
   getAll(): Observable<BankBranch[]> {
     return this.http.get<ApiResponse<ApiBankBranch[]>>(this.baseUrl).pipe(
-      map(res => res.data.map(item => ({
-        id: item.id,
-        code: item.branchCode,
-        name: item.branchName,
-        bankId: item.bankId,
-        isActive: item.isActive,
-      }))),
+      map(res => res.data.map(item => this.mapItem(item))),
     );
+  }
+
+  getByBankCode(bankCode: string): Observable<BankBranch[]> {
+    return this.http.get<ApiResponse<ApiBankBranch[]>>(`${this.baseUrl}/by-bank/${bankCode}`).pipe(
+      map(res => res.data.map(item => this.mapItem(item))),
+    );
+  }
+
+  private mapItem(item: ApiBankBranch): BankBranch {
+    return {
+      id: Number(item.id),
+      code: item.branchCode,
+      name: `${item.branchName} - ${item.branchCode}`,
+      bankId: 0,
+      isActive: item.isActive,
+    };
   }
 }

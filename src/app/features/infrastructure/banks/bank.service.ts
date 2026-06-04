@@ -21,7 +21,7 @@ export class BankService {
   getAll(): Observable<Bank[]> {
     return this.http.get<ApiResponse<ApiBank[]>>(this.baseUrl).pipe(
       map(res => res.data.map(item => ({
-        id: item.id,
+        id: Number(item.id),
         code: item.code,
         name: item.name,
         isActive: item.isActive,

@@ -1,17 +1,28 @@
 :host {
   display: block;
+  height: 100%;
 }
+
+// ── Page wrapper ────────────────────────────────────────────────────────────
 
 .pay-slip-page {
-  padding: 24px;
-  max-width: 760px;
-}
-
-.controls-bar {
   display: flex;
   flex-direction: column;
+  height: 100%;
+  padding: 24px;
+  gap: 0;
+  box-sizing: border-box;
+}
+
+// ── Header ──────────────────────────────────────────────────────────────────
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 16px;
-  margin-bottom: 24px;
+  padding-bottom: 16px;
 }
 
 .page-title {
@@ -21,123 +32,186 @@
   color: #1e293b;
 }
 
-.controls-row {
+.toolbar {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
   flex-wrap: wrap;
 }
 
-.slip-card {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 28px 32px;
+.period-row {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  align-items: flex-start;
+  gap: 10px;
 }
 
-.slip-header {
+.period-field {
+  width: 130px;
+  &--year { width: 90px; }
+}
+
+.layout-toggle {
+  height: 36px;
+}
+
+// ── Loader ──────────────────────────────────────────────────────────────────
+
+.loader-row {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 12px;
-}
-
-.company-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-}
-
-.company-name {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.slip-label {
-  font-size: 13px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  padding: 32px 0;
   color: #64748b;
 }
 
-.employee-info {
+// ── Body layout ─────────────────────────────────────────────────────────────
+
+.body-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  margin-top: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+// ── Left panel ──────────────────────────────────────────────────────────────
+
+.run-list-panel {
+  border-right: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding-top: 8px;
+  overflow: hidden;
+  background: #f8fafc;
 }
 
-.info-row {
-  display: flex;
-  gap: 12px;
-  font-size: 13.5px;
-}
-
-.info-label {
-  width: 100px;
-  color: #94a3b8;
-  flex-shrink: 0;
-}
-
-.info-value {
-  color: #1e293b;
-  font-weight: 500;
-}
-
-.slip-body {
+.search-header {
+  padding: 14px 14px 10px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
-.slip-section {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.section-title {
-  margin: 0 0 4px;
+.panel-label {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.07em;
   color: #94a3b8;
 }
 
-.slip-row {
+.batch-actions {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: baseline;
-  font-size: 13.5px;
-  color: #475569;
+  padding: 8px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fff;
+}
 
-  &.sub {
-    padding-left: 12px;
+.batch-btns {
+  display: flex;
+  gap: 8px;
+}
+
+// ── Run list ────────────────────────────────────────────────────────────────
+
+.run-list {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.run-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: default;
+  transition: background 120ms;
+
+  &:hover { background: #f1f5f9; }
+
+  &--active { background: #eff6ff; }
+
+  &__info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    cursor: pointer;
+  }
+
+  &__name {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #0f172a;
+  }
+
+  &__meta {
+    font-size: 12px;
     color: #64748b;
-    font-size: 13px;
   }
 
-  &.total {
-    font-weight: 600;
-    color: #1e293b;
-    border-top: 1px dashed #e2e8f0;
-    padding-top: 6px;
-    margin-top: 4px;
-  }
-
-  &.net {
-    font-size: 16px;
+  &__status {
+    font-size: 10px;
     font-weight: 700;
-    color: #1e293b;
-    padding: 8px 0 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    align-self: flex-start;
 
-    strong { color: #3b82f6; }
+    &--draft            { color: #d97706; }
+    &--locked           { color: #16a34a; }
+    &--correction_draft { color: #7c3aed; }
+    &--correction_locked{ color: #0f172a; }
   }
+}
+
+// ── Preview panel ───────────────────────────────────────────────────────────
+
+.preview-panel {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 20px 24px;
+  background: #fff;
+}
+
+.preview-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.preview-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.preview-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 12px;
+  color: #94a3b8;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    opacity: 0.3;
+  }
+
+  p { margin: 0; font-size: 0.9rem; }
 }
 
 .empty-state {
@@ -145,26 +219,37 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 64px 24px;
+  padding: 48px 24px;
   color: #94a3b8;
   text-align: center;
 
   mat-icon {
-    font-size: 48px;
-    width: 48px;
-    height: 48px;
-    opacity: 0.4;
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    opacity: 0.3;
   }
 
   p { margin: 0; font-size: 0.9rem; }
 }
 
-@media print {
-  .controls-bar { display: none; }
-  .slip-card { border: none; padding: 0; box-shadow: none; }
-}
+// ── Print ───────────────────────────────────────────────────────────────────
 
-@media (max-width: 600px) {
-  .pay-slip-page { padding: 16px; }
-  .slip-card { padding: 20px 16px; }
+@media print {
+  .page-header,
+  .run-list-panel,
+  .preview-toolbar,
+  .no-print {
+    display: none !important;
+  }
+
+  .body-layout {
+    display: block;
+    border: none;
+  }
+
+  .preview-panel {
+    padding: 0;
+    overflow: visible;
+  }
 }

@@ -1,97 +1,198 @@
-<div class="pay-slip-page" [formGroup]="form">
+<div class="pay-slip-page">
 
-  <div class="controls-bar">
+  <!-- ── Top toolbar ──────────────────────────────────────────────────── -->
+  <div class="page-header">
     <h2 class="page-title">Pay Slip</h2>
-    <div class="controls-row">
-      <app-table-autocomplete
-        formControlName="employeeId"
-        label="Employee"
-        placeholder="Search by name or employee #…"
-        src="/employee?isActive=true"
-        [columns]="employeeCols"
-        [displayFn]="empDisplayFn"
-        (itemSelected)="onItemSelected($event)"
-      />
-      <button mat-flat-button type="button" [disabled]="!selectedEmployee()" (click)="printSlip()">
-        <mat-icon>print</mat-icon>
-        Print Slip
-      </button>
+
+    <div class="toolbar">
+
+      <!-- Period picker -->
+      <div class="period-row" [formGroup]="periodForm">
+        <mat-form-field appearance="outline" class="period-field">
+          <mat-label>Month</mat-label>
+          <mat-select formControlName="month">
+            @for (m of months; track m.value) {
+              <mat-option [value]="m.value">{{ m.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="period-field period-field--year">
+          <mat-label>Year</mat-label>
+          <mat-select formControlName="year">
+            @for (y of years; track y) {
+              <mat-option [value]="y">{{ y }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-flat-button type="button" (click)="loadMonth()" [disabled]="loading()">
+          <mat-icon>search</mat-icon>
+          Load
+        </button>
+      </div>
+
+      <!-- Layout toggle -->
+      <mat-button-toggle-group
+        [value]="layout()"
+        (change)="layout.set($event.value)"
+        aria-label="Payslip layout"
+        class="layout-toggle"
+      >
+        <mat-button-toggle value="portrait"  aria-label="Portrait layout">
+          <mat-icon>crop_portrait</mat-icon>
+          Portrait
+        </mat-button-toggle>
+        <mat-button-toggle value="landscape" aria-label="Landscape layout">
+          <mat-icon>crop_landscape</mat-icon>
+          Landscape
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+
     </div>
   </div>
 
-  @if (selectedEmployee(); as emp) {
-    <div class="slip-card" aria-label="Pay slip document">
+  <mat-divider />
 
-      <div class="slip-header">
-        <div class="company-info">
-          <span class="company-name">Ideal Pay</span>
-          <span class="slip-label">Pay Slip</span>
-        </div>
-        <mat-divider />
-        <div class="employee-info">
-          <div class="info-row">
-            <span class="info-label">Employee</span>
-            <span class="info-value">{{ emp.firstName }} {{ emp.lastName }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Emp #</span>
-            <span class="info-value">{{ emp.employeeNo }}</span>
-          </div>
-        </div>
-      </div>
-
-      <mat-divider />
-
-      <div class="slip-body">
-        <div class="slip-section">
-          <h3 class="section-title">Earnings</h3>
-          <div class="slip-row">
-            <span>Basic Salary</span>
-            <span>0.00</span>
-          </div>
-          <div class="slip-row sub">
-            <span>Total Allowances</span>
-            <span>0.00</span>
-          </div>
-          <div class="slip-row total">
-            <span>Gross Pay</span>
-            <span>LKR 0.00</span>
-          </div>
-        </div>
-
-        <mat-divider />
-
-        <div class="slip-section">
-          <h3 class="section-title">Deductions</h3>
-          <div class="slip-row">
-            <span>EPF — Employee (11%)</span>
-            <span>0.00</span>
-          </div>
-          <div class="slip-row">
-            <span>Income Tax (PAYE)</span>
-            <span>0.00</span>
-          </div>
-          <div class="slip-row total">
-            <span>Total Deductions</span>
-            <span>LKR 0.00</span>
-          </div>
-        </div>
-
-        <mat-divider />
-
-        <div class="slip-row net">
-          <span>Net Pay</span>
-          <strong>LKR 0.00</strong>
-        </div>
-      </div>
-
+  @if (loading()) {
+    <div class="loader-row" role="status" aria-label="Loading">
+      <mat-spinner diameter="36" />
+      <span>Loading…</span>
     </div>
   }
 
-  @if (!selectedEmployee()) {
-    <div class="empty-state" role="status">
-      <mat-icon aria-hidden="true">receipt_long</mat-icon>
-      <p>Select an employee to view their pay slip.</p>
+  <!-- ── Body: run list + preview ─────────────────────────────────────── -->
+  @if (!loading()) {
+    <div class="body-layout">
+
+      <!-- Left: run list / employee search -->
+      <aside class="run-list-panel">
+
+        <!-- Individual search -->
+        <div class="search-header">
+          <span class="panel-label">Employee Search</span>
+          <app-table-autocomplete
+            label="Filter by employee"
+            placeholder="Name or Emp #…"
+            src="/employee?isActive=true"
+            [columns]="employeeCols"
+            [displayFn]="empDisplayFn"
+            (itemSelected)="onEmployeeSelected($event)"
+          />
+        </div>
+
+        @if (batchRuns().length === 0) {
+          <div class="empty-state" role="status">
+            <mat-icon aria-hidden="true">receipt_long</mat-icon>
+            <p>Load a month to see payslip runs.</p>
+          </div>
+        }
+
+        @if (batchRuns().length > 0) {
+          <!-- Batch actions bar -->
+          <div class="batch-actions">
+            <mat-checkbox
+              [checked]="allChecked()"
+              [indeterminate]="someChecked()"
+              (change)="toggleAll($event.checked)"
+              aria-label="Select all employees"
+            >
+              {{ checkedCount() ? checkedCount() + ' selected' : 'Select all' }}
+            </mat-checkbox>
+
+            <div class="batch-btns">
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="!checkedCount() || emailing()"
+                (click)="emailSelected()"
+                aria-label="Email selected payslips"
+                matTooltip="Email payslips to selected employees"
+              >
+                @if (emailing()) {
+                  <mat-spinner diameter="16" />
+                } @else {
+                  <mat-icon>email</mat-icon>
+                }
+                Email
+              </button>
+
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="!detailRun()"
+                (click)="printSlip()"
+                aria-label="Print current payslip"
+                matTooltip="Print the currently viewed payslip"
+              >
+                <mat-icon>print</mat-icon>
+                Print
+              </button>
+            </div>
+          </div>
+
+          <!-- Run rows -->
+          <div class="run-list" role="list">
+            @for (run of batchRuns(); track run.id) {
+              <div
+                class="run-row"
+                [class.run-row--active]="detailRun()?.id === run.id"
+                role="listitem"
+              >
+                <mat-checkbox
+                  [checked]="isChecked(run.id)"
+                  (change)="toggleRow(run.id, $event.checked)"
+                  [aria-label]="'Select ' + run.empName"
+                />
+                <div class="run-row__info" (click)="viewRun(run)" role="button" tabindex="0"
+                     (keydown.enter)="viewRun(run)">
+                  <span class="run-row__name">{{ run.empName }}</span>
+                  <span class="run-row__meta">{{ run.empCode }} · Net: {{ run.netPay | number:'1.2-2' }}</span>
+                  <span class="run-row__status run-row__status--{{ run.status | lowercase }}">
+                    {{ run.status }}
+                  </span>
+                </div>
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="viewRun(run)"
+                  aria-label="View payslip"
+                  matTooltip="View payslip"
+                >
+                  <mat-icon>visibility</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </aside>
+
+      <!-- Right: payslip preview -->
+      <main class="preview-panel" aria-label="Payslip preview">
+        @if (detailRun(); as run) {
+          <div class="preview-toolbar no-print">
+            <span class="preview-title">
+              {{ run.empName }} — {{ periodLabel() }}
+            </span>
+            <button mat-icon-button type="button" (click)="printSlip()" aria-label="Print payslip">
+              <mat-icon>print</mat-icon>
+            </button>
+          </div>
+          <app-payslip-template
+            [run]="run"
+            [employee]="selectedEmployee()"
+            [layout]="layout()"
+          />
+        }
+
+        @if (!detailRun() && !loading()) {
+          <div class="preview-empty" role="status">
+            <mat-icon aria-hidden="true">article</mat-icon>
+            <p>Click on an employee row to preview their payslip.</p>
+          </div>
+        }
+      </main>
+
     </div>
   }
 

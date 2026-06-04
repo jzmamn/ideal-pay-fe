@@ -23,7 +23,8 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { EmployeeRequest, EmployeeResponse } from '../employee.model';
 import { EmployeeService } from '../employee.service';
 import { MasterDataService } from '../../../../shared/services/master-data.service';
-import { Grade } from '../../../../shared/models/master-data.models';
+import { BankBranchService } from '../../../infrastructure/banks/bank-branch.service';
+import { BankBranch, Grade } from '../../../../shared/models/master-data.models';
 import { LookupConfig } from '../../../../shared/components/lookup/lookup.config';
 import { LookupComponent } from '../../../../shared/components/lookup/lookup.component';
 import { SearchableDropdown } from '../../../../shared/components/searchable-dropdown/searchable-dropdown';
@@ -93,6 +94,7 @@ export class EmployeeForm {
   private readonly destroyRef = inject(DestroyRef);
   readonly service          = inject(EmployeeService);
   readonly masterSvc        = inject(MasterDataService);
+  private readonly bankBranchSvc = inject(BankBranchService);
 
   readonly isEditMode           = computed(() => !!this.service.selected());
   readonly empId                = computed(() => this.service.selected()?.id ?? null);
@@ -146,16 +148,7 @@ export class EmployeeForm {
     this.masterSvc.activeNopayDays().map(n => ({ id: n.id, name: `${n.name} (${n.days}d)` }))
   );
 
-  private readonly _bankId = toSignal(
-    this.form.controls.bankId.valueChanges,
-    { initialValue: this.form.controls.bankId.value },
-  );
-
-  readonly bankBranchOptions = computed(() => {
-    const bankId = this._bankId();
-    if (!bankId) return [];
-    return this.masterSvc.activeBankBranches().filter(b => b.bankId === bankId);
-  });
+  readonly bankBranchOptions = signal<BankBranch[]>([]);
 
   readonly gradeLookupConfig = computed<LookupConfig<Grade>>(() => ({
     title: 'Select Grade',
@@ -263,9 +256,25 @@ export class EmployeeForm {
 
     this.form.controls.bankId.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
+      .subscribe(bankId => {
         this.form.controls.bankBranchId.setValue(null, { emitEvent: false });
+        const bankCode = this.masterSvc.activeBanks().find(b => b.id === bankId)?.code;
+        if (bankCode) {
+          this.bankBranchSvc.getByBankCode(bankCode)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(branches => this.bankBranchOptions.set(branches.filter(b => b.isActive)));
+        } else {
+          this.bankBranchOptions.set([]);
+        }
       });
+
+    const initialBankId = this.form.controls.bankId.value;
+    const initialBankCode = this.masterSvc.activeBanks().find(b => b.id === initialBankId)?.code;
+    if (initialBankCode) {
+      this.bankBranchSvc.getByBankCode(initialBankCode)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(branches => this.bankBranchOptions.set(branches.filter(b => b.isActive)));
+    }
   }
 
   private navigateToFirstInvalidTab(): void {

@@ -1,0 +1,144 @@
+<div class="email-settings-page">
+
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Email Settings</h2>
+      <p class="page-subtitle">Configure SMTP for payslip delivery and notifications.</p>
+    </div>
+    <div class="header-actions">
+      <button
+        mat-stroked-button
+        type="button"
+        [disabled]="testing()"
+        (click)="testConnection()"
+      >
+        @if (testing()) {
+          <mat-spinner diameter="16" />
+        } @else {
+          <mat-icon>send</mat-icon>
+        }
+        Test Connection
+      </button>
+      <button
+        mat-flat-button
+        type="button"
+        [disabled]="saving() || form.invalid"
+        (click)="save()"
+      >
+        @if (saving()) {
+          <mat-spinner diameter="16" />
+        } @else {
+          <mat-icon>save</mat-icon>
+        }
+        Save
+      </button>
+    </div>
+  </div>
+
+  <mat-divider />
+
+  @if (loading()) {
+    <div class="loader-row">
+      <mat-spinner diameter="32" />
+      <span>Loading configuration…</span>
+    </div>
+  }
+
+  @if (!loading()) {
+    <form class="settings-form" [formGroup]="form" (ngSubmit)="save()" novalidate>
+
+      <section class="form-section">
+        <h3 class="section-title">SMTP Server</h3>
+
+        <div class="field-row">
+          <mat-form-field appearance="outline" class="field-host">
+            <mat-label>SMTP Host</mat-label>
+            <input matInput formControlName="host" placeholder="smtp.example.com" />
+            <mat-icon matPrefix>dns</mat-icon>
+            @if (form.controls.host.invalid && form.controls.host.touched) {
+              <mat-error>Host is required.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="field-port">
+            <mat-label>Port</mat-label>
+            <input matInput type="number" formControlName="port" />
+            @if (form.controls.port.invalid && form.controls.port.touched) {
+              <mat-error>Valid port required.</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <mat-slide-toggle formControlName="useTls" class="tls-toggle">
+          Use TLS / STARTTLS
+        </mat-slide-toggle>
+      </section>
+
+      <mat-divider />
+
+      <section class="form-section">
+        <h3 class="section-title">Authentication</h3>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Username / Email</mat-label>
+          <input matInput formControlName="username" autocomplete="off" />
+          <mat-icon matPrefix>person</mat-icon>
+          @if (form.controls.username.invalid && form.controls.username.touched) {
+            <mat-error>Valid email required.</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
+          <input
+            matInput
+            [type]="showPass() ? 'text' : 'password'"
+            formControlName="password"
+            autocomplete="new-password"
+          />
+          <mat-icon matPrefix>lock</mat-icon>
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="showPass.set(!showPass())"
+            [attr.aria-label]="showPass() ? 'Hide password' : 'Show password'"
+          >
+            <mat-icon>{{ showPass() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (form.controls.password.invalid && form.controls.password.touched) {
+            <mat-error>Password is required.</mat-error>
+          }
+        </mat-form-field>
+      </section>
+
+      <mat-divider />
+
+      <section class="form-section">
+        <h3 class="section-title">Sender Details</h3>
+
+        <div class="field-row">
+          <mat-form-field appearance="outline">
+            <mat-label>From Name</mat-label>
+            <input matInput formControlName="fromName" placeholder="Ideal Payroll" />
+            <mat-icon matPrefix>badge</mat-icon>
+            @if (form.controls.fromName.invalid && form.controls.fromName.touched) {
+              <mat-error>From name is required.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>From Email Address</mat-label>
+            <input matInput formControlName="fromAddress" placeholder="payroll@example.com" />
+            <mat-icon matPrefix>alternate_email</mat-icon>
+            @if (form.controls.fromAddress.invalid && form.controls.fromAddress.touched) {
+              <mat-error>Valid email required.</mat-error>
+            }
+          </mat-form-field>
+        </div>
+      </section>
+
+    </form>
+  }
+
+</div>

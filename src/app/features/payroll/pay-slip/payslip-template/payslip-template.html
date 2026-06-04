@@ -1,0 +1,99 @@
+<article
+  class="payslip"
+  [class.payslip--portrait]="layout() === 'portrait'"
+  [class.payslip--landscape]="layout() === 'landscape'"
+  aria-label="Pay slip document"
+>
+
+  <!-- ── Header ──────────────────────────────────────────────────────── -->
+  <header class="payslip__header">
+    <div class="payslip__company">
+      <span class="payslip__company-name">{{ companyName() }}</span>
+      <span class="payslip__doc-title">Pay Slip</span>
+    </div>
+    <div class="payslip__period">{{ periodLabel() }}</div>
+  </header>
+
+  <mat-divider />
+
+  <!-- ── Employee info ────────────────────────────────────────────────── -->
+  <section class="payslip__emp" aria-label="Employee details">
+    <div class="payslip__emp-row">
+      <span class="payslip__label">Employee</span>
+      <span class="payslip__value">{{ empFullName() }}</span>
+    </div>
+    <div class="payslip__emp-row">
+      <span class="payslip__label">Emp No.</span>
+      <span class="payslip__value">{{ empCode() }}</span>
+    </div>
+    @if (designation()) {
+      <div class="payslip__emp-row">
+        <span class="payslip__label">Designation</span>
+        <span class="payslip__value">{{ designation() }}</span>
+      </div>
+    }
+    @if (department()) {
+      <div class="payslip__emp-row">
+        <span class="payslip__label">Department</span>
+        <span class="payslip__value">{{ department() }}</span>
+      </div>
+    }
+    <div class="payslip__emp-row">
+      <span class="payslip__label">Working Days</span>
+      <span class="payslip__value">{{ run().workingDays }}</span>
+    </div>
+  </section>
+
+  <mat-divider />
+
+  <!-- ── Body: portrait = side-by-side, landscape = stacked ──────────── -->
+  <div class="payslip__body">
+
+    <!-- Earnings -->
+    <section class="payslip__section" aria-label="Earnings">
+      <h3 class="payslip__section-title">Earnings</h3>
+      @for (line of earnings(); track line.label) {
+        <div class="payslip__line">
+          <span class="payslip__line-label">{{ line.label }}</span>
+          <span class="payslip__line-amount">{{ line.amount | number:'1.2-2' }}</span>
+        </div>
+      }
+      <div class="payslip__line payslip__line--total">
+        <span class="payslip__line-label">Gross Pay</span>
+        <span class="payslip__line-amount">{{ run().grossPay | number:'1.2-2' }}</span>
+      </div>
+    </section>
+
+    <!-- Deductions -->
+    <section class="payslip__section" aria-label="Deductions">
+      <h3 class="payslip__section-title">Deductions</h3>
+      @for (line of deductions(); track line.label) {
+        <div class="payslip__line">
+          <span class="payslip__line-label">{{ line.label }}</span>
+          <span class="payslip__line-amount">{{ line.amount | number:'1.2-2' }}</span>
+        </div>
+      }
+      <div class="payslip__line payslip__line--total">
+        <span class="payslip__line-label">Total Deductions</span>
+        <span class="payslip__line-amount">{{ run().totalDeductions | number:'1.2-2' }}</span>
+      </div>
+    </section>
+
+  </div>
+
+  <mat-divider />
+
+  <!-- ── Net pay ───────────────────────────────────────────────────────── -->
+  <footer class="payslip__footer">
+    <div class="payslip__net">
+      <span class="payslip__net-label">Net Pay</span>
+      <strong class="payslip__net-amount">LKR {{ run().netPay | number:'1.2-2' }}</strong>
+    </div>
+    @if (run().employerEpf > 0) {
+      <div class="payslip__statutory">
+        <span>EPF — Employer: {{ run().employerEpf | number:'1.2-2' }}</span>
+      </div>
+    }
+  </footer>
+
+</article>
