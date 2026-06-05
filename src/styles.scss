@@ -48,3 +48,22 @@ body {
  .mat-expansion-panel-body {
   padding: 0 !important;
 }
+
+@media print {
+  mat-sidenav,
+  mat-toolbar,
+  .mat-drawer-backdrop {
+    display: none !important;
+  }
+
+  .mat-sidenav-content {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    overflow: hidden !important;
+  }
+
+  html, body {
+    overflow: hidden !important;
+    height: auto !important;
+  }
+}

@@ -57,7 +57,7 @@ export class EmailSettings {
 
   private load(): void {
     this.loading.set(true);
-    this.svc.get()
+    this.svc.getActive()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: cfg => {
@@ -65,7 +65,6 @@ export class EmailSettings {
           this.loading.set(false);
         },
         error: () => {
-          // No config yet — form starts empty
           this.loading.set(false);
         },
       });
@@ -74,7 +73,8 @@ export class EmailSettings {
   save(): void {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     this.saving.set(true);
-    this.svc.save(this.form.getRawValue())
+    const raw = this.form.getRawValue();
+    this.svc.create({ name: raw.fromAddress, ...raw })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {

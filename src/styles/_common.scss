@@ -2,6 +2,16 @@
   border-radius: 0 !important;
 }
 
+// Force dialog internals to fill the pane height when an explicit height is set
+.cdk-overlay-pane.square-dialog {
+  mat-dialog-container,
+  .mdc-dialog__container,
+  .mdc-dialog__surface {
+    height: 100%;
+    max-height: 100%;
+  }
+}
+
 // ── Shared dialog title ───────────────────────────────────────────────────────
 .dialog-title {
   display: flex !important;

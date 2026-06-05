@@ -9,7 +9,6 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 24px;
   gap: 0;
   box-sizing: border-box;
 }
@@ -21,15 +20,33 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 16px;
-  padding-bottom: 16px;
+  gap: 12px;
+  padding: 0 20px 0 24px;
+  height: 56px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.page-header-left  { display: flex; align-items: center; gap: 12px; }
+.page-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
+
+.page-header-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 8px;
+  background: #dbeafe; color: #1d4ed8; flex-shrink: 0;
+  mat-icon { font-size: 20px; width: 20px; height: 20px; }
 }
 
 .page-title {
   margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-  color: #1e293b;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
 }
 
 .toolbar {
@@ -41,17 +58,34 @@
 
 .period-row {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
 }
 
 .period-field {
-  width: 130px;
-  &--year { width: 90px; }
+  width: 160px;
+  --mat-form-field-container-height: 36px;
+  --mat-form-field-container-vertical-padding: 6px;
+
+  &--year { width: 104px; }
 }
 
 .layout-toggle {
   height: 36px;
+  border-radius: 4px;
+  overflow: hidden;
+
+  .mat-button-toggle {
+    border-radius: 0;
+  }
+
+  .mat-button-toggle:first-child {
+    border-radius: 4px 0 0 4px;
+  }
+
+  .mat-button-toggle:last-child {
+    border-radius: 0 4px 4px 0;
+  }
 }
 
 // ── Loader ──────────────────────────────────────────────────────────────────
@@ -60,7 +94,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 32px 0;
+  padding: 32px 24px;
   color: #64748b;
 }
 
@@ -72,6 +106,7 @@
   gap: 0;
   flex: 1;
   min-height: 0;
+  margin: 16px 24px;
   margin-top: 16px;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -89,12 +124,16 @@
 }
 
 .search-header {
-  padding: 14px 14px 10px;
+  padding: 10px 14px;
   background: #fff;
   border-bottom: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.search-toggle-btn {
+  width: 100%;
 }
 
 .panel-label {
@@ -116,7 +155,14 @@
 
 .batch-btns {
   display: flex;
+  align-items: center;
   gap: 8px;
+}
+
+.template-select {
+  width: 180px;
+  --mat-form-field-container-height: 36px;
+  --mat-form-field-container-vertical-padding: 6px;
 }
 
 // ── Run list ────────────────────────────────────────────────────────────────
@@ -138,6 +184,11 @@
   &:hover { background: #f1f5f9; }
 
   &--active { background: #eff6ff; }
+
+  // Pair toggle button — highlighted when this run is the chosen pair
+  &__pair-active {
+    color: #7c3aed !important;
+  }
 
   &__info {
     flex: 1;
@@ -186,7 +237,46 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 16px;
+}
+
+// PDF action buttons strip (Download / Preview / Print PDF)
+.pdf-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+// PDF preview pane — shown when the user clicks "Preview PDF"
+.pdf-preview-container {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  background: #f8fafc;
+}
+
+.pdf-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.pdf-iframe {
+  width: 100%;
+  height: 680px;
+  border: none;
 }
 
 .preview-title {
@@ -233,23 +323,65 @@
   p { margin: 0; font-size: 0.9rem; }
 }
 
+// ── Print grid (screen: hidden) ─────────────────────────────────────────────
+
+.no-screen { display: none; }
+
+.print-grid {
+  display: none;
+}
+
 // ── Print ───────────────────────────────────────────────────────────────────
 
 @media print {
   .page-header,
   .run-list-panel,
   .preview-toolbar,
-  .no-print {
+  .no-print,
+  .body-layout {
     display: none !important;
   }
 
-  .body-layout {
-    display: block;
-    border: none;
+  .no-screen {
+    display: block !important;
   }
 
-  .preview-panel {
+  .print-grid {
+    display: grid;
+    /* Portrait: 1 column, 2 rows — 2 slips per page, each = half page height */
+    grid-template-columns: 1fr;
+    grid-auto-rows: 50vh;
+    gap: 0;
     padding: 0;
-    overflow: visible;
+    width: 100vw;
+    height: 100vh;
+
+    app-payslip-template {
+      height: 50vh;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    /* Landscape: 2 columns, 1 row — 2 slips per page, each = half page width */
+    &--landscape {
+      grid-template-columns: 1fr 1fr;
+      grid-auto-rows: 100vh;
+
+      app-payslip-template {
+        height: 100vh;
+      }
+    }
+  }
+
+  @page {
+    size: portrait;
+    margin: 8mm;
+  }
+
+  .print-grid--landscape {
+    @page {
+      size: landscape;
+      margin: 8mm;
+    }
   }
 }

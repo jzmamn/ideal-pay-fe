@@ -93,6 +93,20 @@ export const routes: Routes = [
             },
 
             {
+                path: 'reports',
+                loadComponent: () =>
+                    import('./features/reports/reports')
+                        .then(m => m.Reports)
+            },
+
+            {
+                path: 'reports/statutory',
+                loadComponent: () =>
+                    import('./features/reports/statutory/statutory-reports')
+                        .then(m => m.StatutoryReports)
+            },
+
+            {
                 path: 'company',
                 loadComponent: () =>
                     import('./features/infrastructure/company/companies')
@@ -191,11 +205,20 @@ export const routes: Routes = [
             },
 
             {
-                path: 'email-settings',
+                path: 'email-setup',
                 loadComponent: () =>
-                    import('./features/settings/email-settings/email-settings')
-                        .then(m => m.EmailSettings)
+                    import('./features/infrastructure/email-setup/email-setup')
+                        .then(m => m.EmailSetup)
             },
+
+            {
+                path: 'payslip-template',
+                loadComponent: () =>
+                    import('./features/infrastructure/payslip-template/payslip-template-manager')
+                        .then(m => m.PayslipTemplateManager)
+            },
+
+            { path: 'email-settings', redirectTo: 'email-setup', pathMatch: 'full' },
 
             {
                 path: 'nopay',

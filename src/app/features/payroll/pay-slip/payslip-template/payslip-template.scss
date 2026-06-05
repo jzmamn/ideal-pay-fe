@@ -13,36 +13,28 @@
   color: #1e293b;
   max-width: 860px;
 
-  // ── Layout: portrait = two side-by-side columns ──────────────────────
+  // ── Layout: portrait = single column, top-to-bottom ─────────────────
   &--portrait .payslip__body {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 
-  // ── Layout: landscape = two stacked rows ─────────────────────────────
+  // ── Layout: landscape = two slips side-by-side, each single column ───
   &--landscape {
     max-width: 100%;
 
-    .payslip__body {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 16px;
+    .payslip__emp {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 6px 24px;
     }
 
-    .payslip__section {
+    .payslip__body {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      column-gap: 24px;
-      align-items: start;
-
-      h3 {
-        grid-column: 1 / -1;
-      }
-
-      .payslip__line--total {
-        grid-column: 1 / -1;
-      }
+      gap: 24px;
     }
   }
 }
@@ -181,6 +173,12 @@
   .payslip {
     border: none;
     box-shadow: none;
-    padding: 0;
+    padding: 12px;
+    max-width: 100%;
+    font-size: 11px;
   }
+
+  .payslip__company-name { font-size: 13px; }
+  .payslip__net-amount   { font-size: 14px; }
+  .payslip__net-label    { font-size: 12px; }
 }

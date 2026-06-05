@@ -1,0 +1,197 @@
+:host { display: block; }
+
+.email-setup-page {
+  padding: 24px;
+}
+
+// ── Header ───────────────────────────────────────────────────────────────────
+
+.page-header {
+  margin-bottom: 16px;
+}
+
+.page-title {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.page-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+
+.setup-tabs {
+  .tab-icon {
+    margin-right: 6px;
+    font-size: 18px;
+    height: 18px;
+    width: 18px;
+    vertical-align: middle;
+  }
+}
+
+.tab-content {
+  padding: 20px 0;
+  max-width: 820px;
+}
+
+// ── Shared toolbar ────────────────────────────────────────────────────────────
+
+.tab-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.toolbar-spacer { flex: 1; }
+
+// ── Loader / empty state ──────────────────────────────────────────────────────
+
+.loader-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 0;
+  color: #64748b;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 0;
+  color: #94a3b8;
+
+  .empty-icon {
+    font-size: 48px;
+    height: 48px;
+    width: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+
+  p { margin: 0; font-size: 14px; }
+}
+
+// ── SMTP configs table ────────────────────────────────────────────────────────
+
+.configs-table {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .mat-mdc-header-row { background: #f8fafc; }
+
+  .active-row { background: #f0fdf4; }
+
+  .mono-cell {
+    font-family: monospace;
+    font-size: 12px;
+    color: #334155;
+  }
+
+  .actions-cell {
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  .activate-btn   { color: #2563eb; }
+  .deactivate-btn { color: #2563eb; }
+  .delete-btn     { color: #ef4444; }
+}
+
+.config-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.active-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+// ── Templates table ───────────────────────────────────────────────────────────
+
+.templates-table {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .mat-mdc-header-row { background: #f8fafc; }
+
+  .subject-cell {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    color: #475569;
+  }
+
+  .actions-cell {
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  .delete-btn { color: #ef4444; }
+}
+
+// ── Type chips ────────────────────────────────────────────────────────────────
+
+.type-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.type-payslip          { background: #dbeafe; color: #1d4ed8; }
+.type-salary_advance   { background: #fef9c3; color: #854d0e; }
+.type-salary_increment { background: #dcfce7; color: #166534; }
+.type-general          { background: #f1f5f9; color: #475569; }
+
+// ── Config link / none ────────────────────────────────────────────────────────
+
+.config-link {
+  font-size: 12px;
+  font-weight: 500;
+  color: #2563eb;
+  background: #eff6ff;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.config-none {
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+// ── Status icons ──────────────────────────────────────────────────────────────
+
+.status-icon {
+  font-size: 20px;
+  height: 20px;
+  width: 20px;
+  &.active   { color: #22c55e; }
+  &.inactive { color: #cbd5e1; }
+}

@@ -1,9 +1,9 @@
+import { DecimalPipe, DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy, Component,
   DestroyRef, computed, inject, signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DecimalPipe, DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -20,6 +20,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { forkJoin } from 'rxjs';
 import { BankService } from '../../infrastructure/banks/bank.service';
 import { Bank } from '../../../shared/models/master-data.models';
@@ -114,7 +115,6 @@ const TRANSFER_TYPES: { value: TransferType; label: string }[] = [
   selector: 'app-bank-transfer',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DecimalPipe, DatePipe,
     ReactiveFormsModule,
     MatButtonModule,
     MatButtonToggleModule,
@@ -130,6 +130,8 @@ const TRANSFER_TYPES: { value: TransferType; label: string }[] = [
     MatExpansionModule,
     MatTooltipModule,
     MatBadgeModule,
+    DecimalPipe, DatePipe,
+    MatCheckboxModule,
   ],
   templateUrl: './bank-transfer.html',
   styleUrl:    './bank-transfer.scss',
@@ -241,7 +243,73 @@ export class BankTransfer {
   readonly grandTotal       = computed(() => this.rows().reduce((s, r) => s + r.totalAmount, 0));
   readonly hasRows          = computed(() => this.rows().length > 0);
 
-  readonly displayedColumns = ['employeeNo', 'empName', 'accountNo', 'branchCode', 'totalAmount', 'status'];
+  // ── Row selection ─────────────────────────────────────────────────────────
+
+  readonly selectedIds = signal<Set<number>>(new Set<number>());
+
+  readonly selectedPendingCount = computed(() =>
+    this.rows().filter(r => this.selectedIds().has(r.runId) && r.transferStatus === 'PENDING').length
+  );
+
+  isSelected(runId: number): boolean { return this.selectedIds().has(runId); }
+
+  toggleRow(runId: number): void {
+    this.selectedIds.update(s => {
+      const n = new Set(s);
+      n.has(runId) ? n.delete(runId) : n.add(runId);
+      return n;
+    });
+  }
+
+  isGroupAllSelected(group: BankGroup): boolean {
+    return group.rows.length > 0 && group.rows.every(r => this.selectedIds().has(r.runId));
+  }
+
+  isGroupIndeterminate(group: BankGroup): boolean {
+    const count = group.rows.filter(r => this.selectedIds().has(r.runId)).length;
+    return count > 0 && count < group.rows.length;
+  }
+
+  toggleGroup(group: BankGroup): void {
+    const allSelected = this.isGroupAllSelected(group);
+    this.selectedIds.update(s => {
+      const n = new Set(s);
+      group.rows.forEach(r => allSelected ? n.delete(r.runId) : n.add(r.runId));
+      return n;
+    });
+  }
+
+  isAllSelected(): boolean {
+    const rows = this.rows();
+    return rows.length > 0 && rows.every(r => this.selectedIds().has(r.runId));
+  }
+
+  isAnyIndeterminate(): boolean {
+    const count = this.rows().filter(r => this.selectedIds().has(r.runId)).length;
+    return count > 0 && count < this.rows().length;
+  }
+
+  toggleAll(): void {
+    const allSelected = this.isAllSelected();
+    this.selectedIds.update(() =>
+      allSelected ? new Set<number>() : new Set(this.rows().map(r => r.runId))
+    );
+  }
+
+  markSelectedTransferred(): void {
+    const ids = this.rows()
+      .filter(r => this.selectedIds().has(r.runId) && r.transferStatus === 'PENDING')
+      .map(r => r.runId);
+    if (ids.length) this._markTransferred(ids);
+  }
+
+  effectiveGroupRows(group: BankGroup): BankTransferRow[] {
+    const sel = this.selectedIds();
+    const groupSelected = group.rows.filter(r => sel.has(r.runId));
+    return groupSelected.length > 0 ? groupSelected : group.rows;
+  }
+
+  readonly displayedColumns = ['select', 'employeeNo', 'empName', 'accountNo', 'branchCode', 'totalAmount', 'status'];
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -290,7 +358,7 @@ export class BankTransfer {
     this.svc.getTransferRows(payrollMonth, [this.selectedType()])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next:  data  => { this.rows.set(data); this.loading.set(false); },
+        next:  data  => { this.rows.set(data); this.selectedIds.set(new Set()); this.loading.set(false); },
         error: ()    => {
           this.loadError.set('Failed to load transfer data. Please try again.');
           this.loading.set(false);
@@ -302,7 +370,9 @@ export class BankTransfer {
 
   generateFile(group: BankGroup): void {
     if (!group.template) return;
-    const content = generateBankFile(group);
+    const effectiveRows = this.effectiveGroupRows(group);
+    const effectiveGroup: BankGroup = { ...group, rows: effectiveRows, total: effectiveRows.reduce((s, r) => s + r.totalAmount, 0) };
+    const content = generateBankFile(effectiveGroup);
     const { month, year } = this.periodForm.getRawValue();
     const mm  = String(month).padStart(2, '0');
     const ext = group.template.fileExtension || 'txt';

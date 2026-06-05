@@ -5,7 +5,12 @@
 
   <!-- ── Top bar ─────────────────────────────────────────────────────────── -->
   <div class="si-topbar">
-    <h2 class="si-title">Salary Increment</h2>
+    <div class="page-header-left">
+      <div class="page-header-icon" aria-hidden="true">
+        <mat-icon>trending_up</mat-icon>
+      </div>
+      <h1 class="si-title">Salary Increment</h1>
+    </div>
 
     <!-- Filter: Status -->
     <select class="si-filter-select" (change)="filterStatus.set($any($event.target).value)">

@@ -1,0 +1,136 @@
+<!-- ── Dialog title bar ──────────────────────────────────────────────── -->
+<div class="dialog-titlebar">
+  <div class="dialog-titlebar-left">
+    <mat-icon class="dialog-title-icon">description</mat-icon>
+    <h2 mat-dialog-title>{{ isEdit() ? 'Edit' : 'New' }} Payslip Template</h2>
+  </div>
+  <button mat-icon-button mat-dialog-close aria-label="Close dialog" matTooltip="Close">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<!-- ── Two-column body ───────────────────────────────────────────────── -->
+<mat-dialog-content>
+  <form [formGroup]="form" class="pt-form" novalidate>
+
+    <!-- ── Left sidebar ─────────────────────────────────────────────── -->
+    <aside class="pt-sidebar">
+
+      <!-- Name -->
+      <section class="sidebar-section">
+        <p class="section-label">Template Name</p>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name" placeholder="e.g. Standard Payslip v1" autocomplete="off" />
+          <mat-icon matPrefix>label</mat-icon>
+          @if (form.controls.name.invalid && form.controls.name.touched) {
+            <mat-error>Required · max 150 chars</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Active toggle sits directly under the name -->
+        <mat-slide-toggle
+          formControlName="isActive"
+          class="active-toggle"
+          [attr.aria-label]="form.controls.isActive.value ? 'Template is active' : 'Template is inactive'"
+        >
+          <span class="toggle-label">
+            @if (form.controls.isActive.value) { Active } @else { Inactive }
+          </span>
+        </mat-slide-toggle>
+      </section>
+
+      <div class="sidebar-divider"></div>
+
+      <!-- Token reference -->
+      <section class="sidebar-section token-section">
+        <p class="section-label">
+          <mat-icon class="section-label-icon">code</mat-icon>
+          Token Reference
+        </p>
+        <p class="section-hint">Click a token to insert it at the cursor.</p>
+
+        <div class="token-scroll">
+          @for (group of tokenGroups; track group.group) {
+            <div class="token-group">
+              <span class="token-group-name">{{ group.group }}</span>
+              <div class="token-chips">
+                @for (token of group.tokens; track token) {
+                  <span
+                    class="token-chip"
+                    role="button"
+                    tabindex="0"
+                    [matTooltip]="'Insert ' + token"
+                    (click)="insertToken(token)"
+                    (keydown.enter)="insertToken(token)"
+                    (keydown.space)="$event.preventDefault(); insertToken(token)"
+                  >{{ token }}</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- ── Right: HTML editor ────────────────────────────────────────── -->
+    <div class="pt-editor">
+      <div class="editor-header">
+        <p class="section-label">
+          <mat-icon class="section-label-icon">code</mat-icon>
+          HTML Content
+        </p>
+        <div class="editor-actions">
+          <span class="char-count">{{ form.controls.htmlContent.value.length | number }} chars</span>
+          <button
+            mat-icon-button
+            type="button"
+            (click)="previewHtml()"
+            [disabled]="!form.controls.htmlContent.value"
+            aria-label="Preview template in new tab"
+            matTooltip="Preview in new tab"
+          >
+            <mat-icon>open_in_new</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            type="button"
+            (click)="copyHtml()"
+            [disabled]="!form.controls.htmlContent.value"
+            aria-label="Copy HTML to clipboard"
+            matTooltip="Copy HTML"
+          >
+            <mat-icon>content_copy</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="html-field">
+        <mat-label>HTML Content</mat-label>
+        <textarea
+          #htmlTextarea
+          matInput
+          formControlName="htmlContent"
+          class="html-textarea"
+          placeholder="<!DOCTYPE html>&#10;<html lang=&quot;en&quot;>&#10;  <head>...</head>&#10;  <body>...</body>&#10;</html>"
+          spellcheck="false"
+          autocomplete="off"
+        ></textarea>
+        @if (form.controls.htmlContent.invalid && form.controls.htmlContent.touched) {
+          <mat-error>HTML content is required.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+  </form>
+</mat-dialog-content>
+
+<!-- ── Actions ───────────────────────────────────────────────────────── -->
+ <mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-flat-button [disabled]="form.invalid" (click)="submit()">
+    <mat-icon>save</mat-icon>
+    {{ isEdit() ? 'Update' : 'Create' }}
+  </button>
+</mat-dialog-actions>

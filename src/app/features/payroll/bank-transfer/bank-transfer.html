@@ -1,21 +1,14 @@
 <div class="bank-transfer-page">
 
   <!-- ── Header ─────────────────────────────────────────────────────────── -->
-  <div class="page-header">
-    <div class="title-row">
-      <h2 class="page-title">Bank Transfer</h2>
-      <button mat-stroked-button type="button"
-              [disabled]="refLoading()"
-              (click)="openTemplateManager()"
-              aria-label="Manage bank file templates">
-        <mat-icon>settings</mat-icon>
-        Manage Templates
-      </button>
-    </div>
+  <header class="page-header">
+    <div class="page-header-left" [formGroup]="periodForm">
+      <div class="page-header-icon" aria-hidden="true">
+        <mat-icon>account_balance</mat-icon>
+      </div>
+      <h1 class="page-title">Bank Transfer</h1>
 
-    <!-- Period + Type selectors -->
-    <div class="controls-row" [formGroup]="periodForm">
-      <mat-form-field appearance="outline" class="period-field">
+      <mat-form-field appearance="outline" class="period-month" subscriptSizing="dynamic">
         <mat-label>Month</mat-label>
         <mat-select formControlName="month">
           @for (m of MONTHS; track m.value) {
@@ -24,7 +17,7 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="period-field">
+      <mat-form-field appearance="outline" class="period-year" subscriptSizing="dynamic">
         <mat-label>Year</mat-label>
         <mat-select formControlName="year">
           @for (y of years; track y) {
@@ -51,8 +44,21 @@
       </button>
     </div>
 
-    <!-- Mode toggle -->
-    <div class="mode-row">
+    <div class="page-header-right">
+      <button mat-stroked-button type="button"
+              [disabled]="refLoading()"
+              (click)="openTemplateManager()"
+              aria-label="Manage bank file templates">
+        <mat-icon>settings</mat-icon>
+        Manage Templates
+      </button>
+    </div>
+  </header>
+
+  <div class="page-body">
+
+  <!-- ── Mode row ────────────────────────────────────────────────────────── -->
+  <div class="mode-row">
       <span class="mode-label">Transfer mode</span>
       <mat-button-toggle-group [value]="mode()" (change)="setMode($event.value)"
                                aria-label="Transfer mode" hideSingleSelectionIndicator>
@@ -87,7 +93,6 @@
         }
       }
     </div>
-  </div>
 
   <!-- ── Load error ─────────────────────────────────────────────────────── -->
   @if (loadError()) {
@@ -115,6 +120,17 @@
 
       @if (markError()) {
         <span class="error-inline" role="alert">{{ markError() }}</span>
+      }
+
+      @if (selectedIds().size > 0) {
+        <span class="selection-chip">{{ selectedIds().size }} selected</span>
+        <button mat-flat-button type="button"
+                [disabled]="!selectedPendingCount() || !!markingIds().size"
+                (click)="markSelectedTransferred()"
+                aria-label="Mark selected employees as transferred">
+          <mat-icon>check</mat-icon>
+          Mark Selected Transferred
+        </button>
       }
 
       <button mat-stroked-button type="button"
@@ -162,6 +178,20 @@
 
           <table mat-table [dataSource]="rows()" aria-label="All employees transfer list"
                  class="group-table">
+
+            <ng-container matColumnDef="select">
+              <th mat-header-cell *matHeaderCellDef>
+                <mat-checkbox [checked]="isAllSelected()"
+                              [indeterminate]="isAnyIndeterminate()"
+                              (change)="toggleAll()"
+                              aria-label="Select all employees" />
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <mat-checkbox [checked]="isSelected(row.runId)"
+                              (change)="toggleRow(row.runId)"
+                              [attr.aria-label]="'Select ' + row.empName" />
+              </td>
+            </ng-container>
 
             <ng-container matColumnDef="employeeNo">
               <th mat-header-cell *matHeaderCellDef>Emp #</th>
@@ -248,6 +278,20 @@
                    [attr.aria-label]="'Transfer list for ' + group.bankName"
                    class="group-table">
 
+              <ng-container matColumnDef="select">
+                <th mat-header-cell *matHeaderCellDef>
+                  <mat-checkbox [checked]="isGroupAllSelected(group)"
+                                [indeterminate]="isGroupIndeterminate(group)"
+                                (change)="toggleGroup(group)"
+                                aria-label="Select all in group" />
+                </th>
+                <td mat-cell *matCellDef="let row">
+                  <mat-checkbox [checked]="isSelected(row.runId)"
+                                (change)="toggleRow(row.runId)"
+                                [attr.aria-label]="'Select ' + row.empName" />
+                </td>
+              </ng-container>
+
               <ng-container matColumnDef="employeeNo">
                 <th mat-header-cell *matHeaderCellDef>Emp #</th>
                 <td mat-cell *matCellDef="let row">{{ row.employeeNo }}</td>
@@ -325,5 +369,7 @@
       <p>Select a period and transfer types, then click <strong>Load</strong> to view locked payroll runs ready for transfer.</p>
     </div>
   }
+
+  </div><!-- /.page-body -->
 
 </div>

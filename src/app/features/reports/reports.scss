@@ -1,0 +1,317 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+// ── Page wrapper ─────────────────────────────────────────────────────────────
+
+.reports-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+// ── Header ───────────────────────────────────────────────────────────────────
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0 20px 0 24px;
+  height: 56px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.page-header-left  { display: flex; align-items: center; gap: 12px; }
+.page-header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.page-header-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 8px;
+  background: #dbeafe; color: #1d4ed8; flex-shrink: 0;
+
+  mat-icon { font-size: 20px; width: 20px; height: 20px; }
+}
+
+.page-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.page-title-sep {
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+.page-subtitle {
+  font-weight: 500;
+  color: #475569;
+}
+
+.period-field {
+  width: 140px;
+  --mat-form-field-container-height: 36px;
+  --mat-form-field-container-vertical-padding: 6px;
+
+  &--year { width: 100px; }
+}
+
+.header-divider {
+  height: 28px;
+  margin: 0 4px;
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+// ── Body layout ──────────────────────────────────────────────────────────────
+
+.body-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  flex: 1;
+  min-height: 0;
+  margin: 16px 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+// ── Left: report list panel ──────────────────────────────────────────────────
+
+.report-list-panel {
+  border-right: 1px solid #e2e8f0;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 12px 8px;
+  gap: 2px;
+}
+
+.panel-section-label {
+  margin: 0 8px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #94a3b8;
+}
+
+.report-type-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms;
+
+  &:hover {
+    background: #e2e8f0;
+  }
+
+  &--active {
+    background: #eff6ff;
+
+    .report-type-icon { color: #1d4ed8; }
+    .report-type-label { color: #1d4ed8; font-weight: 700; }
+  }
+}
+
+.report-type-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: #64748b;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.report-type-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.report-type-label {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.report-type-desc {
+  font-size: 11.5px;
+  color: #94a3b8;
+  line-height: 1.3;
+}
+
+// ── Right: viewer panel ──────────────────────────────────────────────────────
+
+.viewer-panel {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  overflow: hidden;
+}
+
+.viewer-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.viewer-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.viewer-title-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+  color: #1d4ed8;
+  flex-shrink: 0;
+}
+
+.viewer-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.viewer-desc {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.search-field {
+  width: 240px;
+  --mat-form-field-container-height: 36px;
+  --mat-form-field-container-vertical-padding: 6px;
+}
+
+// ── Loader / empty state ─────────────────────────────────────────────────────
+
+.loader-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 24px;
+  color: #64748b;
+  justify-content: center;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 64px 24px;
+  color: #94a3b8;
+  text-align: center;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    opacity: 0.25;
+  }
+
+  p { margin: 0; font-size: 0.9rem; }
+}
+
+// ── Table ────────────────────────────────────────────────────────────────────
+
+.table-wrapper {
+  flex: 1;
+  overflow: auto;
+
+  table {
+    width: 100%;
+    min-width: 600px;
+  }
+
+  th.mat-header-cell {
+    font-size: 12px;
+    font-weight: 700;
+    color: #475569;
+    background: #f8fafc;
+    white-space: nowrap;
+    padding: 0 14px;
+  }
+
+  td.mat-cell {
+    font-size: 13px;
+    color: #0f172a;
+    padding: 0 14px;
+  }
+
+  tr.mat-row:hover td {
+    background: #f8fafc;
+  }
+
+  .amount-col {
+    text-align: right;
+  }
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  &.status-draft         { background: #fef3c7; color: #d97706; }
+  &.status-locked        { background: #dcfce7; color: #16a34a; }
+  &.status-pending       { background: #fef3c7; color: #d97706; }
+  &.status-transferred   { background: #dcfce7; color: #16a34a; }
+  &.status-active        { background: #dcfce7; color: #16a34a; }
+  &.status-closed        { background: #f1f5f9; color: #64748b; }
+  &.status-settled       { background: #e0f2fe; color: #0369a1; }
+}
+
+.table-footer {
+  padding: 10px 20px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.row-count {
+  font-size: 12px;
+  color: #94a3b8;
+}

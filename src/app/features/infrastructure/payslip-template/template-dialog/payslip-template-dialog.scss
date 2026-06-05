@@ -1,0 +1,205 @@
+/* ── Title bar ─────────────────────────────────────────────────────── */
+.dialog-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 0 24px;
+}
+
+.dialog-titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dialog-title-icon {
+  color: var(--mat-sys-primary);
+  font-size: 22px;
+  height: 22px;
+  width: 22px;
+}
+
+[mat-dialog-title] { margin: 0; font-size: 18px; font-weight: 600; }
+
+/* ── Two-column form ────────────────────────────────────────────────── */
+mat-dialog-content {
+  padding: 0 !important;
+  overflow: hidden;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.pt-form {
+  display: flex;
+  height: 100%;
+  min-width: 900px;
+  overflow: hidden;
+}
+
+/* ── Sidebar ────────────────────────────────────────────────────────── */
+.pt-sidebar {
+  width: 288px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--mat-sys-outline-variant, #e2e8f0);
+  overflow-y: auto;
+}
+
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 20px 16px;
+}
+
+.sidebar-divider {
+  height: 1px;
+  background: var(--mat-sys-outline-variant, #e2e8f0);
+  flex-shrink: 0;
+}
+
+.token-section {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.token-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-bottom: 12px;
+}
+
+/* ── Labels ─────────────────────────────────────────────────────────── */
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--mat-sys-on-surface-variant, #64748b);
+}
+
+.section-label-icon {
+  font-size: 14px;
+  height: 14px;
+  width: 14px;
+}
+
+.section-hint {
+  margin: -6px 0 0;
+  font-size: 11px;
+  color: var(--mat-sys-on-surface-variant, #94a3b8);
+}
+
+/* ── Active toggle ───────────────────────────────────────────────────── */
+.active-toggle { align-self: flex-start; }
+.toggle-label { font-size: 13px; }
+
+/* ── Token chips ─────────────────────────────────────────────────────── */
+.token-group { display: flex; flex-direction: column; gap: 6px; }
+
+.token-group-name {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mat-sys-on-surface-variant, #94a3b8);
+}
+
+.token-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.token-chip {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 8px;
+  background: var(--mat-sys-surface-container, #f8fafc);
+  border: 1px solid var(--mat-sys-outline-variant, #cbd5e1);
+  color: var(--mat-sys-primary, #1e40af);
+  font-size: 10px;
+  font-family: 'Courier New', Courier, monospace;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s;
+  user-select: none;
+  line-height: 1.6;
+}
+
+.token-chip:hover,
+.token-chip:focus-visible {
+  background: var(--mat-sys-primary-container, #eff6ff);
+  border-color: var(--mat-sys-primary, #93c5fd);
+  outline: none;
+}
+
+/* ── Right: HTML editor ──────────────────────────────────────────────── */
+.pt-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+  padding: 20px 24px 16px;
+}
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.char-count {
+  font-size: 11px;
+  color: var(--mat-sys-on-surface-variant, #94a3b8);
+  padding-right: 4px;
+}
+
+.html-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* Make the mat-form-field and its inner wrapper stretch to fill */
+.html-field::ng-deep .mat-mdc-form-field-flex,
+.html-field::ng-deep .mat-mdc-text-field-wrapper,
+.html-field::ng-deep .mat-mdc-form-field-infix {
+  height: 100%;
+}
+
+.html-textarea {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  resize: none;
+  height: 100% !important;
+  min-height: 400px;
+}
+
+/* ── Dialog actions ──────────────────────────────────────────────────── */
+mat-dialog-actions {
+  padding: 10px 24px !important;
+  min-height: unset !important;
+  border-top: 1px solid var(--mat-sys-outline-variant, #e2e8f0);
+  flex-shrink: 0;
+}

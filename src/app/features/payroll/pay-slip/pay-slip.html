@@ -1,25 +1,28 @@
 <div class="pay-slip-page">
 
-  <!-- ── Top toolbar ──────────────────────────────────────────────────── -->
-  <div class="page-header">
-    <h2 class="page-title">Pay Slip</h2>
+  <!-- ── Page header ───────────────────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="page-header-left">
+      <div class="page-header-icon" aria-hidden="true">
+        <mat-icon>description</mat-icon>
+      </div>
+      <h1 class="page-title">Pay Slip</h1>
+    </div>
 
-    <div class="toolbar">
+    <div class="page-header-right">
 
       <!-- Period picker -->
       <div class="period-row" [formGroup]="periodForm">
-        <mat-form-field appearance="outline" class="period-field">
-          <mat-label>Month</mat-label>
-          <mat-select formControlName="month">
+        <mat-form-field appearance="outline" class="period-field" subscriptSizing="dynamic">
+          <mat-select formControlName="month" aria-label="Month">
             @for (m of months; track m.value) {
               <mat-option [value]="m.value">{{ m.label }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="period-field period-field--year">
-          <mat-label>Year</mat-label>
-          <mat-select formControlName="year">
+        <mat-form-field appearance="outline" class="period-field period-field--year" subscriptSizing="dynamic">
+          <mat-select formControlName="year" aria-label="Year">
             @for (y of years; track y) {
               <mat-option [value]="y">{{ y }}</mat-option>
             }
@@ -49,10 +52,49 @@
         </mat-button-toggle>
       </mat-button-toggle-group>
 
-    </div>
-  </div>
+      <!-- PDF template selector -->
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="template-select">
+        <mat-label>PDF template</mat-label>
+        @if (pdfTemplateLoading()) {
+          <mat-select disabled aria-label="PDF template">
+            <mat-option>Loading…</mat-option>
+          </mat-select>
+        } @else {
+          <mat-select
+            [value]="selectedPdfTemplateId()"
+            (selectionChange)="onPdfTemplateChange($event.value)"
+            aria-label="PDF template"
+          >
+            @if (pdfTemplates().length === 0) {
+              <mat-option [value]="null" disabled>No active templates</mat-option>
+            }
+            @for (t of pdfTemplates(); track t.id) {
+              <mat-option [value]="t.id">
+                {{ t.name }}
+              </mat-option>
+            }
+          </mat-select>
+        }
+        <mat-icon matPrefix>description</mat-icon>
+      </mat-form-field>
 
-  <mat-divider />
+      <!-- Email template selector -->
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="template-select">
+        <mat-label>Email template</mat-label>
+        <mat-select
+          [value]="selectedTemplateId()"
+          (selectionChange)="selectedTemplateId.set($event.value)"
+          aria-label="Email template"
+        >
+          <mat-option [value]="null">— None (default) —</mat-option>
+          @for (t of payslipTemplates(); track t.id) {
+            <mat-option [value]="t.id">{{ t.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+    </div>
+  </header>
 
   @if (loading()) {
     <div class="loader-row" role="status" aria-label="Loading">
@@ -70,15 +112,27 @@
 
         <!-- Individual search -->
         <div class="search-header">
-          <span class="panel-label">Employee Search</span>
-          <app-table-autocomplete
-            label="Filter by employee"
-            placeholder="Name or Emp #…"
-            src="/employee?isActive=true"
-            [columns]="employeeCols"
-            [displayFn]="empDisplayFn"
-            (itemSelected)="onEmployeeSelected($event)"
-          />
+          @if (!showEmployeeSearch()) {
+            <button
+              mat-stroked-button
+              type="button"
+              class="search-toggle-btn"
+              (click)="showEmployeeSearch.set(true)"
+              aria-label="Search employee"
+            >
+              <mat-icon>person_search</mat-icon>
+              Search Employee
+            </button>
+          } @else {
+            <app-table-autocomplete
+              label="Filter by employee"
+              placeholder="Name or Emp #…"
+              src="/employee?isActive=true"
+              [columns]="employeeCols"
+              [displayFn]="empDisplayFn"
+              (itemSelected)="onEmployeeSelected($event)"
+            />
+          }
         </div>
 
         @if (batchRuns().length === 0) {
@@ -101,6 +155,7 @@
             </mat-checkbox>
 
             <div class="batch-btns">
+
               <button
                 mat-stroked-button
                 type="button"
@@ -117,17 +172,6 @@
                 Email
               </button>
 
-              <button
-                mat-stroked-button
-                type="button"
-                [disabled]="!detailRun()"
-                (click)="printSlip()"
-                aria-label="Print current payslip"
-                matTooltip="Print the currently viewed payslip"
-              >
-                <mat-icon>print</mat-icon>
-                Print
-              </button>
             </div>
           </div>
 
@@ -161,6 +205,17 @@
                 >
                   <mat-icon>visibility</mat-icon>
                 </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  [class.run-row__pair-active]="isPaired(run.id)"
+                  (click)="togglePair(run.id)"
+                  [attr.aria-pressed]="isPaired(run.id)"
+                  [attr.aria-label]="isPaired(run.id) ? 'Remove from pair' : 'Set as pair payslip'"
+                  [matTooltip]="isPaired(run.id) ? 'Remove from pair' : 'Pair with selected payslip'"
+                >
+                  <mat-icon>{{ isPaired(run.id) ? 'link_off' : 'link' }}</mat-icon>
+                </button>
               </div>
             }
           </div>
@@ -169,26 +224,99 @@
 
       <!-- Right: payslip preview -->
       <main class="preview-panel" aria-label="Payslip preview">
+
+        <!-- Individual toolbar — shown when a single run is selected -->
         @if (detailRun(); as run) {
           <div class="preview-toolbar no-print">
             <span class="preview-title">
               {{ run.empName }} — {{ periodLabel() }}
             </span>
-            <button mat-icon-button type="button" (click)="printSlip()" aria-label="Print payslip">
-              <mat-icon>print</mat-icon>
-            </button>
+
+            <div class="pdf-actions">
+              @if (pdfLoading()) {
+                <mat-spinner diameter="20" aria-label="Loading PDF" />
+              }
+
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="pdfLoading()"
+                (click)="checkedCount() > 1 ? previewBatch() : previewPdf()"
+                aria-label="Preview payslip as PDF"
+                [matTooltip]="checkedCount() > 1 ? 'Preview all ' + checkedCount() + ' selected payslips' : 'Open PDF inline'"
+              >
+                <mat-icon>picture_as_pdf</mat-icon>
+                Preview PDF
+              </button>
+
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="pdfLoading()"
+                (click)="checkedCount() > 1 ? downloadBatch() : downloadPdf()"
+                aria-label="Download payslip as PDF"
+                [matTooltip]="checkedCount() > 1 ? 'Download all ' + checkedCount() + ' selected payslips' : 'Download payslip as PDF'"
+              >
+                <mat-icon>download</mat-icon>
+                Download PDF
+              </button>
+
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="pdfLoading() || pairedRunId() === null"
+                (click)="downloadPdfPair()"
+                aria-label="Download pair payslip as PDF"
+                [matTooltip]="pairedRunId() === null ? 'Select a pair run from the list first' : 'Download both payslips side by side on A4'"
+              >
+                <mat-icon>picture_in_picture</mat-icon>
+                Download Pair PDF
+              </button>
+
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="!pdfPreviewUrl()"
+                (click)="printPdf()"
+                aria-label="Print PDF payslip"
+                matTooltip="Print the PDF (open Preview first)"
+              >
+                <mat-icon>print</mat-icon>
+                Print PDF
+              </button>
+            </div>
           </div>
-          <app-payslip-template
-            [run]="run"
-            [employee]="selectedEmployee()"
-            [layout]="layout()"
-          />
         }
 
-        @if (!detailRun() && !loading()) {
+        <!-- PDF preview iframe — shown for both individual and batch previews -->
+        @if (pdfPreviewUrl(); as pdfUrl) {
+          <div class="pdf-preview-container">
+            <div class="pdf-preview-header">
+              <span>PDF Preview</span>
+              <button
+                mat-icon-button
+                type="button"
+                (click)="closePdfPreview()"
+                aria-label="Close PDF preview"
+                matTooltip="Close preview"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+            <iframe
+              id="pdf-preview-iframe"
+              [src]="pdfUrl"
+              class="pdf-iframe"
+              title="Payslip PDF preview"
+              aria-label="Payslip PDF preview"
+            ></iframe>
+          </div>
+        }
+
+        @if (!detailRun() && !pdfPreviewUrl() && !loading()) {
           <div class="preview-empty" role="status">
-            <mat-icon aria-hidden="true">article</mat-icon>
-            <p>Click on an employee row to preview their payslip.</p>
+            <mat-icon aria-hidden="true">picture_as_pdf</mat-icon>
+            <p>Click an employee row to preview, or select employees and click Preview.</p>
           </div>
         }
       </main>

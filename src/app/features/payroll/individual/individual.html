@@ -1,42 +1,51 @@
 <div class="page-shell">
 
-  <!-- ── Top bar ────────────────────────────────────────────────────────── -->
-  <div class="top-bar">
-    <mat-form-field appearance="outline" class="period-month" subscriptSizing="dynamic">
-      <mat-label>Month</mat-label>
-      <mat-select [value]="svc.periodMonth()" (valueChange)="svc.periodMonth.set($event)">
-        @for (m of svc.months; track m.value) {
-          <mat-option [value]="m.value">{{ m.label }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
+  <!-- ── Page header ───────────────────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="page-header-left">
+      <div class="page-header-icon" aria-hidden="true">
+        <mat-icon>person</mat-icon>
+      </div>
+      <h1 class="page-title">Individual Payroll</h1>
+    </div>
 
-    <mat-form-field appearance="outline" class="period-year" subscriptSizing="dynamic">
-      <mat-label>Year</mat-label>
-      <mat-select [value]="svc.periodYear()" (valueChange)="svc.periodYear.set($event)">
-        @for (y of svc.years; track y) {
-          <mat-option [value]="y">{{ y }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
+    <div class="page-header-right">
+      <mat-form-field appearance="outline" class="period-month" subscriptSizing="dynamic">
+        <mat-label>Month</mat-label>
+        <mat-select [value]="svc.periodMonth()" (valueChange)="svc.periodMonth.set($event)">
+          @for (m of svc.months; track m.value) {
+            <mat-option [value]="m.value">{{ m.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
 
-    <app-table-autocomplete
-      class="top-bar-emp-search"
-      [formControl]="employeeCtrl"
-      label="Employee"
-      placeholder="Search by name or employee #…"
-      src="/employee?isActive=true"
-      [columns]="employeeCols"
-      [displayFn]="empDisplayFn"
-      (itemSelected)="onEmployeeSelected($event)"
-    />
+      <mat-form-field appearance="outline" class="period-year" subscriptSizing="dynamic">
+        <mat-label>Year</mat-label>
+        <mat-select [value]="svc.periodYear()" (valueChange)="svc.periodYear.set($event)">
+          @for (y of svc.years; track y) {
+            <mat-option [value]="y">{{ y }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
 
-    @if (lastSavedLabel()) {
-      <span class="save-indicator">
-        <mat-icon>cloud_done</mat-icon>{{ lastSavedLabel() }}
-      </span>
-    }
-  </div>
+      <app-table-autocomplete
+        class="top-bar-emp-search"
+        [formControl]="employeeCtrl"
+        label="Employee"
+        placeholder="Search by name or employee #…"
+        src="/employee?isActive=true"
+        [columns]="employeeCols"
+        [displayFn]="empDisplayFn"
+        (itemSelected)="onEmployeeSelected($event)"
+      />
+
+      @if (lastSavedLabel()) {
+        <span class="save-indicator">
+          <mat-icon>cloud_done</mat-icon>{{ lastSavedLabel() }}
+        </span>
+      }
+    </div>
+  </header>
 
   <!-- ── Workflow ───────────────────────────────────────────────────────── -->
   @switch (workflowStep()) {

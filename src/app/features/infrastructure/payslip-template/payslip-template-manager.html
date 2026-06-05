@@ -1,0 +1,117 @@
+<div class="pt-page">
+
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Payslip Templates</h2>
+      <p class="page-subtitle">
+        Manage HTML templates used for PDF payslip generation.
+        Templates can be active or inactive independently.
+      </p>
+    </div>
+    <button mat-flat-button (click)="openDialog()">
+      <mat-icon>add</mat-icon>
+      New Template
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="loader-row">
+      <mat-spinner diameter="28" />
+      <span>Loading templates…</span>
+    </div>
+  }
+
+  @if (!loading()) {
+
+    @if (templates().length === 0) {
+      <div class="empty-state">
+        <mat-icon class="empty-icon">description</mat-icon>
+        <p>No templates yet. Click <strong>New Template</strong> to create one.</p>
+        <p class="empty-hint">
+          Use <code>{{ '{' }}{{ '{' }}TOKEN{{ '}' }}{{ '}' }}</code> placeholders in the HTML —
+          they are replaced with live payroll data when a PDF is generated.
+        </p>
+      </div>
+    }
+
+    @if (templates().length > 0) {
+      <table mat-table [dataSource]="templates()" class="templates-table">
+
+        <!-- Name -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let t">
+            <div class="name-cell">
+              <span class="template-name">{{ t.name }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Status -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let t">
+            <span class="status-badge" [class.status-badge--active]="t.isActive">
+              <mat-icon aria-hidden="true">
+                {{ t.isActive ? 'check_circle' : 'radio_button_unchecked' }}
+              </mat-icon>
+              {{ t.isActive ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Modified by -->
+        <ng-container matColumnDef="modifiedBy">
+          <th mat-header-cell *matHeaderCellDef>Last Modified By</th>
+          <td mat-cell *matCellDef="let t" class="meta-cell">{{ t.modifiedByUserName }}</td>
+        </ng-container>
+
+        <!-- Modified date -->
+        <ng-container matColumnDef="modifiedDate">
+          <th mat-header-cell *matHeaderCellDef>Modified Date</th>
+          <td mat-cell *matCellDef="let t" class="meta-cell">
+            {{ t.modifiedDate | date:'dd MMM yyyy, HH:mm' }}
+          </td>
+        </ng-container>
+
+        <!-- Actions -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let t" class="actions-cell">
+
+            <!-- Preview HTML -->
+            <button
+              mat-icon-button
+              (click)="previewHtml(t)"
+              aria-label="Preview HTML in new tab"
+              matTooltip="Preview HTML"
+            >
+              <mat-icon>open_in_new</mat-icon>
+            </button>
+
+            <!-- Edit -->
+            <button
+              mat-icon-button
+              (click)="openDialog(t)"
+              aria-label="Edit template"
+              matTooltip="Edit"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: columns;"
+          [class.active-row]="row.isActive"
+        ></tr>
+
+      </table>
+    }
+
+  }
+
+</div>

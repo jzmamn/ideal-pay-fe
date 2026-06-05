@@ -6,16 +6,35 @@
   min-height: 100%;
 }
 
-// ── Top bar ───────────────────────────────────────────────────────────────
-.top-bar {
+// ── Page header ───────────────────────────────────────────────────────────
+.page-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  padding: 10px 24px;
+  padding: 0 20px 0 24px;
+  height: 56px;
   background: #fff;
   border-bottom: 1px solid #e2e8f0;
   flex-shrink: 0;
-  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.page-header-left  { display: flex; align-items: center; gap: 12px; }
+.page-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
+
+.page-header-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 8px;
+  background: #dbeafe; color: #1d4ed8; flex-shrink: 0;
+  mat-icon { font-size: 20px; width: 20px; height: 20px; }
+}
+
+.page-title {
+  margin: 0; font-size: 15px; font-weight: 700;
+  color: #0f172a; white-space: nowrap;
 }
 
 .period-month {

@@ -22,6 +22,7 @@
         <span>Dashboard</span>
       </a>
 
+      <!-- Payroll — top-level -->
       <mat-expansion-panel class="menu-panel">
         <mat-expansion-panel-header>
           <mat-panel-title class="panel-title">
@@ -59,6 +60,100 @@
             <mat-icon>trending_up</mat-icon>
             <span>Salary Increment</span>
           </a>
+        </div>
+      </mat-expansion-panel>
+
+      <!-- Reports — top-level -->
+      <mat-expansion-panel class="menu-panel">
+        <mat-expansion-panel-header>
+          <mat-panel-title class="panel-title">
+            <mat-icon>assessment</mat-icon>
+            <span>Reports</span>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div class="sub-menu">
+
+          <mat-expansion-panel class="menu-panel sub-menu-panel">
+            <mat-expansion-panel-header>
+              <mat-panel-title class="panel-title">
+                <mat-icon>payments</mat-icon>
+                <span>Payroll</span>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <div class="sub-sub-menu">
+              <a mat-list-item routerLink="/reports" [queryParams]="{type: 'payroll-summary'}" routerLinkActive="nav-active">
+                <mat-icon>receipt_long</mat-icon>
+                <span>Payroll Summary</span>
+              </a>
+              <a mat-list-item routerLink="/reports" [queryParams]="{type: 'bank-transfer'}" routerLinkActive="nav-active">
+                <mat-icon>account_balance_wallet</mat-icon>
+                <span>Bank Transfer Report</span>
+              </a>
+              <a mat-list-item routerLink="/reports" [queryParams]="{type: 'salary-increment'}" routerLinkActive="nav-active">
+                <mat-icon>trending_up</mat-icon>
+                <span>Salary Increment Report</span>
+              </a>
+              <a mat-list-item routerLink="/reports" [queryParams]="{type: 'loan'}" routerLinkActive="nav-active">
+                <mat-icon>request_quote</mat-icon>
+                <span>Loan Report</span>
+              </a>
+              <a mat-list-item routerLink="/reports" [queryParams]="{type: 'salary-advance'}" routerLinkActive="nav-active">
+                <mat-icon>monetization_on</mat-icon>
+                <span>Salary Advance Report</span>
+              </a>
+              <a mat-list-item routerLink="/reports" [queryParams]="{type: 'nopay'}" routerLinkActive="nav-active">
+                <mat-icon>event_busy</mat-icon>
+                <span>No-Pay Report</span>
+              </a>
+            </div>
+          </mat-expansion-panel>
+
+          <mat-expansion-panel class="menu-panel sub-menu-panel">
+            <mat-expansion-panel-header>
+              <mat-panel-title class="panel-title">
+                <mat-icon>gavel</mat-icon>
+                <span>Statutory</span>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <div class="sub-sub-menu">
+              <a mat-list-item routerLink="/reports/statutory" [queryParams]="{type: 'epf-monthly'}" routerLinkActive="nav-active">
+                <mat-icon>savings</mat-icon>
+                <span>EPF Monthly</span>
+              </a>
+              <a mat-list-item routerLink="/reports/statutory" [queryParams]="{type: 'etf-monthly'}" routerLinkActive="nav-active">
+                <mat-icon>account_balance</mat-icon>
+                <span>ETF Monthly</span>
+              </a>
+              <a mat-list-item routerLink="/reports/statutory" [queryParams]="{type: 'apit-monthly'}" routerLinkActive="nav-active">
+                <mat-icon>receipt</mat-icon>
+                <span>APIT Monthly (T10)</span>
+              </a>
+              <a mat-list-item routerLink="/reports/statutory" [queryParams]="{type: 't10-annual'}" routerLinkActive="nav-active">
+                <mat-icon>description</mat-icon>
+                <span>T10 Annual Certificate</span>
+              </a>
+              <a mat-list-item routerLink="/reports/statutory" [queryParams]="{type: 'epf-annual'}" routerLinkActive="nav-active">
+                <mat-icon>assignment</mat-icon>
+                <span>Annual EPF Return</span>
+              </a>
+              <a mat-list-item routerLink="/reports/statutory" [queryParams]="{type: 'salary-certificate'}" routerLinkActive="nav-active">
+                <mat-icon>workspace_premium</mat-icon>
+                <span>Salary Certificate</span>
+              </a>
+              <a mat-list-item routerLink="/reports/statutory" [queryParams]="{type: 'gratuity'}" routerLinkActive="nav-active">
+                <mat-icon>card_giftcard</mat-icon>
+                <span>Gratuity</span>
+              </a>
+              <a mat-list-item routerLink="/reports/statutory" [queryParams]="{type: 'workmen-compensation'}" routerLinkActive="nav-active">
+                <mat-icon>health_and_safety</mat-icon>
+                <span>Workmen's Compensation</span>
+              </a>
+            </div>
+          </mat-expansion-panel>
+
         </div>
       </mat-expansion-panel>
 
@@ -170,6 +265,14 @@
           <a mat-list-item routerLink="/districts" routerLinkActive="nav-active">
             <mat-icon>map</mat-icon>
             <span>Districts</span>
+          </a>
+          <a mat-list-item routerLink="/email-setup" routerLinkActive="nav-active">
+            <mat-icon>email</mat-icon>
+            <span>Email Setup</span>
+          </a>
+          <a mat-list-item routerLink="/payslip-template" routerLinkActive="nav-active">
+            <mat-icon>description</mat-icon>
+            <span>Payslip Template</span>
           </a>
         </div>
       </mat-expansion-panel>
