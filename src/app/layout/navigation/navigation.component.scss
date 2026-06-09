@@ -30,31 +30,24 @@ $divider:        rgba(255, 255, 255, 0.07);
 }
 
 // ── Brand header ──────────────────────────────────────────────
-.brand-header {
+.brand-banner {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 18px 16px;
+  gap: 14px;
+  padding: 20px 16px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(99, 102, 241, 0.1));
   border-bottom: 1px solid $divider;
   flex-shrink: 0;
 }
 
-.brand-logo {
-  width: 38px;
-  height: 38px;
-  background: linear-gradient(135deg, $accent, #6366f1);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.brand-banner-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  object-fit: contain;
+  background: $sidebar-active;
+  padding: 4px;
   flex-shrink: 0;
-
-  mat-icon {
-    color: #fff;
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
-  }
 }
 
 .brand-text {
@@ -165,7 +158,7 @@ $nav-item-gap: 12px;
     }
   }
 
-  &.mat-expanded .mat-expansion-panel-header {
+  &.panel-child-active .mat-expansion-panel-header {
     color: $sidebar-active;
     .panel-title mat-icon { color: $sidebar-active; }
   }

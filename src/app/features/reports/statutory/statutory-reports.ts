@@ -2,9 +2,12 @@ import {
   ChangeDetectionStrategy, Component, computed,
   inject, signal, OnInit,
 } from '@angular/core';
-import { LowerCasePipe, DecimalPipe } from '@angular/common';
+import { LowerCasePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { finalize } from 'rxjs';
+
+import { ReportsService } from '../reports.service';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
@@ -37,6 +40,14 @@ const MONTHS = [
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 6 }, (_, i) => currentYear - i);
 
+/**
+ * Report keys backed by the generic report engine (sp_rpt_* procedures
+ * registered in V12/V13 — see `ReportsService.run`). Reports not in this
+ * set are still defined for the UI/picker but have no backing stored
+ * procedure yet, so `load()` leaves them empty rather than erroring.
+ */
+const LIVE_REPORT_KEYS = new Set(['epf-monthly', 'etf-monthly', 'apit-monthly']);
+
 // ── Statutory report definitions ─────────────────────────────────────────────
 
 export interface StatutoryReportDef {
@@ -56,7 +67,7 @@ export const STATUTORY_REPORTS: StatutoryReportDef[] = [
     id: 'epf-monthly',
     label: 'EPF Monthly Contribution',
     shortCode: 'EPF',
-    icon: 'savings',
+    icon: 'percent',
     authority: 'Central Bank of Sri Lanka',
     description: 'Monthly EPF contribution return — Employee 8%, Employer 12%',
     legalRef: 'Employees\' Provident Fund Act No. 15 of 1958',
@@ -194,7 +205,7 @@ export const STATUTORY_REPORTS: StatutoryReportDef[] = [
   selector: 'app-statutory-reports',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    LowerCasePipe, DecimalPipe, ReactiveFormsModule,
+    LowerCasePipe, ReactiveFormsModule,
     MatButtonModule, MatDividerModule, MatFormFieldModule,
     MatIconModule, MatInputModule, MatProgressSpinnerModule,
     MatSelectModule, MatTableModule, MatTooltipModule,
@@ -204,8 +215,9 @@ export const STATUTORY_REPORTS: StatutoryReportDef[] = [
   styleUrl: './statutory-reports.scss',
 })
 export class StatutoryReports implements OnInit {
-  private readonly fb    = inject(FormBuilder);
-  private readonly route = inject(ActivatedRoute);
+  private readonly fb       = inject(FormBuilder);
+  private readonly route    = inject(ActivatedRoute);
+  private readonly reports$ = inject(ReportsService);
 
   readonly months  = MONTHS;
   readonly years   = YEARS;
@@ -241,16 +253,34 @@ export class StatutoryReports implements OnInit {
   }
 
   load(): void {
+    const report = this.activeReport();
+    this.rows.set([]);
+
+    if (!LIVE_REPORT_KEYS.has(report.id)) {
+      // No backing stored procedure registered yet for this report —
+      // surface an empty result rather than calling an endpoint that 404s.
+      return;
+    }
+
+    const { month, year } = this.filterForm.value;
+    const filters = { month: `${year}-${String(month).padStart(2, '0')}` };
+
     this.loading.set(true);
-    // Placeholder — replace with real service call per report type
-    setTimeout(() => {
-      this.rows.set([]);
-      this.loading.set(false);
-    }, 600);
+    this.reports$.run(report.id, filters)
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next:  (rows) => this.rows.set(rows),
+        error: ()     => this.rows.set([]),
+      });
   }
 
   onSearch(value: string): void {
     this.searchQuery.set(value);
+  }
+
+  /** Print-friendly output via the browser print dialog + a `@media print` stylesheet. */
+  print(): void {
+    window.print();
   }
 
   exportCsv(): void {

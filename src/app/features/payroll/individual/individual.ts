@@ -5,7 +5,7 @@ import {
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { lastValueFrom } from 'rxjs';
+import { Subject, lastValueFrom, takeUntil } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -30,6 +30,8 @@ import type {
   EmployeeVariableDeductionResponse,
   EmployeeNopayResponse,
   EmployeeOvertimeResponse,
+  EmployeeLateResponse,
+  EmployeeLateRequest,
 } from '../../settings/employee/employee-profile.model';
 import type {
   EmployeeFixedAllowanceRequest,
@@ -47,6 +49,7 @@ export const SUB_STEPS = [
   { uiKey: 'fixedDed',  label: 'Fixed Deduction'     },
   { uiKey: 'varDed',    label: 'Variable Deduction'  },
   { uiKey: 'nopay',     label: 'NoPay'               },
+  { uiKey: 'late',      label: 'Late Deduction'      },
   { uiKey: 'loans',     label: 'Loans'               },
   { uiKey: 'bonus',     label: 'Bonus'               },
 ] as const;
@@ -98,6 +101,8 @@ export class IndividualComponent implements OnInit {
   readonly profileLoading   = signal(false);
   readonly selectedSubStep  = signal(0);
   readonly workflowStep     = signal<WorkflowStep>('prepare');
+  readonly lates            = signal<EmployeeLateResponse[]>([]);
+  private readonly latesLoad$ = new Subject<void>();
   readonly saving           = signal(false);
   readonly submitting       = signal(false);
   readonly isDisbursed      = signal(false);
@@ -142,12 +147,14 @@ export class IndividualComponent implements OnInit {
     (this.sidebarProfile()?.fixedDeductions    ?? []).reduce((s, r) => s + (r.amount ?? 0), 0));
   readonly sidebarTotalVD  = computed(() =>
     (this.sidebarProfile()?.variableDeductions ?? []).reduce((s, r) => s + (r.amount ?? 0), 0));
-  readonly sidebarTotalNP  = computed(() =>
+  readonly sidebarTotalNP   = computed(() =>
     (this.sidebarProfile()?.nopays             ?? []).reduce((s, r) => s + (r.amount ?? 0), 0));
+  readonly sidebarTotalLate = computed(() =>
+    this.lates().reduce((s, r) => s + (r.amount ?? 0), 0));
   readonly sidebarGross    = computed(() =>
     (this.sidebarEmployee()?.basicSalary ?? 0) + this.sidebarTotalFA() + this.sidebarTotalVA() + this.sidebarTotalOT());
   readonly sidebarDedTotal = computed(() =>
-    this.sidebarTotalFD() + this.sidebarTotalVD() + this.sidebarTotalNP());
+    this.sidebarTotalFD() + this.sidebarTotalVD() + this.sidebarTotalNP() + this.sidebarTotalLate());
   readonly sidebarNet      = computed(() => this.sidebarGross() - this.sidebarDedTotal());
 
   // ── Sidebar breakdown lists — zero-amount rows excluded ───────────────────
@@ -164,6 +171,10 @@ export class IndividualComponent implements OnInit {
     (this.sidebarProfile()?.variableDeductions ?? []).filter(r => (r.amount ?? 0) > 0));
   readonly sidebarNPItems = computed(() =>
     (this.sidebarProfile()?.nopays             ?? []).filter(r => (r.amount ?? 0) > 0 || (r.days ?? 0) > 0));
+
+  readonly WORKING_DAYS       = 26;
+  readonly lateHourlyRate     = computed(() =>
+    (this.selectedEmployee()?.basicSalary ?? 0) / (this.WORKING_DAYS * 8));
 
   readonly fixedAllowances    = computed(() => this.employeeProfile()?.fixedAllowances    ?? []);
   readonly fixedDeductions    = computed(() => this.employeeProfile()?.fixedDeductions    ?? []);
@@ -215,6 +226,7 @@ export class IndividualComponent implements OnInit {
     this.selectedEmployee.set(emp);
     this.employeeProfile.set(null);
     this.sidebarProfile.set(null);
+    this.lates.set([]);
     this.workflowStep.set('prepare');
     this.selectedSubStep.set(0);
     this.loadProfile(emp.id);
@@ -237,6 +249,28 @@ export class IndividualComponent implements OnInit {
       .subscribe({
         next:  profile => this.sidebarProfile.set(profile),
         error: ()      => { /* sidebar falls back to selectedEmployee() */ },
+      });
+
+    // Load late deduction for current period — cancel any in-flight request from a prior employee selection
+    const month = this.svc.periodMonth().toString().padStart(2, '0');
+    const payrollMonth = `${this.svc.periodYear()}-${month}`;
+    this.latesLoad$.next();
+    this.profileSvc.getLatesByEmployee(empId)
+      .pipe(takeUntil(this.latesLoad$), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: entries => {
+          const periodEntry = entries.find(e => e.payrollMonth === payrollMonth);
+          if (periodEntry) {
+            this.lates.set([periodEntry]);
+          } else {
+            // Seed a blank row so the UI always has one editable row
+            this.lates.set([{
+              id: 0, hours: 0, amount: 0, payrollMonth,
+              isProcessed: false, empId, empCode: '', empName: '',
+            }]);
+          }
+        },
+        error: () => this.lates.set([]),
       });
   }
 
@@ -293,6 +327,20 @@ export class IndividualComponent implements OnInit {
       const list = [...p.nopays];
       list[idx] = { ...list[idx], ...changes };
       return { ...p, nopays: list };
+    });
+  }
+
+  updateLate(idx: number, changes: Partial<EmployeeLateResponse>): void {
+    this.lates.update(list => {
+      const next = [...list];
+      const updated = { ...next[idx], ...changes };
+      if ('hours' in changes) {
+        updated.amount = parseFloat(
+          (this.lateHourlyRate() * (changes.hours ?? 0)).toFixed(2)
+        );
+      }
+      next[idx] = updated;
+      return next;
     });
   }
 
@@ -394,12 +442,39 @@ export class IndividualComponent implements OnInit {
     if (!emp || !this.employeeProfile()) return;
     this.saving.set(true);
     try {
+      const month = this.svc.periodMonth().toString().padStart(2, '0');
+      const payrollMonth = `${this.svc.periodYear()}-${month}`;
+      const MODIFIED_BY = 1; // TODO: replace with auth user id
+
+      // Save main profile components
       const payload = this.buildSavePayload(emp.id);
       const saved = await lastValueFrom(
         this.profileSvc.saveEmployeeProfile(emp.id, payload)
       );
-      // Refresh profile from the response — employee master not touched
       this.employeeProfile.set(saved);
+
+      // Save late deduction (upsert by empId + payrollMonth on backend)
+      const savedLates: EmployeeLateResponse[] = [];
+      for (const late of this.lates()) {
+        if (late.hours > 0) {
+          const lateReq: EmployeeLateRequest = {
+            ...(late.id > 0 ? { id: late.id } : {}),
+            empId:        emp.id,
+            hours:        late.hours,
+            amount:       late.amount,
+            payrollMonth,
+            isProcessed:  late.isProcessed,
+            createdBy:    MODIFIED_BY,
+            modifiedBy:   MODIFIED_BY,
+          };
+          savedLates.push(await lastValueFrom(this.profileSvc.saveLate(lateReq)));
+        } else if (late.id > 0) {
+          await lastValueFrom(this.profileSvc.deleteLate(late.id));
+          savedLates.push({ ...late, id: 0, hours: 0, amount: 0 });
+        }
+      }
+      if (savedLates.length) this.lates.set(savedLates);
+
       this.lastSavedAt.set(new Date());
     } finally {
       this.saving.set(false);

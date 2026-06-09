@@ -1,0 +1,101 @@
+<div mat-dialog-title class="dialog-title">
+  <div class="dialog-title-icon">
+    <mat-icon>schedule</mat-icon>
+  </div>
+  <span class="dialog-title-main">Late Deduction Configuration</span>
+  <button mat-icon-button mat-dialog-close class="dialog-close-btn" aria-label="Close dialog">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="form-grid">
+
+    <div class="form-row-2">
+      <mat-form-field appearance="outline">
+        <mat-label>Code</mat-label>
+        <input matInput formControlName="code" placeholder="Auto-generated">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name">
+        @if (form.get('name')?.hasError('required')) {
+          <mat-error>Name is required</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Description</mat-label>
+      <textarea matInput formControlName="description" rows="2"
+                placeholder="e.g. Standard late deduction rule for all employees"></textarea>
+    </mat-form-field>
+
+    <div class="form-row-2">
+      <mat-form-field appearance="outline">
+        <mat-label>Working Days / Month</mat-label>
+        <input matInput type="number" formControlName="workingDays" min="1" max="31">
+        <mat-hint>Used in default formula</mat-hint>
+        @if (form.get('workingDays')?.hasError('required')) {
+          <mat-error>Required</mat-error>
+        }
+        @if (form.get('workingDays')?.hasError('min') || form.get('workingDays')?.hasError('max')) {
+          <mat-error>Must be between 1 and 31</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Working Hours / Day</mat-label>
+        <input matInput type="number" formControlName="workingHoursPerDay" min="1" max="24">
+        <mat-hint>Used in default formula</mat-hint>
+        @if (form.get('workingHoursPerDay')?.hasError('required')) {
+          <mat-error>Required</mat-error>
+        }
+        @if (form.get('workingHoursPerDay')?.hasError('min') || form.get('workingHoursPerDay')?.hasError('max')) {
+          <mat-error>Must be between 1 and 24</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="default-formula-hint">
+      <mat-icon>info</mat-icon>
+      <span>
+        Default formula:
+        <code>basicSalary ÷ (workingDays × workingHoursPerDay) × lateHours</code>
+      </span>
+    </div>
+
+    <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
+
+  </form>
+
+  <mat-divider />
+
+  <app-formula-definition-form
+    #formulaForm
+    [initialExpression]="formulaExpression()"
+    [initialIsActive]="formulaIsActive()"
+    [saving]="formulaSaving()"
+    [saveError]="formulaSaveError()"
+    (valueChanged)="onFormulaValueChanged($event)"
+    (saveRequested)="onFormulaSaveRequested($event)"
+  />
+
+  <div class="formula-save-row">
+    <button mat-stroked-button type="button" (click)="formulaForm.save()" aria-label="Apply formula">
+      <mat-icon>calculate</mat-icon> Apply Formula
+    </button>
+  </div>
+
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  <span class="action-spacer"></span>
+  <button mat-flat-button [disabled]="form.invalid" class="btn-warn" (click)="save()">
+    <mat-icon>save</mat-icon> Update
+  </button>
+  <button mat-flat-button mat-dialog-close class="btn-secondary">
+    <mat-icon>close</mat-icon> Cancel
+  </button>
+</mat-dialog-actions>

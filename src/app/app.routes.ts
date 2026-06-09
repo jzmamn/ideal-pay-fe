@@ -142,6 +142,13 @@ export const routes: Routes = [
             },
 
             {
+                path: 'bonus',
+                loadComponent: () =>
+                    import('./features/settings/bonus/bonus-master')
+                        .then(m => m.BonusMaster)
+            },
+
+            {
                 path: 'deduction',
                 loadComponent: () =>
                     import('./features/settings/deduction/deduction')
@@ -167,6 +174,13 @@ export const routes: Routes = [
                 loadComponent: () =>
                     import('./features/settings/overtime/overtime')
                         .then(m => m.Overtime)
+            },
+
+            {
+                path: 'late-deduction-config',
+                loadComponent: () =>
+                    import('./features/settings/late-deduction-config/late-deduction-config')
+                        .then(m => m.LateDeductionConfig)
             },
 
             {

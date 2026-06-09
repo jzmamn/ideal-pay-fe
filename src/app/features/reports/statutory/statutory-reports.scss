@@ -34,7 +34,7 @@
 .page-header-icon {
   display: flex; align-items: center; justify-content: center;
   width: 36px; height: 36px; border-radius: 8px;
-  background: #fce7f3; color: #be185d; flex-shrink: 0;
+  background: #dbeafe; color: #1d4ed8; flex-shrink: 0;
 
   mat-icon { font-size: 20px; width: 20px; height: 20px; }
 }
@@ -75,6 +75,7 @@
 
 .body-layout {
   display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 0;
   margin: 16px 24px;
@@ -88,13 +89,15 @@
 .viewer-panel {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  width: 100%;
   background: #fff;
   overflow: hidden;
 }
 
 .viewer-toolbar {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   padding: 14px 20px;
@@ -105,24 +108,16 @@
 
 .viewer-title-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
 }
 
 .viewer-title-icon {
-  font-size: 30px;
-  width: 30px;
-  height: 30px;
-  color: #be185d;
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+  color: #1d4ed8;
   flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.viewer-title-line {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
 }
 
 .viewer-title {
@@ -132,24 +127,8 @@
   color: #0f172a;
 }
 
-.viewer-code-badge {
-  font-size: 11px;
-  font-weight: 700;
-  background: #fce7f3;
-  color: #be185d;
-  padding: 2px 8px;
-  border-radius: 999px;
-}
-
-.viewer-legal-ref {
-  margin: 4px 0 2px;
-  font-size: 11px;
-  color: #be185d;
-  font-style: italic;
-}
-
 .viewer-desc {
-  margin: 0;
+  margin: 2px 0 0;
   font-size: 12px;
   color: #94a3b8;
 }
@@ -158,22 +137,6 @@
   width: 240px;
   --mat-form-field-container-height: 36px;
   --mat-form-field-container-vertical-padding: 6px;
-}
-
-// ── Authority banner ─────────────────────────────────────────────────────────
-
-.authority-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 20px;
-  background: #fdf4ff;
-  border-bottom: 1px solid #f3e8ff;
-  font-size: 12.5px;
-  color: #7e22ce;
-  flex-shrink: 0;
-
-  mat-icon { font-size: 16px; width: 16px; height: 16px; }
 }
 
 // ── Loader / empty ───────────────────────────────────────────────────────────
@@ -229,7 +192,7 @@
     padding: 0 14px;
   }
 
-  tr.mat-row:hover td { background: #fdf4ff; }
+  tr.mat-row:hover td { background: #f8fafc; }
 
   .amount-col { text-align: right; }
 }
@@ -260,4 +223,51 @@
 .row-count {
   font-size: 12px;
   color: #94a3b8;
+}
+
+// ── Print ────────────────────────────────────────────────────────────────────
+// Triggered by the toolbar "Print / PDF" button (window.print()). Hides the
+// chrome (header, search, footer, banner) and prints only the report table —
+// users can then "Save as PDF" from the browser print dialog for submission
+// to EPF / ETF / IRD.
+
+@media print {
+  :host {
+    height: auto;
+  }
+
+  .statutory-page {
+    height: auto;
+  }
+
+  .page-header,
+  .viewer-toolbar,
+  .table-footer,
+  .loader-row,
+  .empty-state {
+    display: none !important;
+  }
+
+  .body-layout {
+    display: block;
+    margin: 0;
+    border: none;
+    overflow: visible;
+  }
+
+  .viewer-panel {
+    overflow: visible;
+  }
+
+  .table-wrapper {
+    overflow: visible;
+  }
+
+  table {
+    width: 100%;
+  }
+
+  th.mat-mdc-header-cell {
+    position: static !important;
+  }
 }

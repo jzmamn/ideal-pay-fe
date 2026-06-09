@@ -143,6 +143,18 @@ mat-dialog-content {
   outline: none;
 }
 
+.token-chip--dynamic {
+  border-style: dashed;
+  color: var(--mat-sys-tertiary, #7c3aed);
+  border-color: var(--mat-sys-tertiary, #7c3aed);
+  background: var(--mat-sys-tertiary-container, #f5f3ff);
+
+  &:hover, &:focus-visible {
+    background: var(--mat-sys-tertiary-container, #ede9fe);
+    border-color: var(--mat-sys-tertiary, #6d28d9);
+  }
+}
+
 /* ── Right: HTML editor ──────────────────────────────────────────────── */
 .pt-editor {
   flex: 1;

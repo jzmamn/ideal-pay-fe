@@ -1,92 +1,121 @@
 import {
-  ChangeDetectionStrategy, Component,
-  computed, signal,
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
-
-interface BonusItem {
-  id: number;
-  code: string;
-  name: string;
-  amount: number;
-}
-
-const BONUS_TYPES: BonusItem[] = [
-  { id: 1, code: 'BON-PER', name: 'Performance Bonus', amount: 0 },
-  { id: 2, code: 'BON-FES', name: 'Festival Bonus',    amount: 0 },
-  { id: 3, code: 'BON-ANN', name: 'Annual Bonus',      amount: 0 },
-  { id: 4, code: 'BON-REF', name: 'Referral Bonus',    amount: 0 },
-];
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { EmployeeBonusResponse, EmployeeBonusRequest } from './employee-bonus.model';
+import { EmployeeBonusService } from './employee-bonus.service';
 
 @Component({
   selector: 'app-bonus',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DecimalPipe, ReactiveFormsModule,
-    MatButtonModule, MatFormFieldModule, MatIconModule,
-    MatInputModule, MatTooltipModule,
+    DecimalPipe,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatDividerModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    MatTooltipModule,
   ],
   templateUrl: './bonus.component.html',
   styleUrl: './bonus.component.scss',
 })
 export class BonusComponent {
-  readonly items        = signal<BonusItem[]>(BONUS_TYPES.map(b => ({ ...b })));
-  readonly editingIndex = signal<number | null>(null);
+  private readonly bonusSvc  = inject(EmployeeBonusService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly snackBar   = inject(MatSnackBar);
 
-  readonly total = computed(() => this.items().reduce((s, i) => s + i.amount, 0));
+  readonly empId = input<number | null>(null);
+
+  readonly bonuses      = signal<EmployeeBonusResponse[]>([]);
+  readonly editingIndex = signal<number | null>(null);
+  readonly saving       = signal(false);
+
+  readonly total = computed(() =>
+    this.bonuses().reduce((sum, b) => sum + b.amount, 0)
+  );
 
   readonly editAmountCtrl = new FormControl<number | null>(null, {
     validators: [Validators.required, Validators.min(0)],
   });
 
+  constructor() {
+    effect(() => {
+      const id = this.empId();
+      if (id != null) {
+        this.bonusSvc.getByEmployee(id)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: data => this.bonuses.set(data),
+            error: err => console.error('Failed to load employee bonuses', err),
+          });
+      } else {
+        this.bonuses.set([]);
+      }
+    });
+  }
+
   startEdit(index: number): void {
-    this.editAmountCtrl.setValue(this.items()[index].amount);
+    this.editAmountCtrl.setValue(this.bonuses()[index].amount);
     this.editAmountCtrl.markAsUntouched();
     this.editingIndex.set(index);
   }
 
   saveEdit(index: number): void {
-    if (this.editAmountCtrl.invalid) { this.editAmountCtrl.markAsTouched(); return; }
-    this.items.update(list =>
-      list.map((item, i) => i === index ? { ...item, amount: Number(this.editAmountCtrl.value) } : item)
-    );
-    this.editingIndex.set(null);
-  }
+    if (this.editAmountCtrl.invalid) {
+      this.editAmountCtrl.markAsTouched();
+      return;
+    }
+    const record    = this.bonuses()[index];
+    const newAmount = Number(this.editAmountCtrl.value);
 
-  cancelEdit(): void { this.editingIndex.set(null); }
-
-  exportCsv(): void {
-    const header = 'Code,Bonus Type,Amount';
-    const rows = this.items().map(i => `${i.code},${i.name},${i.amount}`);
-    const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'bonus.csv'; a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  importCsv(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const lines = (reader.result as string).split('\n').slice(1); // skip header
-      this.items.update(list =>
-        list.map(item => {
-          const match = lines.find(l => l.startsWith(item.code + ','));
-          if (!match) return item;
-          const amount = Number(match.split(',')[2]);
-          return isNaN(amount) ? item : { ...item, amount };
-        })
-      );
+    const payload: EmployeeBonusRequest = {
+      empId:        record.empId,
+      bonusId:      record.bonusId,
+      amount:       newAmount,
+      payrollMonth: record.payrollMonth,
+      isProcessed:  record.isProcessed,
+      processedDate: record.processedDate,
+      createdBy:    1,
+      modifiedBy:   1,
     };
-    reader.readAsText(file);
-    (event.target as HTMLInputElement).value = '';
+
+    this.saving.set(true);
+    this.bonusSvc.update(record.id, payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: updated => {
+          this.bonuses.update(list =>
+            list.map((b, i) => i === index ? updated : b)
+          );
+          this.editingIndex.set(null);
+          this.saving.set(false);
+        },
+        error: () => {
+          this.snackBar.open('Failed to update bonus.', 'Close', { duration: 3000 });
+          this.saving.set(false);
+        },
+      });
+  }
+
+  cancelEdit(): void {
+    this.editingIndex.set(null);
   }
 }

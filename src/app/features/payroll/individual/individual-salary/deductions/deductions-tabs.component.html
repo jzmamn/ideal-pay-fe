@@ -40,6 +40,15 @@
         <app-grid-skeleton [rows]="10" />
       }
     }
+    @case ('late-deduction') {
+      @defer (on idle) {
+        <app-late-deduction />
+      } @placeholder {
+        <app-grid-skeleton [rows]="10" />
+      } @loading (minimum 300ms) {
+        <app-grid-skeleton [rows]="10" />
+      }
+    }
     @case ('loans') {
       @defer (on idle) {
         <app-loans />

@@ -40,15 +40,17 @@
 }
 
 .period-month {
-  width: 160px;
+  width: 140px;
   --mdc-outlined-text-field-container-height: 36px;
-  font-size: 13px;
+  --mat-form-field-container-height: 36px;
+  --mat-form-field-container-vertical-padding: 6px;
 }
 
 .period-year {
-  width: 104px;
+  width: 100px;
   --mdc-outlined-text-field-container-height: 36px;
-  font-size: 13px;
+  --mat-form-field-container-height: 36px;
+  --mat-form-field-container-vertical-padding: 6px;
 }
 
 // ── Body ──────────────────────────────────────────────────────────────────────

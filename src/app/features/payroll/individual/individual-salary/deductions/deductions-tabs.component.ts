@@ -7,9 +7,10 @@ import { NoPayComponent } from './no-pay/no-pay.component';
 import { LoansComponent } from './loans/loans.component';
 import { TaxComponent } from './tax/tax.component';
 import { SalaryDecrementComponent } from './salary-decrement/salary-decrement.component';
+import { LateDeductionComponent } from './late-deduction/late-deduction.component';
 
 type DeductionsTab = 'fixed-deduction' | 'variable-deduction' | 'no-pay'
-                   | 'loans' | 'tax' | 'salary-decrement';
+                   | 'loans' | 'tax' | 'salary-decrement' | 'late-deduction';
 
 @Component({
   selector: 'app-deductions-tabs',
@@ -18,6 +19,7 @@ type DeductionsTab = 'fixed-deduction' | 'variable-deduction' | 'no-pay'
     MatButtonModule, GridSkeletonComponent,
     FixedDeductionComponent, VariableDeductionComponent, NoPayComponent,
     LoansComponent, TaxComponent, SalaryDecrementComponent,
+    LateDeductionComponent,
   ],
   templateUrl: './deductions-tabs.component.html',
   styleUrl: './deductions-tabs.component.scss',
@@ -29,6 +31,7 @@ export class DeductionsTabsComponent {
     { id: 'fixed-deduction',    label: 'Fixed Deduction'    },
     { id: 'variable-deduction', label: 'Variable Deduction' },
     { id: 'no-pay',             label: 'No Pay'             },
+    { id: 'late-deduction',     label: 'Late Deduction'     },
     { id: 'loans',              label: 'Loans'              },
     { id: 'tax',                label: 'Tax'                },
     { id: 'salary-decrement',   label: 'Salary Decrement'   },

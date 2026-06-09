@@ -295,6 +295,52 @@
                   </div>
                 }
 
+                <!-- Late Deduction -->
+                @if (step.uiKey === 'late') {
+                  <div class="comp-table-wrap">
+                    <div class="comp-formula-chip">
+                      Formula: Late Deduction = Basic Salary ÷ ({{ WORKING_DAYS }} days × 8 hrs) × Late Hours
+                    </div>
+                    <table class="comp-table">
+                      <thead><tr>
+                        <th class="col-name">Employee</th>
+                        <th class="col-amount">Hourly Rate</th>
+                        <th class="col-hours">Late Hours</th>
+                        <th class="col-amount">Deduction</th>
+                        <th class="col-month">Month</th>
+                      </tr></thead>
+                      <tbody>
+                        @if (!selectedEmployee()) {
+                          <tr><td colspan="5" class="comp-empty">
+                            Select an employee to load components.
+                          </td></tr>
+                        } @else {
+                          @for (row of lates(); track $index; let i = $index) {
+                            <tr>
+                              <td class="col-name comp-readonly">
+                                {{ selectedEmployee()?.firstName }} {{ selectedEmployee()?.lastName }}
+                              </td>
+                              <td class="col-amount comp-readonly">
+                                {{ lateHourlyRate() | number:'1.4-4' }}
+                              </td>
+                              <td class="col-hours">
+                                <input class="comp-input" type="number" min="0" step="0.5"
+                                       [value]="row.hours"
+                                       (change)="updateLate(i, { hours: +$any($event.target).value })"
+                                       aria-label="Late hours" />
+                              </td>
+                              <td class="col-amount comp-readonly late-amount">
+                                {{ row.amount | number:'1.2-2' }}
+                              </td>
+                              <td class="col-month">{{ row.payrollMonth }}</td>
+                            </tr>
+                          }
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+
                 <!-- Loans -->
                 @if (step.uiKey === 'loans') {
                   <div class="comp-empty-state">
@@ -427,6 +473,12 @@
                 <div class="emp-pay-row">
                   <span class="emp-pay-label">No Pay</span>
                   <span class="emp-pay-value emp-pay-negative">− {{ sidebarTotalNP() | number:'1.2-2' }}</span>
+                </div>
+              }
+              @if (sidebarTotalLate()) {
+                <div class="emp-pay-row">
+                  <span class="emp-pay-label">Late Deduction</span>
+                  <span class="emp-pay-value emp-pay-negative">− {{ sidebarTotalLate() | number:'1.2-2' }}</span>
                 </div>
               }
               <div class="emp-pay-row emp-pay-net">

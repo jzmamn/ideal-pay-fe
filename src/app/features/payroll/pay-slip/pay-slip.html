@@ -14,6 +14,7 @@
       <!-- Period picker -->
       <div class="period-row" [formGroup]="periodForm">
         <mat-form-field appearance="outline" class="period-field" subscriptSizing="dynamic">
+          <mat-label>Month</mat-label>
           <mat-select formControlName="month" aria-label="Month">
             @for (m of months; track m.value) {
               <mat-option [value]="m.value">{{ m.label }}</mat-option>
@@ -22,6 +23,7 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="period-field period-field--year" subscriptSizing="dynamic">
+          <mat-label>Year</mat-label>
           <mat-select formControlName="year" aria-label="Year">
             @for (y of years; track y) {
               <mat-option [value]="y">{{ y }}</mat-option>
@@ -34,23 +36,6 @@
           Load
         </button>
       </div>
-
-      <!-- Layout toggle -->
-      <mat-button-toggle-group
-        [value]="layout()"
-        (change)="layout.set($event.value)"
-        aria-label="Payslip layout"
-        class="layout-toggle"
-      >
-        <mat-button-toggle value="portrait"  aria-label="Portrait layout">
-          <mat-icon>crop_portrait</mat-icon>
-          Portrait
-        </mat-button-toggle>
-        <mat-button-toggle value="landscape" aria-label="Landscape layout">
-          <mat-icon>crop_landscape</mat-icon>
-          Landscape
-        </mat-button-toggle>
-      </mat-button-toggle-group>
 
       <!-- PDF template selector -->
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="template-select">

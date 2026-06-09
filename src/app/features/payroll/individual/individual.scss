@@ -38,13 +38,17 @@
 }
 
 .period-month {
-  min-width: 160px;
+  width: 140px;
   --mdc-outlined-text-field-container-height: 36px;
+  --mat-form-field-container-height: 36px;
+  --mat-form-field-container-vertical-padding: 6px;
 }
 
 .period-year {
-  width: 110px;
+  width: 100px;
   --mdc-outlined-text-field-container-height: 36px;
+  --mat-form-field-container-height: 36px;
+  --mat-form-field-container-vertical-padding: 6px;
 }
 
 .top-bar-emp-search {
@@ -163,6 +167,22 @@
   font-size: 13px;
   color: #64748b;
   font-style: italic;
+}
+
+.comp-formula-chip {
+  font-size: 11px;
+  color: #64748b;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 5px 12px;
+  margin: 8px 12px 0;
+  display: inline-block;
+}
+
+.late-amount {
+  color: #dc2626;
+  font-weight: 600;
 }
 
 .comp-input {

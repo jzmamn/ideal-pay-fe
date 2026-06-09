@@ -26,8 +26,10 @@ export interface PayslipTemplateRequest {
 }
 
 
-// All {{TOKEN}} placeholders supported by PayslipTokenMapper
-export const PAYSLIP_TOKENS: { group: string; tokens: string[] }[] = [
+// All {{TOKEN}} placeholders supported by PayslipTokenMapper.
+// Dynamic code-based tokens (FA_*, FD_*, OT_*, VA_*, VD_*) resolve at runtime
+// by matching the suffix against the employee's allowance/deduction/overtime codes.
+export const PAYSLIP_TOKENS: { group: string; tokens: string[]; dynamicPrefixes?: string[] }[] = [
   {
     group: 'Company',
     tokens: [
@@ -44,18 +46,24 @@ export const PAYSLIP_TOKENS: { group: string; tokens: string[] }[] = [
     ],
   },
   {
-    group: 'Period',
+    group: 'Payroll Period',
     tokens: ['{{PAYROLL_MONTH}}', '{{WORKING_DAYS}}'],
   },
   {
-    group: 'Totals',
+    group: 'Financials',
+    dynamicPrefixes: ['FA_', 'FD_', 'OT_', 'VA_', 'VD_'],
     tokens: [
-      '{{GROSS_PAY}}', '{{TOTAL_DEDUCTIONS}}', '{{NET_PAY}}',
+      '{{BASIC_SALARY}}', '{{GROSS_PAY}}', '{{TOTAL_DEDUCTIONS}}', '{{NET_PAY}}',
       '{{EPF_EMPLOYEE}}', '{{EPF_EMPLOYER}}', '{{ETF}}', '{{PAYE_TAX}}',
+      '{{NOPAY}}', '{{LATE_DEDUCTION}}',
+      '{{FIXED_ALLOWANCE}}', '{{FIXED_DEDUCTION}}',
+      '{{OVERTIME}}',
+      '{{VARIABLE_ALLOWANCE}}', '{{BONUS}}', '{{INCREMENT}}', '{{GRATUITY}}',
+      '{{VARIABLE_DEDUCTION}}',
     ],
   },
   {
-    group: 'Table Rows',
+    group: 'Dynamic Table Rows',
     tokens: ['{{EARNINGS_ROWS}}', '{{DEDUCTIONS_ROWS}}', '{{EMPLOYER_ROWS}}'],
   },
 ];

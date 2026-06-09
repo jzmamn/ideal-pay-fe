@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy, Component, DestroyRef,
   computed, inject, signal,
 } from '@angular/core';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { DecimalPipe, LowerCasePipe } from '@angular/common';
@@ -22,10 +23,10 @@ import { MatDividerModule } from '@angular/material/divider';
 import { PayrollRunService } from '../shared/payroll-run.service';
 import { PayrollRunResponse, PayrollRunSummary } from '../shared/payroll-run.model';
 import { PayslipService } from './payslip.service';
-import { type PayslipLayout } from './payslip-template/payslip-template';
+
 import { TableAutocomplete, type TableColumn } from '../../../shared/components/table-autocomplete/table-autocomplete';
 import { type EmployeeResponse } from '../../settings/employee/employee.model';
-import { EmailTemplateService, EmailTemplate } from '../../infrastructure/email-setup/email-template.service';
+import { EmailTemplateService, EmailTemplate, TEMPLATE_VARIABLES } from '../../infrastructure/email-setup/email-template.service';
 import {
   PayslipTemplateService,
   PayslipTemplateResponse,
@@ -49,6 +50,30 @@ const MONTHS = [
 ];
 
 const TODAY = new Date();
+
+// ── Financial-token warning dialog ────────────────────────────────────────
+
+@Component({
+  selector: 'app-financial-token-warning-dialog',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [MatButtonModule, MatDialogModule, MatIconModule],
+  template: `
+    <h2 mat-dialog-title>
+      <mat-icon aria-hidden="true" style="vertical-align:middle;margin-right:8px;color:var(--mat-sys-error)">warning</mat-icon>
+      Sensitive Financial Data
+    </h2>
+    <mat-dialog-content>
+      <p>This email template contains <strong>financial tokens</strong> (e.g. salary, deductions, net pay).
+         Sending it will share sensitive payroll figures with the selected employees.</p>
+      <p>Do you want to proceed?</p>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button [mat-dialog-close]="false">Cancel</button>
+      <button mat-flat-button color="warn" [mat-dialog-close]="true">Send Anyway</button>
+    </mat-dialog-actions>
+  `,
+})
+export class FinancialTokenWarningDialog {}
 
 // ── Component ──────────────────────────────────────────────────────────────
 
@@ -81,6 +106,7 @@ export class PaySlip {
   private readonly templateSvc     = inject(EmailTemplateService);
   private readonly pdfTemplateSvc  = inject(PayslipTemplateService);
   private readonly snackBar        = inject(MatSnackBar);
+  private readonly dialog          = inject(MatDialog);
   private readonly destroyRef      = inject(DestroyRef);
   // DomSanitizer needed to trust blob: URLs for the PDF preview iframe
   private readonly sanitizer       = inject(DomSanitizer);
@@ -105,7 +131,6 @@ export class PaySlip {
   });
 
   // ── Signals ────────────────────────────────────────────────────────────
-  readonly layout             = signal<PayslipLayout>('portrait');
   readonly batchRuns          = signal<PayrollRunSummary[]>([]);
   readonly detailRun          = signal<PayrollRunResponse | null>(null);
   readonly selectedEmployee   = signal<EmployeeResponse | null>(null);
@@ -410,15 +435,42 @@ export class PaySlip {
   }
 
   // ── Email ──────────────────────────────────────────────────────────────
+
+  /** Returns true when the selected email template body/subject contains financial tokens. */
+  private selectedTemplateHasFinancialTokens(): boolean {
+    const id = this.selectedTemplateId();
+    if (id == null) return false;
+    const tpl = this.payslipTemplates().find(t => t.id === id);
+    if (!tpl) return false;
+    const financialTokens = TEMPLATE_VARIABLES['PAYSLIP'];
+    const content = `${tpl.subject} ${tpl.body}`;
+    return financialTokens.some(token => content.includes(token));
+  }
+
   emailSelected(): void {
     const ids = [...this.checkedIds()];
     if (!ids.length) {
       this.snackBar.open('Select at least one employee to email.', 'Close', { duration: 3000 });
       return;
     }
+
+    if (this.selectedTemplateHasFinancialTokens()) {
+      const ref = this.dialog.open(FinancialTokenWarningDialog, {
+        width: '420px',
+        panelClass: 'square-dialog',
+      });
+      ref.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(confirmed => {
+        if (confirmed) this.dispatchEmails(ids);
+      });
+    } else {
+      this.dispatchEmails(ids);
+    }
+  }
+
+  private dispatchEmails(ids: number[]): void {
     this.emailing.set(true);
     this.payslipSvc
-      .emailPayslips({ runIds: ids, layout: this.layout(), templateId: this.selectedTemplateId(), pdfTemplateId: this.selectedPdfTemplateId() })
+      .emailPayslips({ runIds: ids, layout: 'portrait', templateId: this.selectedTemplateId(), pdfTemplateId: this.selectedPdfTemplateId() })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: result => {

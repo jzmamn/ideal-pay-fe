@@ -1,10 +1,12 @@
 import {
-  ChangeDetectionStrategy, Component, computed,
+  ChangeDetectionStrategy, Component, DestroyRef, computed,
   inject, signal, OnInit,
 } from '@angular/core';
-import { DecimalPipe, DatePipe, LowerCasePipe } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { LowerCasePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { finalize } from 'rxjs';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -17,6 +19,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+
+import { ReportsService } from './reports.service';
+import { ReportColumn, ReportDefinition, ReportRow } from './report-definition.model';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -38,97 +43,23 @@ const MONTHS = [
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 6 }, (_, i) => currentYear - i);
 
-// ── Report definitions ───────────────────────────────────────────────────────
-
-interface ReportDef {
-  id: string;
-  label: string;
-  icon: string;
-  description: string;
-  columns: string[];
-  columnLabels: Record<string, string>;
-}
-
-const REPORT_DEFS: ReportDef[] = [
-  {
-    id: 'payroll-summary',
-    label: 'Payroll Summary',
-    icon: 'receipt_long',
-    description: 'Monthly payroll summary for all employees',
-    columns: ['empCode', 'empName', 'department', 'basicSalary', 'totalEarnings', 'totalDeductions', 'netPay', 'status'],
-    columnLabels: {
-      empCode: 'Emp #', empName: 'Employee', department: 'Department',
-      basicSalary: 'Basic (LKR)', totalEarnings: 'Earnings (LKR)',
-      totalDeductions: 'Deductions (LKR)', netPay: 'Net Pay (LKR)', status: 'Status',
-    },
-  },
-  {
-    id: 'bank-transfer',
-    label: 'Bank Transfer',
-    icon: 'account_balance_wallet',
-    description: 'Bank transfer details per pay period',
-    columns: ['empCode', 'empName', 'bankName', 'accountNo', 'branchCode', 'amount', 'transferStatus'],
-    columnLabels: {
-      empCode: 'Emp #', empName: 'Employee', bankName: 'Bank',
-      accountNo: 'Account No.', branchCode: 'Branch', amount: 'Amount (LKR)', transferStatus: 'Status',
-    },
-  },
-  {
-    id: 'salary-increment',
-    label: 'Salary Increment',
-    icon: 'trending_up',
-    description: 'Salary increment history and projections',
-    columns: ['empCode', 'empName', 'department', 'previousSalary', 'newSalary', 'incrementAmount', 'incrementPct', 'effectiveDate'],
-    columnLabels: {
-      empCode: 'Emp #', empName: 'Employee', department: 'Department',
-      previousSalary: 'Previous (LKR)', newSalary: 'New (LKR)',
-      incrementAmount: 'Increment (LKR)', incrementPct: 'Increment %', effectiveDate: 'Effective Date',
-    },
-  },
-  {
-    id: 'loan',
-    label: 'Loan Report',
-    icon: 'request_quote',
-    description: 'Loan applications and repayment status',
-    columns: ['empCode', 'empName', 'loanType', 'loanAmount', 'balance', 'installment', 'startDate', 'status'],
-    columnLabels: {
-      empCode: 'Emp #', empName: 'Employee', loanType: 'Loan Type',
-      loanAmount: 'Amount (LKR)', balance: 'Balance (LKR)',
-      installment: 'Installment (LKR)', startDate: 'Start Date', status: 'Status',
-    },
-  },
-  {
-    id: 'salary-advance',
-    label: 'Salary Advance',
-    icon: 'monetization_on',
-    description: 'Salary advance requests and settlements',
-    columns: ['empCode', 'empName', 'advanceAmount', 'deductedAmount', 'balance', 'requestDate', 'status'],
-    columnLabels: {
-      empCode: 'Emp #', empName: 'Employee', advanceAmount: 'Advance (LKR)',
-      deductedAmount: 'Deducted (LKR)', balance: 'Balance (LKR)',
-      requestDate: 'Request Date', status: 'Status',
-    },
-  },
-  {
-    id: 'nopay',
-    label: 'No-Pay Report',
-    icon: 'event_busy',
-    description: 'No-pay days per employee per period',
-    columns: ['empCode', 'empName', 'department', 'nopayDays', 'nopayAmount', 'reason', 'period'],
-    columnLabels: {
-      empCode: 'Emp #', empName: 'Employee', department: 'Department',
-      nopayDays: 'No-Pay Days', nopayAmount: 'Amount (LKR)', reason: 'Reason', period: 'Period',
-    },
-  },
-];
+const STATUS_COLUMN_TYPES = new Set(['STATUS']);
+const NUMERIC_COLUMN_TYPES = new Set(['NUMBER', 'CURRENCY']);
 
 // ── Component ────────────────────────────────────────────────────────────────
+//
+// Generic, metadata-driven report viewer (ADR-001, Option B). Report
+// identity, filters, and columns all come from the report engine registry
+// (GET /payroll/reports) — this component renders whatever metadata it's
+// given rather than hardcoding a REPORT_DEFS table per report. Filters,
+// table rendering, CSV export, and printing are therefore "free" for any
+// new report registered on the backend.
 
 @Component({
   selector: 'app-reports',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DecimalPipe, DatePipe, LowerCasePipe, ReactiveFormsModule,
+    LowerCasePipe, ReactiveFormsModule,
     MatButtonModule, MatButtonToggleModule, MatCheckboxModule,
     MatDividerModule, MatFormFieldModule, MatIconModule,
     MatInputModule, MatProgressSpinnerModule, MatSelectModule,
@@ -138,27 +69,33 @@ const REPORT_DEFS: ReportDef[] = [
   styleUrl: './reports.scss',
 })
 export class Reports implements OnInit {
-  private readonly fb    = inject(FormBuilder);
-  private readonly route = inject(ActivatedRoute);
+  private readonly fb         = inject(FormBuilder);
+  private readonly route      = inject(ActivatedRoute);
+  private readonly reports$   = inject(ReportsService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly months = MONTHS;
   readonly years  = YEARS;
-  readonly reports = REPORT_DEFS;
 
-  readonly activeReport = signal<ReportDef>(REPORT_DEFS[0]);
+  readonly reportList   = signal<ReportDefinition[]>([]);
+  readonly reportsReady = signal(false);
+  readonly activeReport = signal<ReportDefinition | null>(null);
   readonly loading      = signal(false);
-  readonly rows         = signal<Record<string, unknown>[]>([]);
+  readonly rows         = signal<ReportRow[]>([]);
   readonly searchQuery  = signal('');
 
   readonly filterForm = this.fb.group({
-    month:      [new Date().getMonth() + 1],
-    year:       [currentYear],
-    department: [''],
-    search:     [''],
+    month:  [new Date().getMonth() + 1],
+    year:   [currentYear],
+    search: [''],
   });
 
-  readonly columns = computed(() => this.activeReport().columns);
-  readonly columnLabels = computed(() => this.activeReport().columnLabels);
+  /** True while the active report declares at least one MONTH-type parameter. */
+  readonly needsPeriodFilter = computed(() =>
+    (this.activeReport()?.parameters ?? []).some(p => p.paramType === 'MONTH'));
+
+  readonly columns = computed<ReportColumn[]>(() => this.activeReport()?.columns ?? []);
+  readonly columnKeys = computed(() => this.columns().map(c => c.columnKey));
 
   readonly filteredRows = computed(() => {
     const q = this.searchQuery().toLowerCase();
@@ -169,41 +106,84 @@ export class Reports implements OnInit {
   });
 
   ngOnInit(): void {
-    this.route.queryParamMap.subscribe(params => {
-      const type = params.get('type');
-      if (type) {
-        const match = REPORT_DEFS.find(r => r.id === type);
-        if (match) this.activeReport.set(match);
-      }
+    this.reports$.list().subscribe(defs => {
+      this.reportList.set(defs);
+      this.reportsReady.set(true);
+
+      const requestedKey = this.route.snapshot.queryParamMap.get('type');
+      const initial = defs.find(d => d.reportKey === requestedKey) ?? defs[0] ?? null;
+      if (initial) this.activeReport.set(initial);
     });
+
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(params => {
+        const key = params.get('type');
+        if (!key) return;
+        const match = this.reportList().find(r => r.reportKey === key);
+        if (match) this.selectReport(match);
+      });
   }
 
-  selectReport(report: ReportDef): void {
+  selectReport(report: ReportDefinition): void {
+    if (this.activeReport()?.reportKey === report.reportKey) return;
     this.activeReport.set(report);
     this.rows.set([]);
   }
 
   load(): void {
+    const report = this.activeReport();
+    if (!report) return;
+
+    const filters = this.buildFilters(report);
+
     this.loading.set(true);
-    // Placeholder — replace with real service call
-    setTimeout(() => {
-      this.rows.set([]);
-      this.loading.set(false);
-    }, 600);
+    this.reports$.run(report.reportKey, filters)
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next:  (rows) => this.rows.set(rows),
+        error: ()     => this.rows.set([]),
+      });
   }
 
   onSearch(value: string): void {
     this.searchQuery.set(value);
   }
 
+  /** Renders a cell value according to its column's declared data type. */
+  formatCell(row: ReportRow, column: ReportColumn): string {
+    const value = row[column.columnKey];
+    if (value === null || value === undefined || value === '') return '—';
+
+    switch (column.dataType) {
+      case 'CURRENCY':
+        return Number(value).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      case 'NUMBER':
+        return Number(value).toLocaleString('en-LK');
+      case 'DATE':
+        return new Date(String(value)).toLocaleDateString('en-LK', { year: 'numeric', month: 'short', day: '2-digit' });
+      default:
+        return String(value);
+    }
+  }
+
+  isStatusColumn(column: ReportColumn): boolean {
+    return STATUS_COLUMN_TYPES.has(column.dataType);
+  }
+
+  isNumericColumn(column: ReportColumn): boolean {
+    return NUMERIC_COLUMN_TYPES.has(column.dataType);
+  }
+
   exportCsv(): void {
     const report = this.activeReport();
+    const cols = this.columns();
     const data = this.filteredRows();
-    if (!data.length) return;
+    if (!report || !data.length) return;
 
-    const header = report.columns.map(c => report.columnLabels[c]).join(',');
+    const header = cols.map(c => c.label).join(',');
     const rowLines = data.map(r =>
-      report.columns.map(c => `"${String(r[c] ?? '').replace(/"/g, '""')}"`).join(',')
+      cols.map(c => `"${String(r[c.columnKey] ?? '').replace(/"/g, '""')}"`).join(',')
     );
     const csv = [header, ...rowLines].join('\n');
 
@@ -211,9 +191,14 @@ export class Reports implements OnInit {
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href     = url;
-    a.download = `${report.id}-${this.filterForm.value.year}-${String(this.filterForm.value.month).padStart(2, '0')}.csv`;
+    a.download = `${report.reportKey}-${this.periodSuffix()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  /** Print-friendly output via the browser print dialog + a `@media print` stylesheet. */
+  print(): void {
+    window.print();
   }
 
   importFile(event: Event): void {
@@ -225,5 +210,32 @@ export class Reports implements OnInit {
 
   triggerImport(): void {
     document.getElementById('import-file-input')?.click();
+  }
+
+  // ── Internals ────────────────────────────────────────────
+
+  /**
+   * Translates the generic filter form into the raw key/value map the
+   * report engine expects, based on each report's declared parameters.
+   * MONTH-type params are combined from the month/year pickers into
+   * "YYYY-MM"; other types fall back to their configured default.
+   */
+  private buildFilters(report: ReportDefinition): Record<string, string> {
+    const filters: Record<string, string> = {};
+    const { month, year } = this.filterForm.value;
+
+    for (const param of report.parameters) {
+      if (param.paramType === 'MONTH') {
+        filters[param.paramKey] = `${year}-${String(month).padStart(2, '0')}`;
+      } else if (param.defaultValue) {
+        filters[param.paramKey] = param.defaultValue;
+      }
+    }
+    return filters;
+  }
+
+  private periodSuffix(): string {
+    const { month, year } = this.filterForm.value;
+    return this.needsPeriodFilter() ? `${year}-${String(month).padStart(2, '0')}` : 'export';
   }
 }

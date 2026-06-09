@@ -24,6 +24,7 @@ export interface BatchLoadResponse {
   variableDeductions: PivotRow[];
   overtimes:          PivotRow[];
   nopays:             PivotRow[];
+  lates:              PivotRow[];
   salaryAdvances:     PivotRow[];
   bonuses:            PivotRow[];
   loans:              PivotRow[];
@@ -35,7 +36,7 @@ export interface BatchLoadResponse {
 export interface BatchSaveEntry {
   /** Component code matching master table code column e.g. FA_001 */
   componentCode: string;
-  /** FA | FD | VA | VD | OT | NOPAY | SAL_ADV | BONUS | LOAN | SAL_INCR */
+  /** FA | FD | VA | VD | OT | NOPAY | LATE | SAL_ADV | BONUS | LOAN | SAL_INCR */
   componentType: string;
   employeeId:    number;
   /** amount = 0 triggers a delete on the backend */

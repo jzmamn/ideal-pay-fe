@@ -4,13 +4,11 @@
     [mode]="(isHandset$ | async) ? 'over' : 'side'"
     [opened]="(isHandset$ | async) === false">
 
-    <!-- Brand -->
-    <div class="brand-header">
-      <div class="brand-logo">
-        <mat-icon>account_balance</mat-icon>
-      </div>
+    <!-- Brand banner -->
+    <div class="brand-banner">
+      <img class="brand-banner-logo" src="/vender-logo.jpeg" alt="Payroll360 logo" width="64" height="64" />
       <div class="brand-text">
-        <span class="brand-name">Ideal Pay</span>
+        <span class="brand-name">Payroll360</span>
         <span class="brand-tagline">Payroll Management</span>
       </div>
     </div>
@@ -23,7 +21,7 @@
       </a>
 
       <!-- Payroll — top-level -->
-      <mat-expansion-panel class="menu-panel">
+      <mat-expansion-panel routerLinkActive="panel-child-active" class="menu-panel">
         <mat-expansion-panel-header>
           <mat-panel-title class="panel-title">
             <mat-icon>payments</mat-icon>
@@ -64,7 +62,7 @@
       </mat-expansion-panel>
 
       <!-- Reports — top-level -->
-      <mat-expansion-panel class="menu-panel">
+      <mat-expansion-panel routerLinkActive="panel-child-active" class="menu-panel">
         <mat-expansion-panel-header>
           <mat-panel-title class="panel-title">
             <mat-icon>assessment</mat-icon>
@@ -74,7 +72,7 @@
 
         <div class="sub-menu">
 
-          <mat-expansion-panel class="menu-panel sub-menu-panel">
+          <mat-expansion-panel routerLinkActive="panel-child-active" [routerLinkActiveOptions]="{exact: true}" class="menu-panel sub-menu-panel">
             <mat-expansion-panel-header>
               <mat-panel-title class="panel-title">
                 <mat-icon>payments</mat-icon>
@@ -83,34 +81,34 @@
             </mat-expansion-panel-header>
 
             <div class="sub-sub-menu">
-              <a mat-list-item routerLink="/reports" [queryParams]="{type: 'payroll-summary'}" routerLinkActive="nav-active">
+              <a mat-list-item routerLink="/reports" [queryParams]="{type: 'payroll-summary'}" routerLinkActive="nav-active" [routerLinkActiveOptions]="{exact: true}">
                 <mat-icon>receipt_long</mat-icon>
                 <span>Payroll Summary</span>
               </a>
-              <a mat-list-item routerLink="/reports" [queryParams]="{type: 'bank-transfer'}" routerLinkActive="nav-active">
+              <a mat-list-item routerLink="/reports" [queryParams]="{type: 'bank-transfer'}" routerLinkActive="nav-active" [routerLinkActiveOptions]="{exact: true}">
                 <mat-icon>account_balance_wallet</mat-icon>
                 <span>Bank Transfer Report</span>
               </a>
-              <a mat-list-item routerLink="/reports" [queryParams]="{type: 'salary-increment'}" routerLinkActive="nav-active">
+              <a mat-list-item routerLink="/reports" [queryParams]="{type: 'salary-increment'}" routerLinkActive="nav-active" [routerLinkActiveOptions]="{exact: true}">
                 <mat-icon>trending_up</mat-icon>
                 <span>Salary Increment Report</span>
               </a>
-              <a mat-list-item routerLink="/reports" [queryParams]="{type: 'loan'}" routerLinkActive="nav-active">
+              <a mat-list-item routerLink="/reports" [queryParams]="{type: 'loan'}" routerLinkActive="nav-active" [routerLinkActiveOptions]="{exact: true}">
                 <mat-icon>request_quote</mat-icon>
                 <span>Loan Report</span>
               </a>
-              <a mat-list-item routerLink="/reports" [queryParams]="{type: 'salary-advance'}" routerLinkActive="nav-active">
+              <a mat-list-item routerLink="/reports" [queryParams]="{type: 'salary-advance'}" routerLinkActive="nav-active" [routerLinkActiveOptions]="{exact: true}">
                 <mat-icon>monetization_on</mat-icon>
                 <span>Salary Advance Report</span>
               </a>
-              <a mat-list-item routerLink="/reports" [queryParams]="{type: 'nopay'}" routerLinkActive="nav-active">
+              <a mat-list-item routerLink="/reports" [queryParams]="{type: 'nopay'}" routerLinkActive="nav-active" [routerLinkActiveOptions]="{exact: true}">
                 <mat-icon>event_busy</mat-icon>
                 <span>No-Pay Report</span>
               </a>
             </div>
           </mat-expansion-panel>
 
-          <mat-expansion-panel class="menu-panel sub-menu-panel">
+          <mat-expansion-panel routerLinkActive="panel-child-active" [routerLinkActiveOptions]="{exact: true}" class="menu-panel sub-menu-panel">
             <mat-expansion-panel-header>
               <mat-panel-title class="panel-title">
                 <mat-icon>gavel</mat-icon>
@@ -119,35 +117,35 @@
             </mat-expansion-panel-header>
 
             <div class="sub-sub-menu">
-              <a mat-list-item routerLink="/reports/statutory" [queryParams]="{type: 'epf-monthly'}" routerLinkActive="nav-active">
-                <mat-icon>savings</mat-icon>
+              <a mat-list-item routerLink="/reports/statutory" [routerLinkActiveOptions]="{exact: true}" [queryParams]="{type: 'epf-monthly'}" routerLinkActive="nav-active">
+                <mat-icon>percent</mat-icon>
                 <span>EPF Monthly</span>
               </a>
-              <a mat-list-item routerLink="/reports/statutory" [queryParams]="{type: 'etf-monthly'}" routerLinkActive="nav-active">
+              <a mat-list-item routerLink="/reports/statutory" [routerLinkActiveOptions]="{exact: true}" [queryParams]="{type: 'etf-monthly'}" routerLinkActive="nav-active">
                 <mat-icon>account_balance</mat-icon>
                 <span>ETF Monthly</span>
               </a>
-              <a mat-list-item routerLink="/reports/statutory" [queryParams]="{type: 'apit-monthly'}" routerLinkActive="nav-active">
+              <a mat-list-item routerLink="/reports/statutory" [routerLinkActiveOptions]="{exact: true}" [queryParams]="{type: 'apit-monthly'}" routerLinkActive="nav-active">
                 <mat-icon>receipt</mat-icon>
                 <span>APIT Monthly (T10)</span>
               </a>
-              <a mat-list-item routerLink="/reports/statutory" [queryParams]="{type: 't10-annual'}" routerLinkActive="nav-active">
+              <a mat-list-item routerLink="/reports/statutory" [routerLinkActiveOptions]="{exact: true}" [queryParams]="{type: 't10-annual'}" routerLinkActive="nav-active">
                 <mat-icon>description</mat-icon>
                 <span>T10 Annual Certificate</span>
               </a>
-              <a mat-list-item routerLink="/reports/statutory" [queryParams]="{type: 'epf-annual'}" routerLinkActive="nav-active">
+              <a mat-list-item routerLink="/reports/statutory" [routerLinkActiveOptions]="{exact: true}" [queryParams]="{type: 'epf-annual'}" routerLinkActive="nav-active">
                 <mat-icon>assignment</mat-icon>
                 <span>Annual EPF Return</span>
               </a>
-              <a mat-list-item routerLink="/reports/statutory" [queryParams]="{type: 'salary-certificate'}" routerLinkActive="nav-active">
+              <a mat-list-item routerLink="/reports/statutory" [routerLinkActiveOptions]="{exact: true}" [queryParams]="{type: 'salary-certificate'}" routerLinkActive="nav-active">
                 <mat-icon>workspace_premium</mat-icon>
                 <span>Salary Certificate</span>
               </a>
-              <a mat-list-item routerLink="/reports/statutory" [queryParams]="{type: 'gratuity'}" routerLinkActive="nav-active">
+              <a mat-list-item routerLink="/reports/statutory" [routerLinkActiveOptions]="{exact: true}" [queryParams]="{type: 'gratuity'}" routerLinkActive="nav-active">
                 <mat-icon>card_giftcard</mat-icon>
                 <span>Gratuity</span>
               </a>
-              <a mat-list-item routerLink="/reports/statutory" [queryParams]="{type: 'workmen-compensation'}" routerLinkActive="nav-active">
+              <a mat-list-item routerLink="/reports/statutory" [routerLinkActiveOptions]="{exact: true}" [queryParams]="{type: 'workmen-compensation'}" routerLinkActive="nav-active">
                 <mat-icon>health_and_safety</mat-icon>
                 <span>Workmen's Compensation</span>
               </a>
@@ -157,7 +155,7 @@
         </div>
       </mat-expansion-panel>
 
-      <mat-expansion-panel class="menu-panel">
+      <mat-expansion-panel routerLinkActive="panel-child-active" class="menu-panel">
         <mat-expansion-panel-header>
           <mat-panel-title class="panel-title">
             <mat-icon>settings</mat-icon>
@@ -170,7 +168,7 @@
             <mat-icon>person</mat-icon>
             <span>Employee</span>
           </a>
-          <mat-expansion-panel class="menu-panel sub-menu-panel">
+          <mat-expansion-panel routerLinkActive="panel-child-active" class="menu-panel sub-menu-panel">
             <mat-expansion-panel-header>
               <mat-panel-title class="panel-title">
                 <mat-icon>add_circle_outline</mat-icon>
@@ -188,7 +186,7 @@
               </a>
             </div>
           </mat-expansion-panel>
-          <mat-expansion-panel class="menu-panel sub-menu-panel">
+          <mat-expansion-panel routerLinkActive="panel-child-active" class="menu-panel sub-menu-panel">
             <mat-expansion-panel-header>
               <mat-panel-title class="panel-title">
                 <mat-icon>remove_circle_outline</mat-icon>
@@ -206,9 +204,17 @@
               </a>
             </div>
           </mat-expansion-panel>
+          <a mat-list-item routerLink="/bonus" routerLinkActive="nav-active">
+            <mat-icon>card_giftcard</mat-icon>
+            <span>Bonus</span>
+          </a>
           <a mat-list-item routerLink="/overtime" routerLinkActive="nav-active">
             <mat-icon>schedule</mat-icon>
             <span>Overtime</span>
+          </a>
+          <a mat-list-item routerLink="/late-deduction-config" routerLinkActive="nav-active">
+            <mat-icon>timer_off</mat-icon>
+            <span>Late Deduction</span>
           </a>
           <a mat-list-item routerLink="/loan" routerLinkActive="nav-active">
             <mat-icon>account_balance</mat-icon>
@@ -221,7 +227,7 @@
         </div>
       </mat-expansion-panel>
 
-      <mat-expansion-panel class="menu-panel">
+      <mat-expansion-panel routerLinkActive="panel-child-active" class="menu-panel">
         <mat-expansion-panel-header>
           <mat-panel-title class="panel-title">
             <mat-icon>domain</mat-icon>
@@ -277,7 +283,7 @@
         </div>
       </mat-expansion-panel>
 
-      <mat-expansion-panel class="menu-panel">
+      <mat-expansion-panel routerLinkActive="panel-child-active" class="menu-panel">
         <mat-expansion-panel-header>
           <mat-panel-title class="panel-title">
             <mat-icon>admin_panel_settings</mat-icon>

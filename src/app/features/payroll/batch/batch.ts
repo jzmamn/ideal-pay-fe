@@ -34,6 +34,7 @@ const SECTION_CONFIG = [
   { backendKey: 'fixedDeductions',    uiKey: 'fixedDed',  label: 'Fixed Deduction',    type: 'FD'      },
   { backendKey: 'variableDeductions', uiKey: 'varDed',    label: 'Variable Deduction', type: 'VD'      },
   { backendKey: 'nopays',             uiKey: 'nopay',     label: 'NoPay',              type: 'NOPAY'   },
+  { backendKey: 'lates',            uiKey: 'late',     label: 'Late Deduction',    type: 'LATE'     },
   { backendKey: 'salaryAdvances',   uiKey: 'salAdv',   label: 'Salary Advance',    type: 'SAL_ADV'  },
   { backendKey: 'bonuses',          uiKey: 'bonus',    label: 'Bonus',             type: 'BONUS'    },
   { backendKey: 'loans',            uiKey: 'loans',    label: 'Loans',             type: 'LOAN'     },
@@ -62,6 +63,15 @@ export interface SalAdvFlatRow {
   empId:       number;
   employeeNo:  string;
   payrollName: string;
+  amount:      number;
+  isProcessed: boolean;
+}
+
+export interface LateFlatRow {
+  empId:       number;
+  employeeNo:  string;
+  payrollName: string;
+  hours:       number;
   amount:      number;
   isProcessed: boolean;
 }
@@ -156,6 +166,24 @@ function buildSalAdvFlatRows(rows: PivotRow[]): SalAdvFlatRow[] {
         payrollName: String(row['payroll_name'] || `${row['first_name'] ?? ''} ${row['last_name'] ?? ''}`.trim()),
         amount:      Number(row['sal_adv_amount'] ?? 0),
         isProcessed: String(row['is_processed']) === 'Y',
+      };
+    });
+}
+
+function buildLateFlatRows(rows: PivotRow[]): LateFlatRow[] {
+  return rows
+    .filter(row => Number(row['id'] ?? row['ID'] ?? row['employeeid'] ?? row['employeeId']) > 0)
+    .map(raw => {
+      const row = normalisedRow(raw);
+      // SP returns: employeeid, employeecode, employeename, latehours, lateamount, isprocessed
+      const empId = Number(row['id'] ?? row['employeeid'] ?? 0);
+      return {
+        empId,
+        employeeNo:  String(row['employee_no'] ?? row['employeecode'] ?? ''),
+        payrollName: String(row['payroll_name'] ?? row['employeename'] ?? ''),
+        hours:       Number(row['latehours']   ?? row['late_hours']   ?? 0),
+        amount:      Number(row['lateamount']  ?? row['late_amount']  ?? 0),
+        isProcessed: String(row['isprocessed'] ?? row['is_processed'] ?? 'N') === 'Y',
       };
     });
 }
@@ -270,6 +298,12 @@ export class BatchComponent {
   readonly salIncrEditCtrl       = this.fb.nonNullable.control(0);
   private readonly _salIncrEditCell = signal<number | null>(null);
 
+  // ── Late Deduction table state ─────────────────────────────────────────
+  private readonly _lateRows     = signal<LateFlatRow[]>([]);
+  readonly lateFilter            = signal('');
+  readonly lateEditCtrl          = this.fb.nonNullable.control(0);
+  private readonly _lateEditCell = signal<{ idx: number; field: 'hours' | 'amount' } | null>(null);
+
   // ── Computed ───────────────────────────────────────────────────────────
 
   readonly pivotRows = computed(() =>
@@ -331,11 +365,21 @@ export class BatchComponent {
   readonly salIncrRowsCount   = computed(() => this._salIncrRows().length);
   readonly salIncrAmountTotal = computed(() => this._salIncrRows().reduce((s, r) => s + r.amount, 0));
 
+  readonly filteredLateRows = computed(() => {
+    const f = this.lateFilter().toLowerCase().trim();
+    return this._lateRows().map((row, idx) => ({ row, idx }))
+      .filter(({ row }) => !f || row.payrollName.toLowerCase().includes(f) || row.employeeNo.toLowerCase().includes(f));
+  });
+  readonly lateRowsCount   = computed(() => this._lateRows().length);
+  readonly lateHoursTotal  = computed(() => this._lateRows().reduce((s, r) => s + r.hours,  0));
+  readonly lateAmountTotal = computed(() => this._lateRows().reduce((s, r) => s + r.amount, 0));
+
   readonly grandTotal = computed(() =>
     Object.values(this._matrices()).reduce((total, mat) =>
       total + Object.values(mat).reduce((s, col) =>
         s + col.reduce((a, v) => a + v, 0), 0), 0)
     + this.nopayAmountTotal()
+    + this.lateAmountTotal()
     + this.salAdvAmountTotal()
     + this.bonusAmountTotal()
     + this.loanAmountTotal()
@@ -478,6 +522,34 @@ export class BatchComponent {
 
   cancelSalIncrEdit(): void { this._salIncrEditCell.set(null); }
 
+  // ── Event handlers — late deduction table ─────────────────────────────
+
+  isLateEditing(idx: number, field: 'hours' | 'amount'): boolean {
+    const c = this._lateEditCell();
+    return c?.idx === idx && c?.field === field;
+  }
+
+  startLateEdit(idx: number, field: 'hours' | 'amount'): void {
+    const row = this._lateRows()[idx];
+    if (!row || row.isProcessed) return;
+    this.lateEditCtrl.setValue(field === 'hours' ? row.hours : row.amount);
+    this._lateEditCell.set({ idx, field });
+  }
+
+  saveLateEdit(): void {
+    const cell = this._lateEditCell();
+    if (!cell) return;
+    const value = this.lateEditCtrl.value;
+    this._lateRows.update(rows => {
+      const updated = [...rows];
+      updated[cell.idx] = { ...updated[cell.idx], [cell.field]: isNaN(value) ? 0 : value };
+      return updated;
+    });
+    this._lateEditCell.set(null);
+  }
+
+  cancelLateEdit(): void { this._lateEditCell.set(null); }
+
   // ── Period change ──────────────────────────────────────────────────────
 
   onPeriodChange(): void {
@@ -491,15 +563,18 @@ export class BatchComponent {
     this._bonusRows.set([]);
     this._loanRows.set([]);
     this._salIncrRows.set([]);
+    this._lateRows.set([]);
     this.nopayFilter.set('');
     this.salAdvFilter.set('');
     this.bonusFilter.set('');
     this.loanFilter.set('');
     this.salIncrFilter.set('');
+    this.lateFilter.set('');
     this._nopayEditCell.set(null);
     this._salAdvEditCell.set(null);
     this._bonusEditCell.set(null);
     this._salIncrEditCell.set(null);
+    this._lateEditCell.set(null);
     this._loadValues();
   }
 
@@ -511,6 +586,7 @@ export class BatchComponent {
     this.saveSalAdvEdit();
     this.saveBonusEdit();
     this.saveSalIncrEdit();
+    this.saveLateEdit();
     this.saving.set(true);
     this.saveError.set(null);
     this.saveSuccess.set(false);
@@ -524,7 +600,7 @@ export class BatchComponent {
 
     // ── Pivot sections (FA, FD, VA, VD, OT) ───────────────────────────
     for (const cfg of SECTION_CONFIG) {
-      if (!cfg.type || !cfg.backendKey || cfg.type === 'NOPAY' || cfg.type === 'SAL_ADV') continue;
+      if (!cfg.type || !cfg.backendKey || cfg.type === 'NOPAY' || cfg.type === 'LATE' || cfg.type === 'SAL_ADV') continue;
       const names   = this._names()[cfg.uiKey] ?? [];
       const codeMap = labelToCode[cfg.uiKey] ?? {};
 
@@ -582,6 +658,18 @@ export class BatchComponent {
     for (const row of this._salIncrRows()) {
       if (row.isProcessed || row.empId <= 0) continue;
       entries.push({ componentCode: 'SAL_INCR', componentType: 'SAL_INCR', employeeId: row.empId, amount: row.amount });
+    }
+
+    // ── Late deduction rows ────────────────────────────────────────────
+    for (const row of this._lateRows()) {
+      if (row.isProcessed || row.empId <= 0 || row.hours <= 0 || row.amount <= 0) continue;
+      entries.push({
+        componentCode: 'LATE',
+        componentType: 'LATE',
+        employeeId:    row.empId,
+        amount:        row.amount,
+        hours:         row.hours,
+      });
     }
 
     const modifiedBy = 1; // TODO: replace with AuthService user id
@@ -738,6 +826,7 @@ export class BatchComponent {
     this._bonusRows.set(buildSimpleFlatRows(resp.bonuses ?? [],          'bonus_amount'));
     this._loanRows.set(buildSimpleFlatRows(resp.loans ?? [],             'no_active_components'));
     this._salIncrRows.set(buildSimpleFlatRows(resp.salaryIncrements ?? [],'sal_incr_amount'));
+    this._lateRows.set(buildLateFlatRows(resp.lates ?? []));
 
     this._employees.set(employees);
     this._names.set(newNames);

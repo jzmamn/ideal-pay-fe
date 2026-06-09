@@ -18,6 +18,8 @@ import type {
   EmployeeProfileSaveRequest,
   EmployeeVariableAllowanceRequest,
   EmployeeVariableAllowanceResponse,
+  EmployeeLateResponse,
+  EmployeeLateRequest,
   EmployeeVariableDeductionRequest,
   EmployeeVariableDeductionResponse,
   EmployeeNopayRequest,
@@ -31,6 +33,8 @@ export type {
   EmployeeProfileSaveRequest,
   EmployeeVariableAllowanceRequest,
   EmployeeVariableAllowanceResponse,
+  EmployeeLateResponse,
+  EmployeeLateRequest,
   EmployeeVariableDeductionRequest,
   EmployeeVariableDeductionResponse,
   EmployeeNopayRequest,
@@ -225,6 +229,27 @@ export class EmployeeProfileService {
 
   deleteOvertime(id: number): Observable<void> {
     return this.http.delete<ApiResponse<void>>(`${this.base}/emp-ot/${id}`)
+      .pipe(map(r => r.data));
+  }
+
+  // ── Late ──────────────────────────────────────────────────────────────────
+
+  getLatesByEmployee(empId: number): Observable<EmployeeLateResponse[]> {
+    return this.http.get<ApiResponse<EmployeeLateResponse[]>>(`${this.base}/emp-late/employee/${empId}`)
+      .pipe(map(r => r.data));
+  }
+
+  saveLate(payload: EmployeeLateRequest): Observable<EmployeeLateResponse> {
+    if (payload.id && payload.id > 0) {
+      return this.http.put<ApiResponse<EmployeeLateResponse>>(`${this.base}/emp-late/${payload.id}`, payload)
+        .pipe(map(r => r.data));
+    }
+    return this.http.post<ApiResponse<EmployeeLateResponse>>(`${this.base}/emp-late`, payload)
+      .pipe(map(r => r.data));
+  }
+
+  deleteLate(id: number): Observable<void> {
+    return this.http.delete<ApiResponse<void>>(`${this.base}/emp-late/${id}`)
       .pipe(map(r => r.data));
   }
 }

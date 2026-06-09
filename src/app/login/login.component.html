@@ -1,65 +1,76 @@
 <div class="login-bg">
-  <div class="card" [class.shake]="isShaking()">
+  <div class="brand-panel">
     <div class="brand">
-      <mat-icon aria-hidden="true">payments</mat-icon>
-      <span class="brand-name">PayrollIQ</span>
+      <img class="brand-logo" src="/vender-logo.jpeg" alt="Payroll360 logo" width="56" height="56" />
+      <span class="brand-name">Payroll360</span>
     </div>
-    <p class="subheading">Sign in to your account</p>
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Username</mat-label>
-        <input
-          matInput
-          formControlName="username"
-          placeholder="Username"
-          autocomplete="username"
-        />
-        <mat-error>Username is required</mat-error>
-      </mat-form-field>
+    <div class="brand-copy">
+      <h1>Manage payroll that keeps your team paid, accurately and on time.</h1>
+      <p>Run payroll, track compliance, and pay your people — all from one place.</p>
+    </div>
+  </div>
 
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Password</mat-label>
-        <input
-          matInput
-          formControlName="password"
-          [type]="showPassword() ? 'text' : 'password'"
-          placeholder="Password"
-          autocomplete="current-password"
-        />
+  <div class="form-panel">
+    <div class="card" [class.shake]="isShaking()">
+      <h2 class="title">Sign in</h2>
+      <p class="subheading">Sign in to your account</p>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Username</mat-label>
+          <input
+            matInput
+            formControlName="username"
+            placeholder="Username"
+            autocomplete="username"
+          />
+          <mat-error>Username is required</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Password</mat-label>
+          <input
+            matInput
+            formControlName="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            placeholder="Password"
+            autocomplete="current-password"
+          />
+          <button
+            type="button"
+            mat-icon-button
+            matSuffix
+            (click)="togglePassword()"
+            [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+          >
+            <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          <mat-error>
+            @if (form.get('password')?.hasError('required')) {
+              Password is required
+            } @else {
+              Password must be at least 6 characters
+            }
+          </mat-error>
+        </mat-form-field>
+
+        @if (loginError()) {
+          <div class="error-banner" role="alert" aria-live="assertive">
+            Invalid username or password. Please try again.
+          </div>
+        }
+
         <button
-          type="button"
-          mat-icon-button
-          matSuffix
-          (click)="togglePassword()"
-          [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+          type="submit"
+          mat-raised-button
+          class="submit-btn"
+          [disabled]="isLoading()"
+          aria-label="Sign in"
         >
-          <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          {{ isLoading() ? 'Signing in…' : 'Sign in' }}
         </button>
-        <mat-error>
-          @if (form.get('password')?.hasError('required')) {
-            Password is required
-          } @else {
-            Password must be at least 6 characters
-          }
-        </mat-error>
-      </mat-form-field>
-
-      @if (loginError()) {
-        <div class="error-banner" role="alert" aria-live="assertive">
-          Invalid username or password. Please try again.
-        </div>
-      }
-
-      <button
-        type="submit"
-        mat-raised-button
-        class="submit-btn"
-        [disabled]="isLoading()"
-        aria-label="Sign in"
-      >
-        {{ isLoading() ? 'Signing in…' : 'Sign in' }}
-      </button>
-    </form>
+      </form>
+    </div>
   </div>
 </div>

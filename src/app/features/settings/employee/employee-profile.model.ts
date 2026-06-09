@@ -154,6 +154,31 @@ export interface EmployeeOvertimeResponse {
   modifiedDate: string;
 }
 
+// ── Late ──────────────────────────────────────────────────────────────────────
+
+export interface EmployeeLateResponse {
+  id: number;
+  hours: number;
+  amount: number;
+  payrollMonth: string;
+  isProcessed: boolean;
+  processedDate?: string;
+  empId: number;
+  empCode: string;
+  empName: string;
+}
+
+export interface EmployeeLateRequest {
+  id?: number;
+  empId: number;
+  hours: number;
+  amount: number;
+  payrollMonth?: string;
+  isProcessed?: boolean;
+  createdBy: number;
+  modifiedBy: number;
+}
+
 // ── Profile ───────────────────────────────────────────────────────────────────
 
 export interface EmployeePayrollComponentsResponse {

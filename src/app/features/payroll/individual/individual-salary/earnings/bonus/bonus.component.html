@@ -1,44 +1,41 @@
-<section class="section" aria-labelledby="bonus-heading">
+<section class="allowances-section" aria-labelledby="bonus-heading">
 
+  <!-- ── Header ────────────────────────────────────────────────── -->
   <div class="panel-header">
     <div class="panel-heading">
       <mat-icon aria-hidden="true">card_giftcard</mat-icon>
       <span id="bonus-heading" class="panel-title">Bonus</span>
     </div>
-    <div class="panel-actions">
-      <button mat-stroked-button type="button" (click)="exportCsv()" aria-label="Export bonus data as CSV">
-        <mat-icon>download</mat-icon> Export
-      </button>
-      <button mat-stroked-button type="button" (click)="importInput.click()" aria-label="Import bonus data from CSV">
-        <mat-icon>upload</mat-icon> Import
-      </button>
-      <input #importInput type="file" accept=".csv" class="hidden-input"
-             aria-hidden="true" (change)="importCsv($event)">
-    </div>
   </div>
 
-  @if (items().length > 0) {
+  @if (bonuses().length > 0) {
     <div class="table-wrapper">
-      <table aria-label="Bonus">
+      <table aria-label="Employee bonuses">
         <thead>
           <tr>
             <th scope="col">Code</th>
-            <th scope="col">Bonus Type</th>
+            <th scope="col">Name</th>
             <th scope="col" class="amount-col">Bonus Amount</th>
+            <th scope="col" class="amount-col">Amount</th>
             <th scope="col" class="action-col"></th>
           </tr>
         </thead>
         <tbody>
-          @for (item of items(); track item.id; let i = $index) {
+          @for (bonus of bonuses(); track bonus.id; let i = $index) {
             <tr [class.editing-row]="editingIndex() === i">
-              <td class="code-cell">{{ item.code }}</td>
-              <td>{{ item.name }}</td>
+              <td class="code-cell">{{ bonus.bonusCode }}</td>
+              <td>{{ bonus.bonusName }}</td>
+              <td class="bonus-amount-cell">{{ bonus.bonusAmount | number: '1.2-2' }}</td>
               <td class="amount-cell">
                 @if (editingIndex() === i) {
                   <mat-form-field appearance="outline" class="amount-field">
-                    <input matInput type="number" min="0"
-                           [formControl]="editAmountCtrl"
-                           [attr.aria-label]="'Edit bonus for ' + item.name">
+                    <input
+                      matInput
+                      type="number"
+                      min="0"
+                      [formControl]="editAmountCtrl"
+                      [attr.aria-label]="'Edit amount for ' + bonus.bonusName"
+                    >
                     @if (editAmountCtrl.hasError('required') && editAmountCtrl.touched) {
                       <mat-error>Amount is required</mat-error>
                     }
@@ -47,28 +44,42 @@
                     }
                   </mat-form-field>
                 } @else {
-                  <span class="amount-value">{{ item.amount | number:'1.2-2' }}</span>
+                  <span class="amount-value">{{ bonus.amount | number:'1.2-2' }}</span>
                 }
               </td>
               <td class="action-col">
                 @if (editingIndex() === i) {
-                  <button mat-icon-button type="button" color="primary"
-                          (click)="saveEdit(i)"
-                          [attr.aria-label]="'Save bonus for ' + item.name"
-                          matTooltip="Save">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    color="primary"
+                    (click)="saveEdit(i)"
+                    [disabled]="saving()"
+                    [attr.aria-label]="'Save changes for ' + bonus.bonusName"
+                    matTooltip="Save"
+                  >
                     <mat-icon>check</mat-icon>
                   </button>
-                  <button mat-icon-button type="button"
-                          (click)="cancelEdit()"
-                          matTooltip="Cancel">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    (click)="cancelEdit()"
+                    [disabled]="saving()"
+                    [attr.aria-label]="'Cancel editing ' + bonus.bonusName"
+                    matTooltip="Cancel"
+                  >
                     <mat-icon>close</mat-icon>
                   </button>
                 } @else {
-                  <button mat-icon-button type="button" class="btn-edit"
-                          [disabled]="editingIndex() !== null"
-                          (click)="startEdit(i)"
-                          [attr.aria-label]="'Edit bonus for ' + item.name"
-                          matTooltip="Edit amount">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    class="btn-edit"
+                    [disabled]="editingIndex() !== null"
+                    (click)="startEdit(i)"
+                    [attr.aria-label]="'Edit amount for ' + bonus.bonusName"
+                    matTooltip="Edit amount"
+                  >
                     <mat-icon>edit</mat-icon>
                   </button>
                 }
@@ -78,7 +89,7 @@
         </tbody>
         <tfoot aria-live="polite" aria-atomic="true">
           <tr class="total-row">
-            <td colspan="2" class="total-label">Total Bonus</td>
+            <td colspan="3" class="total-label">Total Bonus</td>
             <td class="total-amount">{{ total() | number:'1.2-2' }}</td>
             <td></td>
           </tr>
@@ -86,7 +97,7 @@
       </table>
     </div>
   } @else {
-    <p class="empty-note">No employees found.</p>
+    <p class="empty-note">No bonuses found for this employee.</p>
   }
 
 </section>

@@ -66,6 +66,17 @@
                     (keydown.space)="$event.preventDefault(); insertToken(token)"
                   >{{ token }}</span>
                 }
+                @for (prefix of (group.dynamicPrefixes ?? []); track prefix) {
+                  <span
+                    class="token-chip token-chip--dynamic"
+                    role="button"
+                    tabindex="0"
+                    [matTooltip]="'Insert pattern — replace CODE with your ' + prefix + ' code'"
+                    (click)="insertToken('{{' + prefix + 'CODE}}')"
+                    (keydown.enter)="insertToken('{{' + prefix + 'CODE}}')"
+                    (keydown.space)="$event.preventDefault(); insertToken('{{' + prefix + 'CODE}}')"
+                  >{{ '{' + '{' + prefix + 'CODE' + '}' + '}' }}</span>
+                }
               </div>
             </div>
           }

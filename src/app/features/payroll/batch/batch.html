@@ -212,6 +212,129 @@
 
           </div>
 
+        } @else if (step.uiKey === 'late') {
+
+          <!-- ── Late Deduction table ────────────────────────────── -->
+          <div class="np-wrapper sa-wrapper">
+
+            <div class="table-toolbar">
+              <div class="table-toolbar-left">
+                <span class="table-label">Late Deduction</span>
+                <div class="toolbar-sep" aria-hidden="true"></div>
+                <div class="search-field">
+                  <mat-icon class="search-icon">search</mat-icon>
+                  <input class="search-input"
+                         [value]="lateFilter()"
+                         (input)="lateFilter.set($any($event.target).value)"
+                         placeholder="Search employees…"
+                         aria-label="Filter employees" />
+                  @if (lateFilter()) {
+                    <button class="search-clear" (click)="lateFilter.set('')" aria-label="Clear filter">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  }
+                </div>
+                <span class="filter-count" aria-live="polite">
+                  @if (lateFilter()) { {{ filteredLateRows().length }} / {{ lateRowsCount() }} }
+                </span>
+              </div>
+              <div class="table-toolbar-right">
+                <span class="formula-chip">
+                  Deduction = Monthly Salary ÷ (Working Days × 8) × Late Hours
+                </span>
+              </div>
+            </div>
+
+            <table aria-label="Late Deduction">
+              <thead>
+                <tr>
+                  <th scope="col" class="emp-id-col">Emp ID</th>
+                  <th scope="col" class="emp-name-col">Employee Name</th>
+                  <th scope="col" class="amount-col">Late Hours</th>
+                  <th scope="col" class="amount-col">Deduction</th>
+                  <th scope="col" class="status-col">Processed</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                @if (filteredLateRows().length === 0) {
+                  <tr>
+                    <td colspan="5" class="np-empty">No late deduction entries for this period.</td>
+                  </tr>
+                } @else {
+                  @for (item of filteredLateRows(); track item.idx; let even = $even) {
+                    <tr [class.row-even]="even">
+                      <td class="emp-id-cell">{{ item.row.employeeNo }}</td>
+                      <td class="emp-name-cell">{{ item.row.payrollName }}</td>
+
+                      <!-- Late Hours -->
+                      <td class="value-cell"
+                          [class.cell-editing]="isLateEditing(item.idx, 'hours')"
+                          [class.readonly-cell]="item.row.isProcessed"
+                          (click)="startLateEdit(item.idx, 'hours')"
+                          [attr.aria-label]="item.row.payrollName + ' late hours'">
+                        @if (isLateEditing(item.idx, 'hours')) {
+                          <input type="number" min="0" step="0.5"
+                                 class="cell-input"
+                                 [formControl]="lateEditCtrl"
+                                 (blur)="saveLateEdit()"
+                                 (keydown.enter)="saveLateEdit()"
+                                 (keydown.escape)="cancelLateEdit()"
+                                 [attr.aria-label]="item.row.payrollName + ' late hours input'" />
+                        } @else {
+                          <span class="cell-value">{{ item.row.hours | number:'1.2-2' }}</span>
+                        }
+                      </td>
+
+                      <!-- Deduction Amount -->
+                      <td class="value-cell"
+                          [class.cell-editing]="isLateEditing(item.idx, 'amount')"
+                          [class.readonly-cell]="item.row.isProcessed"
+                          (click)="startLateEdit(item.idx, 'amount')"
+                          [attr.aria-label]="item.row.payrollName + ' late amount'">
+                        @if (isLateEditing(item.idx, 'amount')) {
+                          <input type="number" min="0" step="0.01"
+                                 class="cell-input"
+                                 [formControl]="lateEditCtrl"
+                                 (blur)="saveLateEdit()"
+                                 (keydown.enter)="saveLateEdit()"
+                                 (keydown.escape)="cancelLateEdit()"
+                                 [attr.aria-label]="item.row.payrollName + ' late amount input'" />
+                        } @else {
+                          <span class="cell-value">{{ item.row.amount | number:'1.2-2' }}</span>
+                        }
+                      </td>
+
+                      <!-- Processed badge -->
+                      <td class="status-cell">
+                        @if (item.row.isProcessed) {
+                          <span class="badge badge--processed">Processed</span>
+                        } @else {
+                          <span class="badge badge--pending">Pending</span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+
+              <tfoot>
+                <tr>
+                  <td class="total-label">Totals</td>
+                  <td class="total-name-spacer"></td>
+                  <td class="total-amount">
+                    <span class="total-amount-inner">{{ lateHoursTotal() | number:'1.2-2' }}</span>
+                  </td>
+                  <td class="total-amount">
+                    <span class="total-amount-inner">{{ lateAmountTotal() | number:'1.2-2' }}</span>
+                  </td>
+                  <td class="total-amount"></td>
+                </tr>
+              </tfoot>
+            </table>
+
+          </div>
+
         } @else if (step.uiKey === 'salAdv') {
 
           <!-- ── Salary Advance table ─────────────────────────────── -->

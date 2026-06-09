@@ -63,11 +63,12 @@
 }
 
 .period-field {
-  width: 160px;
+  width: 140px;
+  --mdc-outlined-text-field-container-height: 36px;
   --mat-form-field-container-height: 36px;
   --mat-form-field-container-vertical-padding: 6px;
 
-  &--year { width: 104px; }
+  &--year { width: 100px; }
 }
 
 .layout-toggle {

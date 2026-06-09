@@ -55,6 +55,18 @@
       <button
         mat-stroked-button
         type="button"
+        (click)="print()"
+        [disabled]="!filteredRows().length"
+        aria-label="Print report as PDF"
+        matTooltip="Print or save the report as a PDF"
+      >
+        <mat-icon>print</mat-icon>
+        Print / PDF
+      </button>
+
+      <button
+        mat-stroked-button
+        type="button"
         (click)="triggerImport()"
         aria-label="Import data"
         matTooltip="Import data from CSV"
@@ -84,11 +96,7 @@
         <div class="viewer-title-row">
           <mat-icon class="viewer-title-icon" aria-hidden="true">{{ activeReport().icon }}</mat-icon>
           <div>
-            <div class="viewer-title-line">
-              <h2 class="viewer-title">{{ activeReport().label }}</h2>
-              <span class="viewer-code-badge">{{ activeReport().shortCode }}</span>
-            </div>
-            <p class="viewer-legal-ref">{{ activeReport().legalRef }}</p>
+            <h2 class="viewer-title">{{ activeReport().label }}</h2>
             <p class="viewer-desc">{{ activeReport().description }}</p>
           </div>
         </div>
@@ -104,12 +112,6 @@
             (input)="onSearch($any($event.target).value)"
           />
         </mat-form-field>
-      </div>
-
-      <!-- Authority info banner -->
-      <div class="authority-banner" aria-label="Governing authority">
-        <mat-icon aria-hidden="true">account_balance</mat-icon>
-        <span>Governing Authority: <strong>{{ activeReport().authority }}</strong></span>
       </div>
 
       <!-- Table -->
