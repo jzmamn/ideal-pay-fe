@@ -282,12 +282,6 @@ export class BatchComponent {
   readonly salAdvEditCtrl = this.fb.nonNullable.control(0);
   private readonly _salAdvEditCell = signal<number | null>(null);
 
-  // ── Bonus table state ──────────────────────────────────────────────────
-  private readonly _bonusRows    = signal<SimpleFlatRow[]>([]);
-  readonly bonusFilter           = signal('');
-  readonly bonusEditCtrl         = this.fb.nonNullable.control(0);
-  private readonly _bonusEditCell = signal<number | null>(null);
-
   // ── Loan table state ───────────────────────────────────────────────────
   private readonly _loanRows     = signal<SimpleFlatRow[]>([]);
   readonly loanFilter            = signal('');
@@ -341,14 +335,6 @@ export class BatchComponent {
   readonly salAdvRowsCount   = computed(() => this._salAdvRows().length);
   readonly salAdvAmountTotal = computed(() => this._salAdvRows().reduce((s, r) => s + r.amount, 0));
 
-  readonly filteredBonusRows = computed(() => {
-    const f = this.bonusFilter().toLowerCase().trim();
-    return this._bonusRows().map((row, idx) => ({ row, idx }))
-      .filter(({ row }) => !f || row.payrollName.toLowerCase().includes(f) || row.employeeNo.toLowerCase().includes(f));
-  });
-  readonly bonusRowsCount   = computed(() => this._bonusRows().length);
-  readonly bonusAmountTotal = computed(() => this._bonusRows().reduce((s, r) => s + r.amount, 0));
-
   readonly filteredLoanRows = computed(() => {
     const f = this.loanFilter().toLowerCase().trim();
     return this._loanRows().map((row, idx) => ({ row, idx }))
@@ -381,7 +367,6 @@ export class BatchComponent {
     + this.nopayAmountTotal()
     + this.lateAmountTotal()
     + this.salAdvAmountTotal()
-    + this.bonusAmountTotal()
     + this.loanAmountTotal()
     + this.salIncrAmountTotal()
   );
@@ -480,27 +465,6 @@ export class BatchComponent {
     this._salAdvEditCell.set(null);
   }
 
-  // ── Event handlers — bonus table ───────────────────────────────────────
-
-  isBonusEditing(idx: number): boolean { return this._bonusEditCell() === idx; }
-
-  startBonusEdit(idx: number): void {
-    const row = this._bonusRows()[idx];
-    if (!row || row.isProcessed) return;
-    this.bonusEditCtrl.setValue(row.amount);
-    this._bonusEditCell.set(idx);
-  }
-
-  saveBonusEdit(): void {
-    const idx = this._bonusEditCell();
-    if (idx === null) return;
-    const value = this.bonusEditCtrl.value;
-    this._bonusRows.update(rows => { const u = [...rows]; u[idx] = { ...u[idx], amount: isNaN(value) ? 0 : value }; return u; });
-    this._bonusEditCell.set(null);
-  }
-
-  cancelBonusEdit(): void { this._bonusEditCell.set(null); }
-
   // ── Event handlers — salary increment table ────────────────────────────
 
   isSalIncrEditing(idx: number): boolean { return this._salIncrEditCell() === idx; }
@@ -560,21 +524,19 @@ export class BatchComponent {
     this._labelToCode.set({});
     this._nopayRows.set([]);
     this._salAdvRows.set([]);
-    this._bonusRows.set([]);
     this._loanRows.set([]);
     this._salIncrRows.set([]);
     this._lateRows.set([]);
     this.nopayFilter.set('');
     this.salAdvFilter.set('');
-    this.bonusFilter.set('');
     this.loanFilter.set('');
     this.salIncrFilter.set('');
     this.lateFilter.set('');
     this._nopayEditCell.set(null);
     this._salAdvEditCell.set(null);
-    this._bonusEditCell.set(null);
     this._salIncrEditCell.set(null);
     this._lateEditCell.set(null);
+
     this._loadValues();
   }
 
@@ -584,7 +546,6 @@ export class BatchComponent {
     if (this.saving() || this.periodForm.invalid) return;
     this.saveNopayEdit();
     this.saveSalAdvEdit();
-    this.saveBonusEdit();
     this.saveSalIncrEdit();
     this.saveLateEdit();
     this.saving.set(true);
@@ -638,12 +599,6 @@ export class BatchComponent {
     for (const row of this._salAdvRows()) {
       if (row.isProcessed || row.empId <= 0) continue;
       entries.push({ componentCode: 'SAL_ADV', componentType: 'SAL_ADV', employeeId: row.empId, amount: row.amount });
-    }
-
-    // ── Bonus rows ─────────────────────────────────────────────────────
-    for (const row of this._bonusRows()) {
-      if (row.isProcessed || row.empId <= 0) continue;
-      entries.push({ componentCode: 'BONUS', componentType: 'BONUS', employeeId: row.empId, amount: row.amount });
     }
 
     // ── Loan rows — skip if no real loan code resolved ─────────────────
@@ -823,7 +778,6 @@ export class BatchComponent {
 
     this._nopayRows.set(buildNopayFlatRows(resp.nopays ?? []));
     this._salAdvRows.set(buildSalAdvFlatRows(resp.salaryAdvances ?? []));
-    this._bonusRows.set(buildSimpleFlatRows(resp.bonuses ?? [],          'bonus_amount'));
     this._loanRows.set(buildSimpleFlatRows(resp.loans ?? [],             'no_active_components'));
     this._salIncrRows.set(buildSimpleFlatRows(resp.salaryIncrements ?? [],'sal_incr_amount'));
     this._lateRows.set(buildLateFlatRows(resp.lates ?? []));
