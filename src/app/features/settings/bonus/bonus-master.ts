@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
 import { MasterDataTableComponent } from '../../../shared/components/master-data-table/master-data-table.component';
 import { MasterDataTableConfig } from '../../../shared/components/master-data-table/master-data-table.config';
@@ -14,8 +15,9 @@ import { BonusService } from './bonus.service';
   styleUrl: './bonus-master.scss',
 })
 export class BonusMaster implements OnInit {
-  private readonly dialog   = inject(MatDialog);
-  private readonly bonusSvc = inject(BonusService);
+  private readonly dialog      = inject(MatDialog);
+  private readonly bonusSvc    = inject(BonusService);
+  private readonly destroyRef  = inject(DestroyRef);
 
   readonly bonuses = signal<BonusModel[]>([]);
 
@@ -24,17 +26,17 @@ export class BonusMaster implements OnInit {
     showNewButton: true,
     showActiveFilter: true,
     columns: [
-      { key: 'id',            label: 'ID',     sortable: false },
-      { key: 'code',          label: 'Code' },
-      { key: 'name',          label: 'Name' },
-      { key: 'amount',        label: 'Amount', type: 'currency' },
-      { key: 'formulaEnabled',label: 'Formula', type: 'icon', icon: 'functions', iconTooltip: 'Formula enabled', sortable: false },
-      { key: 'isActive',      label: 'Active',          type: 'boolean' },
-      { key: 'isTaxable',     label: 'Taxable',         type: 'boolean' },
-      { key: 'liableForEpf',  label: 'Liable for EPF',  type: 'boolean' },
-      { key: 'liableForEtf',  label: 'Liable for ETF',  type: 'boolean' },
-      { key: 'liableForPaye', label: 'Liable for PAYE', type: 'boolean' },
-      { key: 'liableNoPay',   label: 'Liable No Pay',   type: 'boolean' },
+      { key: 'id',             label: 'ID',              sortable: false },
+      { key: 'code',           label: 'Code' },
+      { key: 'name',           label: 'Name' },
+      { key: 'amount',         label: 'Amount',          type: 'currency' },
+      { key: 'formulaEnabled', label: 'Formula',         type: 'icon', icon: 'functions', iconTooltip: 'Formula enabled', sortable: false },
+      { key: 'isActive',       label: 'Active',          type: 'boolean' },
+      { key: 'isTaxable',      label: 'Taxable',         type: 'boolean' },
+      { key: 'liableForEpf',   label: 'Liable for EPF',  type: 'boolean' },
+      { key: 'liableForEtf',   label: 'Liable for ETF',  type: 'boolean' },
+      { key: 'liableForPaye',  label: 'Liable for PAYE', type: 'boolean' },
+      { key: 'liableNoPay',    label: 'Liable No Pay',   type: 'boolean' },
     ],
   };
 
@@ -43,10 +45,12 @@ export class BonusMaster implements OnInit {
   }
 
   private load(): void {
-    this.bonusSvc.getAll().subscribe({
-      next: data => this.bonuses.set(data),
-      error: err => console.error('Failed to load bonuses', err),
-    });
+    this.bonusSvc.getAll()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next:  data => this.bonuses.set(data),
+        error: err  => console.error('Failed to load bonuses', err),
+      });
   }
 
   onRowSelected(row: BonusModel): void {
@@ -64,28 +68,36 @@ export class BonusMaster implements OnInit {
       data: { row },
     });
 
-    dialogRef.afterClosed().subscribe((result: BonusDialogResult | undefined) => {
-      if (!result) return;
-      this.handleDialogResult(result);
-    });
+    dialogRef.afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result: BonusDialogResult | undefined) => {
+        if (!result) return;
+        this.handleDialogResult(result);
+      });
   }
 
   private handleDialogResult(result: BonusDialogResult): void {
     switch (result.action) {
       case 'create':
-        this.bonusSvc.create(result.data).subscribe(created => {
-          this.bonuses.update(list => [...list, created]);
-        });
+        this.bonusSvc.create(result.data)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe(created => {
+            this.bonuses.update(list => [...list, created]);
+          });
         break;
       case 'update':
-        this.bonusSvc.update(result.data.id, result.data).subscribe(() => {
-          this.bonuses.update(list => list.map(b => b.id === result.data.id ? result.data : b));
-        });
+        this.bonusSvc.update(result.data.id, result.data)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe(() => {
+            this.bonuses.update(list => list.map(b => b.id === result.data.id ? result.data : b));
+          });
         break;
       case 'delete':
-        this.bonusSvc.delete(result.id).subscribe(() => {
-          this.bonuses.update(list => list.filter(b => b.id !== result.id));
-        });
+        this.bonusSvc.delete(result.id)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe(() => {
+            this.bonuses.update(list => list.filter(b => b.id !== result.id));
+          });
         break;
     }
   }

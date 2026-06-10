@@ -10,6 +10,8 @@ import {
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
@@ -56,12 +58,16 @@ export class BonusComponent {
     validators: [Validators.required, Validators.min(0)],
   });
 
+  /** Emits whenever empId changes to cancel the previous in-flight request. */
+  private readonly cancelLoad$ = new Subject<void>();
+
   constructor() {
     effect(() => {
       const id = this.empId();
+      this.cancelLoad$.next(); // cancel any previous subscription
       if (id != null) {
         this.bonusSvc.getByEmployee(id)
-          .pipe(takeUntilDestroyed(this.destroyRef))
+          .pipe(takeUntil(this.cancelLoad$), takeUntilDestroyed(this.destroyRef))
           .subscribe({
             next: data => this.bonuses.set(data),
             error: err => console.error('Failed to load employee bonuses', err),
@@ -93,8 +99,8 @@ export class BonusComponent {
       payrollMonth: record.payrollMonth,
       isProcessed:  record.isProcessed,
       processedDate: record.processedDate,
-      createdBy:    1,
-      modifiedBy:   1,
+      createdBy:    1, // TODO: replace with AuthService user id
+      modifiedBy:   1, // TODO: replace with AuthService user id
     };
 
     this.saving.set(true);
