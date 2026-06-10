@@ -30,6 +30,9 @@
         </mat-expansion-panel-header>
 
         <div class="sub-menu">
+
+          <!-- Core Payroll -->
+          <div class="sub-menu-group-label">Core Payroll</div>
           <a mat-list-item routerLink="/payroll/entry" routerLinkActive="nav-active">
             <mat-icon>edit_note</mat-icon>
             <span>Individual</span>
@@ -37,10 +40,6 @@
           <a mat-list-item routerLink="/payroll/batch" routerLinkActive="nav-active">
             <mat-icon>grid_on</mat-icon>
             <span>Batch</span>
-          </a>
-          <a mat-list-item routerLink="/payroll/run-review" routerLinkActive="nav-active">
-            <mat-icon>fact_check</mat-icon>
-            <span>Run Review</span>
           </a>
           <a mat-list-item routerLink="/payroll/pay-slip" routerLinkActive="nav-active">
             <mat-icon>receipt_long</mat-icon>
@@ -50,18 +49,35 @@
             <mat-icon>account_balance_wallet</mat-icon>
             <span>Bank Transfer</span>
           </a>
+
+          <!-- One-Time Payments -->
+          <mat-divider class="sub-menu-divider" />
+          <div class="sub-menu-group-label">One-Time Payments</div>
           <a mat-list-item routerLink="/payroll/salary-advance" routerLinkActive="nav-active">
             <mat-icon>monetization_on</mat-icon>
             <span>Salary Advance</span>
+          </a>
+          <a mat-list-item routerLink="/payroll/bonus" routerLinkActive="nav-active">
+            <mat-icon>redeem</mat-icon>
+            <span>Bonus</span>
           </a>
           <a mat-list-item routerLink="/payroll/loan-application" routerLinkActive="nav-active">
             <mat-icon>request_quote</mat-icon>
             <span>Loan Application</span>
           </a>
+
+          <!-- HR Actions -->
+          <mat-divider class="sub-menu-divider" />
+          <div class="sub-menu-group-label">HR Actions</div>
           <a mat-list-item routerLink="/payroll/salary-increment" routerLinkActive="nav-active">
             <mat-icon>trending_up</mat-icon>
             <span>Salary Increment</span>
           </a>
+          <a mat-list-item routerLink="/payroll/gratuity" routerLinkActive="nav-active">
+            <mat-icon>card_giftcard</mat-icon>
+            <span>Gratuity</span>
+          </a>
+
         </div>
       </mat-expansion-panel>
 
@@ -219,6 +235,10 @@
           <a mat-list-item routerLink="/late-deduction-config" routerLinkActive="nav-active">
             <mat-icon>timer_off</mat-icon>
             <span>Late Deduction</span>
+          </a>
+          <a mat-list-item routerLink="/gratuity-config" routerLinkActive="nav-active">
+            <mat-icon>card_giftcard</mat-icon>
+            <span>Gratuity</span>
           </a>
           <a mat-list-item routerLink="/loan" routerLinkActive="nav-active">
             <mat-icon>account_balance</mat-icon>

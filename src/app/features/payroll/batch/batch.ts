@@ -35,10 +35,7 @@ const SECTION_CONFIG = [
   { backendKey: 'variableDeductions', uiKey: 'varDed',    label: 'Variable Deduction', type: 'VD'      },
   { backendKey: 'nopays',             uiKey: 'nopay',     label: 'NoPay',              type: 'NOPAY'   },
   { backendKey: 'lates',            uiKey: 'late',     label: 'Late Deduction',    type: 'LATE'     },
-  { backendKey: 'salaryAdvances',   uiKey: 'salAdv',   label: 'Salary Advance',    type: 'SAL_ADV'  },
-  { backendKey: 'bonuses',          uiKey: 'bonus',    label: 'Bonus',             type: 'BONUS'    },
   { backendKey: 'loans',            uiKey: 'loans',    label: 'Loans',             type: 'LOAN'     },
-  { backendKey: 'salaryIncrements', uiKey: 'salIncr',  label: 'Salary Increment',  type: 'SAL_INCR' },
 ] as const;
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -561,7 +558,7 @@ export class BatchComponent {
 
     // ── Pivot sections (FA, FD, VA, VD, OT) ───────────────────────────
     for (const cfg of SECTION_CONFIG) {
-      if (!cfg.type || !cfg.backendKey || cfg.type === 'NOPAY' || cfg.type === 'LATE' || cfg.type === 'SAL_ADV') continue;
+      if (!cfg.type || !cfg.backendKey || cfg.type === 'NOPAY' || cfg.type === 'LATE') continue;
       const names   = this._names()[cfg.uiKey] ?? [];
       const codeMap = labelToCode[cfg.uiKey] ?? {};
 
@@ -752,7 +749,7 @@ export class BatchComponent {
     let   employees:      BatchEmployee[]                        = [];
 
     for (const cfg of SECTION_CONFIG) {
-      if (!cfg.backendKey || !cfg.type || cfg.type === 'NOPAY' || cfg.type === 'SAL_ADV') continue;
+      if (!cfg.backendKey || !cfg.type || cfg.type === 'NOPAY') continue;
 
       const rows = (resp[cfg.backendKey as keyof BatchLoadResponse] ?? [])
         .filter(row => Number(row['id']) > 0);

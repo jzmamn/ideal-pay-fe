@@ -172,30 +172,26 @@ export class BankTransfer {
   /** Transfer mode: group by each employee's bank, or use one selected bank for all. */
   readonly mode = signal<TransferMode>('by-bank');
 
-  /** Bank selected in single-bank mode. */
-  readonly singleBankId = signal<number | null>(null);
-
-  readonly singleBank = computed(() =>
-    this.banks().find(b => b.id === this.singleBankId()) ?? null
-  );
+  /** Template selected in single-bank mode. */
+  readonly selectedTemplateId = signal<number | null>(null);
 
   readonly singleBankTemplate = computed(() => {
-    const bank = this.singleBank();
-    if (!bank) return null;
-    return this.templates().find(t => t.bankCode === bank.code) ?? null;
+    const explicit = this.selectedTemplateId();
+    if (explicit === null) return null;
+    return this.templates().find(t => t.id === explicit) ?? null;
   });
 
-  /** A virtual BankGroup covering all rows, using the selected bank's template. */
+  /** A virtual BankGroup covering all rows, using the selected template's bank. */
   readonly singleBankGroup = computed<BankGroup | null>(() => {
     if (this.mode() !== 'single-bank') return null;
-    const bank = this.singleBank();
-    if (!bank) return null;
+    const tmpl = this.singleBankTemplate();
+    if (!tmpl) return null;
     const rows = this.rows();
     return {
-      bankId:        bank.id,
-      bankCode:      bank.code,
-      bankName:      bank.name,
-      template:      this.singleBankTemplate(),
+      bankId:        tmpl.bankId,
+      bankCode:      tmpl.bankCode,
+      bankName:      tmpl.bankName,
+      template:      tmpl,
       rows,
       total:         rows.reduce((s, r) => s + r.totalAmount, 0),
       fileGenerated: false,
@@ -324,7 +320,7 @@ export class BankTransfer {
 
   setMode(m: TransferMode): void {
     this.mode.set(m);
-    this.singleBankId.set(null);
+    this.selectedTemplateId.set(null);
   }
 
   // ── Reference data load ───────────────────────────────────────────────────

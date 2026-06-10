@@ -7,6 +7,23 @@
   background: #f8fafc;
 }
 
+// ── Draft view shell ──────────────────────────────────────────────────────
+.draft-shell {
+  display: flex; flex-direction: column;
+  height: 100%; overflow: hidden;
+}
+
+.draft-shell-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 20px 0 24px; height: 56px;
+  background: #fff; border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.draft-shell-title {
+  margin: 0; font-size: 15px; font-weight: 600; color: #0f172a;
+}
+
 // ── Header ────────────────────────────────────────────────────────────────
 .page-header {
   display: flex;
@@ -74,7 +91,7 @@
       position: sticky; top: 56px; z-index: 9;
       background: #fff; border-bottom: 1px solid #e2e8f0;
     }
-    .mat-mdc-tab-body-content { padding: 0; overflow: visible; }
+    .mat-mdc-tab-body-content { padding: 0; overflow: hidden; }
     .mat-mdc-tab-label-container { padding: 0 12px; }
     .mdc-tab { height: 44px; min-width: 120px; }
     .mdc-tab__text-label { font-size: 12px; font-weight: 500; letter-spacing: 0.01em; }

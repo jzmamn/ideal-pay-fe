@@ -189,6 +189,21 @@ $nav-item-gap: 12px;
   padding: 4px 0 4px 8px;
 }
 
+.sub-menu-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.5);
+  padding: 8px 12px 4px;
+  user-select: none;
+}
+
+.sub-menu-divider {
+  border-top-color: $divider !important;
+  margin: 6px 12px;
+}
+
 // ── Nested expansion panel (inside .sub-menu) ─────────────────
 .sub-menu-panel {
   margin-bottom: 2px;

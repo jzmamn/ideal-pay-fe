@@ -14,7 +14,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { HttpErrorResponse } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
-import { BatchService, BatchSaveEntry, BatchSavePayload } from '../batch/batch.service';
+import { BatchService, BatchSaveEntry, BatchSavePayload, PivotRow } from '../batch/batch.service';
 import { SalaryAdvanceService, SalAdvEntry } from './salary-advance.service';
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -81,6 +81,7 @@ export class SalaryAdvance {
   readonly saveError    = signal<string | null>(null);
   readonly saveSuccess  = signal(false);
 
+  // ── Salary Advance table state ─────────────────────────────────────────
   private readonly _rows           = signal<SalAdvFlatRow[]>([]);
   readonly salAdvFilter            = signal('');
   readonly salAdvEditCtrl          = this.fb.nonNullable.control(0);
@@ -126,7 +127,7 @@ export class SalaryAdvance {
     this._load();
   }
 
-  // ── Inline edit ────────────────────────────────────────────────────────
+  // ── SA inline edit ─────────────────────────────────────────────────────
   isSalAdvEditing(idx: number): boolean { return this._salAdvEditCell() === idx; }
 
   startSalAdvEdit(idx: number): void {
@@ -157,7 +158,6 @@ export class SalaryAdvance {
     this.lockError.set(null);
   }
 
-  /** Load SA entries for the period and show the draft (read-only). */
   viewDraft(): void {
     if (this.draftLoading() || this.periodForm.invalid) return;
     const { month, year } = this.periodForm.getRawValue();
@@ -190,17 +190,8 @@ export class SalaryAdvance {
     const { month, year } = this.periodForm.getRawValue();
     const modifiedBy = 1; // TODO: replace with AuthService user id
 
-    const entries: BatchSaveEntry[] = this._rows()
-      .filter(r => !r.isProcessed && r.empId > 0)
-      .map(r => ({
-        componentCode: 'SAL_ADV',
-        componentType: 'SAL_ADV',
-        employeeId:    r.empId,
-        amount:        r.amount,
-      }));
-
     this.batchSvc
-      .save({ periodMonth: month, periodYear: year, entries } satisfies BatchSavePayload, modifiedBy)
+      .save({ periodMonth: month, periodYear: year, entries: this._buildEntries() } satisfies BatchSavePayload, modifiedBy)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next:  ()             => { this.saving.set(false); this.saveSuccess.set(true); },
@@ -211,7 +202,6 @@ export class SalaryAdvance {
       });
   }
 
-  /** Save entries then lock the entire period — shows draft view after. */
   saveAndLock(): void {
     if (this.saving() || this.periodForm.invalid) return;
     this.saveSalAdvEdit();
@@ -222,17 +212,8 @@ export class SalaryAdvance {
     const { month, year } = this.periodForm.getRawValue();
     const modifiedBy = 1; // TODO: replace with AuthService user id
 
-    const entries: BatchSaveEntry[] = this._rows()
-      .filter(r => !r.isProcessed && r.empId > 0)
-      .map(r => ({
-        componentCode: 'SAL_ADV',
-        componentType: 'SAL_ADV',
-        employeeId:    r.empId,
-        amount:        r.amount,
-      }));
-
     this.batchSvc
-      .save({ periodMonth: month, periodYear: year, entries } satisfies BatchSavePayload, modifiedBy)
+      .save({ periodMonth: month, periodYear: year, entries: this._buildEntries() } satisfies BatchSavePayload, modifiedBy)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
@@ -278,6 +259,17 @@ export class SalaryAdvance {
   }
 
   // ── Private ────────────────────────────────────────────────────────────
+  private _buildEntries(): BatchSaveEntry[] {
+    return this._rows()
+      .filter(r => !r.isProcessed && r.empId > 0)
+      .map(r => ({
+        componentCode: 'SAL_ADV',
+        componentType: 'SAL_ADV',
+        employeeId:    r.empId,
+        amount:        r.amount,
+      }));
+  }
+
   private _lockAllAndShowDraft(month: number, year: number, lockedBy: number): void {
     this.salAdvSvc.lockAll(month, year, lockedBy)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -315,24 +307,29 @@ export class SalaryAdvance {
       .subscribe({
         next: resp => {
           this.loading.set(false);
-          const rows = (resp.salaryAdvances ?? [])
-            .filter((row: Record<string, unknown>) => Number(row['id'] ?? row['ID']) > 0)
-            .map((raw: Record<string, unknown>) => {
-              const row = Object.fromEntries(
-                Object.entries(raw).map(([k, v]) => [k.toLowerCase(), v]),
-              );
-              return {
-                empId:       Number(row['id']),
-                employeeNo:  String(row['employee_no'] ?? ''),
-                payrollName: String(row['payroll_name'] || `${row['first_name'] ?? ''} ${row['last_name'] ?? ''}`.trim()),
-                amount:      Number(row['sal_adv_amount'] ?? 0),
-                isProcessed: String(row['is_processed']) === 'Y',
-              } as SalAdvFlatRow;
-            });
-          this._rows.set(rows);
+          this._rows.set(this._parseSalAdvRows(resp.salaryAdvances ?? []));
         },
         error: () => this.loading.set(false),
       });
+  }
+
+  private _parseSalAdvRows(rows: PivotRow[]): SalAdvFlatRow[] {
+    return rows
+      .filter(row => Number(row['id'] ?? row['ID']) > 0)
+      .map(raw => {
+        const row = this._normalise(raw);
+        return {
+          empId:       Number(row['id']),
+          employeeNo:  String(row['employee_no'] ?? ''),
+          payrollName: String(row['payroll_name'] || `${row['first_name'] ?? ''} ${row['last_name'] ?? ''}`.trim()),
+          amount:      Number(row['sal_adv_amount'] ?? 0),
+          isProcessed: String(row['is_processed']) === 'Y',
+        };
+      });
+  }
+
+  private _normalise(row: PivotRow): PivotRow {
+    return Object.fromEntries(Object.entries(row).map(([k, v]) => [k.toLowerCase(), v]));
   }
 
   private _extractError(err: unknown, fallback: string): string {

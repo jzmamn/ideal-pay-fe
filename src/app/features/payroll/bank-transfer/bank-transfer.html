@@ -48,11 +48,12 @@
       <button mat-stroked-button type="button"
               [disabled]="refLoading()"
               (click)="openTemplateManager()"
-              aria-label="Manage bank file templates">
+              aria-label="Manage bank transfer templates">
         <mat-icon>settings</mat-icon>
-        Manage Templates
+        Manage Bank Templates
       </button>
     </div>
+
   </header>
 
   <div class="page-body">
@@ -72,25 +73,22 @@
         </mat-button-toggle>
       </mat-button-toggle-group>
 
-      <!-- Single-bank selector — shown only in single-bank mode -->
+      <!-- Template selector — shown only in single-bank mode -->
       @if (mode() === 'single-bank') {
         <mat-form-field appearance="outline" class="single-bank-field">
-          <mat-label>Select Template Bank</mat-label>
-          <mat-select [value]="singleBankId()"
-                      (valueChange)="singleBankId.set($event)"
-                      aria-label="Select bank for single-bank transfer">
-            @for (b of banks(); track b.id) {
-              <mat-option [value]="b.id">{{ b.name }}</mat-option>
+          <mat-label>Template</mat-label>
+          <mat-select [value]="selectedTemplateId()"
+                      (valueChange)="selectedTemplateId.set($event)"
+                      [disabled]="refLoading()"
+                      aria-label="Select bank file template">
+            @for (t of templates(); track t.id) {
+              <mat-option [value]="t.id">{{ t.bankName }}</mat-option>
             }
           </mat-select>
+          @if (templates().length === 0) {
+            <mat-hint>No templates — configure under Pay Slip Template</mat-hint>
+          }
         </mat-form-field>
-
-        @if (singleBankId() && !singleBankTemplate()) {
-          <span class="no-tmpl-warn" aria-live="polite">
-            <mat-icon>warning</mat-icon>
-            No template configured for this bank
-          </span>
-        }
       }
     </div>
 
@@ -145,17 +143,17 @@
     <!-- ═══ SINGLE-BANK MODE ════════════════════════════════════════════════ -->
     @if (mode() === 'single-bank') {
 
-      @if (!singleBankId()) {
+      @if (!singleBankTemplate()) {
         <div class="empty-state" role="status">
           <mat-icon aria-hidden="true">account_balance</mat-icon>
-          <p>Select a bank above to use its template for all employees.</p>
+          <p>Select a template above to use its bank for all employees.</p>
         </div>
       } @else {
         <div class="single-bank-panel">
           <div class="single-bank-header">
             <div>
-              <h3 class="single-bank-title">{{ singleBank()?.name }}</h3>
-              <span class="bank-code-badge">{{ singleBank()?.code }}</span>
+              <h3 class="single-bank-title">{{ singleBankTemplate()?.bankName }}</h3>
+              <span class="bank-code-badge">{{ singleBankTemplate()?.bankCode }}</span>
             </div>
             <div class="panel-actions">
               <button mat-stroked-button type="button"

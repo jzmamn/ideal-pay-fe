@@ -1,0 +1,307 @@
+<div class="gt-shell">
+
+  <!-- ── Top bar ─────────────────────────────────────────────────────────── -->
+  <div class="gt-topbar">
+    <div class="page-header-left">
+      <div class="page-header-icon" aria-hidden="true">
+        <mat-icon>card_giftcard</mat-icon>
+      </div>
+      <h1 class="gt-title">Gratuity</h1>
+    </div>
+
+    <select class="gt-filter-select" (change)="filterStatus.set($any($event.target).value)"
+            aria-label="Filter by status">
+      <option value="">All Statuses</option>
+      <option value="DRAFT">Draft</option>
+      <option value="APPROVED">Approved</option>
+      <option value="PAID">Paid</option>
+      <option value="CANCELLED">Cancelled</option>
+    </select>
+
+    <button mat-flat-button (click)="openCreate()">
+      <mat-icon>add</mat-icon> New Gratuity
+    </button>
+  </div>
+
+  <div class="gt-body">
+
+    <!-- ── Left: list ──────────────────────────────────────────────────── -->
+    <div class="gt-list-panel">
+      @if (loading()) {
+        <div class="gt-list-loading">
+          <mat-spinner diameter="18" />
+          <span>Loading…</span>
+        </div>
+      }
+
+      @for (r of filtered(); track r.id) {
+        <div class="gt-list-item" [class.active]="selected()?.id === r.id" (click)="select(r)">
+          <div class="gt-item-row1">
+            <span class="gt-item-code">{{ r.code }}</span>
+            <span class="gt-chip" [class]="statusClass(r.status)">{{ r.status }}</span>
+          </div>
+          <div class="gt-item-name">{{ r.empName }}</div>
+          <div class="gt-item-meta">{{ r.empCode }} · {{ r.terminationDate }}</div>
+        </div>
+      }
+
+      @if (!loading() && !filtered().length) {
+        <div class="gt-list-empty">
+          <mat-icon>card_giftcard</mat-icon>
+          <p>No gratuity records found.</p>
+        </div>
+      }
+    </div>
+
+    <!-- ── Right panel ─────────────────────────────────────────────────── -->
+    <div class="gt-right-panel">
+
+      <!-- ════════ FORM ════════════════════════════════════════════════════ -->
+      @if (isFormMode()) {
+        <div class="gt-form-wrap">
+
+          <div class="gt-form-topbar">
+            <h3>{{ panelMode() === 'edit' ? 'Edit Gratuity' : 'New Gratuity' }}</h3>
+            <button mat-icon-button matTooltip="Cancel" (click)="cancelForm()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+
+          <!-- Header section -->
+          <div class="gt-section">
+            <div class="gt-section-label">Gratuity Details</div>
+            <div class="gt-form-grid">
+
+              <div class="gt-readonly-field">
+                <span class="gt-readonly-label">Code (auto-generated)</span>
+                <span class="gt-readonly-val">{{ formCode() || '—' }}</span>
+              </div>
+
+              <div class="gt-input-field">
+                <label class="gt-input-label" for="gt-termination-date">Termination Date</label>
+                <input id="gt-termination-date" type="date" class="gt-text-input"
+                       [value]="formTerminationDate()"
+                       (change)="onTerminationDateChange($any($event.target).value)" />
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Employee section -->
+          <div class="gt-section">
+            <div class="gt-section-label">Employee</div>
+
+            @if (panelMode() === 'create') {
+              <app-table-autocomplete
+                class="gt-emp-autocomplete"
+                label="Search employee"
+                [src]="apiBase + '/employee'"
+                [columns]="empCols"
+                [displayFn]="empDisplayFn"
+                (selected)="onEmpSelected($event)"
+                aria-label="Search and select employee"
+              />
+            } @else {
+              <div class="gt-readonly-field">
+                <span class="gt-readonly-label">Employee</span>
+                <span class="gt-readonly-val">{{ formEmpName() }}</span>
+              </div>
+            }
+
+            <div class="gt-form-grid" style="margin-top: 12px;">
+              <div class="gt-input-field">
+                <label class="gt-input-label" for="gt-joined-date">Joined Date</label>
+                <input id="gt-joined-date" type="date" class="gt-text-input"
+                       [value]="formJoinedDate()"
+                       (change)="formJoinedDate.set($any($event.target).value)" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Calculation section -->
+          <div class="gt-section">
+            <div class="gt-section-label">Calculation</div>
+            <div class="gt-calc-row">
+
+              <div class="gt-calc-field">
+                <div class="gt-calc-label">Basic Salary</div>
+                <input type="number" class="gt-num-input" min="0" step="0.01"
+                       [value]="formBasicSalary()"
+                       (change)="onBasicSalaryChange($any($event.target).value)"
+                       aria-label="Basic salary" />
+              </div>
+
+              <mat-icon class="gt-op-icon" aria-hidden="true">arrow_forward</mat-icon>
+
+              <div class="gt-calc-field">
+                <div class="gt-calc-label">Years of Service</div>
+                <input type="number" class="gt-num-input" min="0" step="0.01"
+                       [value]="formYears()"
+                       (change)="onYearsChange($any($event.target).value)"
+                       aria-label="Years of service" />
+              </div>
+
+              <mat-icon class="gt-op-icon" aria-hidden="true">arrow_forward</mat-icon>
+
+              <div class="gt-calc-field">
+                <div class="gt-calc-label">Gratuity Amount</div>
+                @if (calculating()) {
+                  <div class="gt-calculating">
+                    <mat-spinner diameter="16" />
+                    <span>Calculating…</span>
+                  </div>
+                } @else {
+                  <input type="number" class="gt-num-input gt-highlight" min="0" step="0.01"
+                         [value]="formGratuityAmount()"
+                         (change)="formGratuityAmount.set(+$any($event.target).value)"
+                         aria-label="Gratuity amount" />
+                }
+              </div>
+
+            </div>
+            <div class="gt-formula-hint">
+              <mat-icon>functions</mat-icon>
+              <span>{{ formulaHint() }}</span>
+            </div>
+          </div>
+
+          <!-- Remarks -->
+          <div class="gt-section">
+            <div class="gt-section-label">Remarks</div>
+            <textarea class="gt-text-input gt-textarea" rows="3"
+                      placeholder="Optional remarks…"
+                      [value]="formRemarks()"
+                      (input)="formRemarks.set($any($event.target).value)"
+                      aria-label="Remarks"></textarea>
+          </div>
+
+          <!-- Save bar -->
+          <div class="gt-save-bar">
+            <button mat-stroked-button (click)="cancelForm()">Cancel</button>
+            <button mat-flat-button (click)="save()" [disabled]="saving()">
+              @if (saving()) { <mat-spinner diameter="16" /> }
+              @else { Save }
+            </button>
+          </div>
+
+        </div>
+      }
+
+      <!-- ════════ VIEW ════════════════════════════════════════════════════ -->
+      @else if (panelMode() === 'view' && selected(); as r) {
+        <div class="gt-view-wrap">
+
+          <div class="gt-view-header">
+            <div class="gt-view-title-block">
+              <div class="gt-view-title-row">
+                <h2 class="gt-view-title">{{ r.empName }}</h2>
+                <span class="gt-chip gt-chip-lg" [class]="statusClass(r.status)">{{ r.status }}</span>
+              </div>
+              <div class="gt-view-meta">
+                <span>{{ r.code }}</span>
+                <span>·</span>
+                <span>{{ r.empCode }}</span>
+                @if (r.designationName) { <span>· {{ r.designationName }}</span> }
+                @if (r.branchName)      { <span>· {{ r.branchName }}</span> }
+              </div>
+            </div>
+
+            <div class="gt-view-actions">
+              @if (canApprove()) {
+                <button mat-flat-button class="btn-approve" (click)="approve()" [disabled]="acting()">
+                  <mat-icon>check_circle</mat-icon> Approve
+                </button>
+              }
+              @if (canPay()) {
+                <button mat-flat-button class="btn-pay" (click)="markPaid()" [disabled]="acting()">
+                  <mat-icon>payments</mat-icon> Mark Paid
+                </button>
+              }
+              @if (canEdit()) {
+                <button mat-stroked-button (click)="openEdit()">
+                  <mat-icon>edit</mat-icon> Edit
+                </button>
+              }
+              @if (canCancel()) {
+                <button mat-button class="btn-cancel" (click)="cancel()" [disabled]="acting()">
+                  Cancel
+                </button>
+              }
+              @if (canEdit()) {
+                <button mat-icon-button class="btn-delete" matTooltip="Delete"
+                        (click)="deleteRecord()" [disabled]="acting()">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              }
+            </div>
+          </div>
+
+          <mat-divider />
+
+          <!-- Detail cards -->
+          <div class="gt-view-cards">
+
+            <!-- Dates card -->
+            <div class="gt-view-card">
+              <div class="gt-view-card-title">Service Period</div>
+              <div class="gt-view-card-body">
+                <div class="gt-view-col">
+                  <div class="gt-view-col-label">Joined Date</div>
+                  <div class="gt-view-col-val">{{ r.joinedDate }}</div>
+                </div>
+                <mat-icon class="gt-arrow" aria-hidden="true">arrow_forward</mat-icon>
+                <div class="gt-view-col">
+                  <div class="gt-view-col-label">Termination Date</div>
+                  <div class="gt-view-col-val">{{ r.terminationDate }}</div>
+                </div>
+                <div class="gt-view-col gt-view-col-right">
+                  <div class="gt-view-col-label">Years of Service</div>
+                  <div class="gt-view-col-val gt-highlight">{{ r.yearsOfService | number:'1.2-2' }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Amount card -->
+            <div class="gt-view-card">
+              <div class="gt-view-card-title">Calculation</div>
+              <div class="gt-view-card-body">
+                <div class="gt-view-col">
+                  <div class="gt-view-col-label">Basic Salary</div>
+                  <div class="gt-view-col-val">{{ r.basicSalary | number:'1.2-2' }}</div>
+                </div>
+                <mat-icon class="gt-op-icon" aria-hidden="true">close</mat-icon>
+                <div class="gt-view-col">
+                  <div class="gt-view-col-label">½ × Years</div>
+                  <div class="gt-view-col-val">{{ (r.basicSalary / 2 * r.yearsOfService) | number:'1.2-2' }}</div>
+                </div>
+                <mat-icon class="gt-op-icon" aria-hidden="true">arrow_forward</mat-icon>
+                <div class="gt-view-col">
+                  <div class="gt-view-col-label">Gratuity Amount</div>
+                  <div class="gt-view-col-val gt-highlight gt-amount">{{ r.gratuityAmount | number:'1.2-2' }}</div>
+                </div>
+              </div>
+            </div>
+
+            @if (r.remarks) {
+              <div class="gt-view-remarks">
+                <div class="gt-view-col-label">Remarks</div>
+                <p>{{ r.remarks }}</p>
+              </div>
+            }
+
+          </div>
+        </div>
+      }
+
+      <!-- ════════ EMPTY ═══════════════════════════════════════════════════ -->
+      @else {
+        <div class="gt-empty-state">
+          <mat-icon>card_giftcard</mat-icon>
+          <p>Select a gratuity record from the list,<br>or create a new one.</p>
+        </div>
+      }
+
+    </div>
+  </div>
+
+</div>

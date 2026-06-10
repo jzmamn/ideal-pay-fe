@@ -2,116 +2,177 @@
 
   <div class="page-header">
     <div>
-      <h2 class="page-title">Payslip Templates</h2>
+      <h2 class="page-title">Templates</h2>
       <p class="page-subtitle">
-        Manage HTML templates used for PDF payslip generation.
-        Templates can be active or inactive independently.
+        Manage payslip HTML templates and bank file templates.
       </p>
     </div>
-    <button mat-flat-button (click)="openDialog()">
-      <mat-icon>add</mat-icon>
-      New Template
-    </button>
   </div>
 
-  @if (loading()) {
-    <div class="loader-row">
-      <mat-spinner diameter="28" />
-      <span>Loading templates…</span>
-    </div>
-  }
+  <mat-tab-group animationDuration="0ms">
 
-  @if (!loading()) {
+    <!-- ── Tab 1: Payslip Templates ────────────────────────────────────────── -->
+    <mat-tab label="Payslip Templates">
+      <div class="tab-content">
 
-    @if (templates().length === 0) {
-      <div class="empty-state">
-        <mat-icon class="empty-icon">description</mat-icon>
-        <p>No templates yet. Click <strong>New Template</strong> to create one.</p>
-        <p class="empty-hint">
-          Use <code>{{ '{' }}{{ '{' }}TOKEN{{ '}' }}{{ '}' }}</code> placeholders in the HTML —
-          they are replaced with live payroll data when a PDF is generated.
-        </p>
-      </div>
-    }
+        <div class="tab-header">
+          <button mat-flat-button (click)="openDialog()">
+            <mat-icon>add</mat-icon>
+            New Template
+          </button>
+        </div>
 
-    @if (templates().length > 0) {
-      <table mat-table [dataSource]="templates()" class="templates-table">
+        @if (loading()) {
+          <div class="loader-row">
+            <mat-spinner diameter="28" />
+            <span>Loading templates…</span>
+          </div>
+        }
 
-        <!-- Name -->
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Name</th>
-          <td mat-cell *matCellDef="let t">
-            <div class="name-cell">
-              <span class="template-name">{{ t.name }}</span>
+        @if (!loading()) {
+
+          @if (templates().length === 0) {
+            <div class="empty-state">
+              <mat-icon class="empty-icon">description</mat-icon>
+              <p>No templates yet. Click <strong>New Template</strong> to create one.</p>
             </div>
-          </td>
-        </ng-container>
+          }
 
-        <!-- Status -->
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef>Status</th>
-          <td mat-cell *matCellDef="let t">
-            <span class="status-badge" [class.status-badge--active]="t.isActive">
-              <mat-icon aria-hidden="true">
-                {{ t.isActive ? 'check_circle' : 'radio_button_unchecked' }}
-              </mat-icon>
-              {{ t.isActive ? 'Active' : 'Inactive' }}
-            </span>
-          </td>
-        </ng-container>
+          @if (templates().length > 0) {
+            <table mat-table [dataSource]="templates()" class="templates-table">
 
-        <!-- Modified by -->
-        <ng-container matColumnDef="modifiedBy">
-          <th mat-header-cell *matHeaderCellDef>Last Modified By</th>
-          <td mat-cell *matCellDef="let t" class="meta-cell">{{ t.modifiedByUserName }}</td>
-        </ng-container>
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>Name</th>
+                <td mat-cell *matCellDef="let t">
+                  <span class="template-name">{{ t.name }}</span>
+                </td>
+              </ng-container>
 
-        <!-- Modified date -->
-        <ng-container matColumnDef="modifiedDate">
-          <th mat-header-cell *matHeaderCellDef>Modified Date</th>
-          <td mat-cell *matCellDef="let t" class="meta-cell">
-            {{ t.modifiedDate | date:'dd MMM yyyy, HH:mm' }}
-          </td>
-        </ng-container>
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let t">
+                  <span class="status-badge" [class.status-badge--active]="t.isActive">
+                    <mat-icon aria-hidden="true">
+                      {{ t.isActive ? 'check_circle' : 'radio_button_unchecked' }}
+                    </mat-icon>
+                    {{ t.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+              </ng-container>
 
-        <!-- Actions -->
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let t" class="actions-cell">
+              <ng-container matColumnDef="modifiedBy">
+                <th mat-header-cell *matHeaderCellDef>Last Modified By</th>
+                <td mat-cell *matCellDef="let t" class="meta-cell">{{ t.modifiedByUserName }}</td>
+              </ng-container>
 
-            <!-- Preview HTML -->
-            <button
-              mat-icon-button
-              (click)="previewHtml(t)"
-              aria-label="Preview HTML in new tab"
-              matTooltip="Preview HTML"
-            >
-              <mat-icon>open_in_new</mat-icon>
-            </button>
+              <ng-container matColumnDef="modifiedDate">
+                <th mat-header-cell *matHeaderCellDef>Modified Date</th>
+                <td mat-cell *matCellDef="let t" class="meta-cell">
+                  {{ t.modifiedDate | date:'dd MMM yyyy, HH:mm' }}
+                </td>
+              </ng-container>
 
-            <!-- Edit -->
-            <button
-              mat-icon-button
-              (click)="openDialog(t)"
-              aria-label="Edit template"
-              matTooltip="Edit"
-            >
-              <mat-icon>edit</mat-icon>
-            </button>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let t" class="actions-cell">
+                  <button mat-icon-button (click)="previewHtml(t)"
+                          aria-label="Preview HTML in new tab" matTooltip="Preview HTML">
+                    <mat-icon>open_in_new</mat-icon>
+                  </button>
+                  <button mat-icon-button (click)="openDialog(t)"
+                          aria-label="Edit template" matTooltip="Edit">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
 
-          </td>
-        </ng-container>
+              <tr mat-header-row *matHeaderRowDef="columns"></tr>
+              <tr mat-row *matRowDef="let row; columns: columns;" [class.active-row]="row.isActive"></tr>
 
-        <tr mat-header-row *matHeaderRowDef="columns"></tr>
-        <tr
-          mat-row
-          *matRowDef="let row; columns: columns;"
-          [class.active-row]="row.isActive"
-        ></tr>
+            </table>
+          }
 
-      </table>
-    }
+        }
 
-  }
+      </div>
+    </mat-tab>
+
+    <!-- ── Tab 2: Bank File Templates ──────────────────────────────────────── -->
+    <mat-tab label="Bank File Templates">
+      <div class="tab-content">
+
+        <div class="tab-header">
+          <p class="tab-description">
+            Configure per-bank file templates used when generating bank transfer files.
+          </p>
+          <button mat-flat-button
+                  [disabled]="bankRefLoading()"
+                  (click)="openBankTemplateManager()"
+                  aria-label="Manage bank file templates">
+            <mat-icon>settings</mat-icon>
+            Manage Bank Templates
+          </button>
+        </div>
+
+        @if (bankRefLoading()) {
+          <div class="loader-row">
+            <mat-spinner diameter="28" />
+            <span>Loading bank templates…</span>
+          </div>
+        }
+
+        @if (!bankRefLoading()) {
+
+          @if (bankTemplates().length === 0) {
+            <div class="empty-state">
+              <mat-icon class="empty-icon">account_balance</mat-icon>
+              <p>No bank file templates configured yet.</p>
+              <p class="empty-hint">
+                Click <strong>Manage Bank Templates</strong> to add templates for each bank.
+              </p>
+            </div>
+          }
+
+          @if (bankTemplates().length > 0) {
+            <table mat-table [dataSource]="bankTemplates()" class="templates-table">
+
+              <ng-container matColumnDef="bankName">
+                <th mat-header-cell *matHeaderCellDef>Bank</th>
+                <td mat-cell *matCellDef="let t" class="template-name">{{ t.bankName }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="bankCode">
+                <th mat-header-cell *matHeaderCellDef>Code</th>
+                <td mat-cell *matCellDef="let t">
+                  <span class="bank-code-badge">{{ t.bankCode }}</span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="headerLines">
+                <th mat-header-cell *matHeaderCellDef>Header</th>
+                <td mat-cell *matCellDef="let t" class="meta-cell">
+                  {{ t.headerTemplate ? 'Configured' : '—' }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="footerLines">
+                <th mat-header-cell *matHeaderCellDef>Footer</th>
+                <td mat-cell *matCellDef="let t" class="meta-cell">
+                  {{ t.footerTemplate ? 'Configured' : '—' }}
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="bankColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: bankColumns;"></tr>
+
+            </table>
+          }
+
+        }
+
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
 
 </div>

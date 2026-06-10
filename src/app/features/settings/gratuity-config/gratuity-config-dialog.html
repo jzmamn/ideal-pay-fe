@@ -1,0 +1,76 @@
+<div mat-dialog-title class="dialog-title">
+  <div class="dialog-title-icon">
+    <mat-icon>card_giftcard</mat-icon>
+  </div>
+  <span class="dialog-title-main">Gratuity Configuration</span>
+  <button mat-icon-button mat-dialog-close class="dialog-close-btn" aria-label="Close dialog">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="form-grid">
+
+    <div class="form-row-2">
+      <mat-form-field appearance="outline">
+        <mat-label>Code</mat-label>
+        <input matInput formControlName="code" placeholder="Auto-generated">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name">
+        @if (form.get('name')?.hasError('required')) {
+          <mat-error>Name is required</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Description</mat-label>
+      <textarea matInput formControlName="description" rows="2"
+                placeholder="e.g. Standard gratuity rule for all employees"></textarea>
+    </mat-form-field>
+
+    <div class="default-formula-hint">
+      <mat-icon>info</mat-icon>
+      <span>
+        Default formula:
+        <code>basicSalary / 2 * yearsOfService</code>
+        &nbsp;— Available variables: <code>basicSalary</code>, <code>yearsOfService</code>
+      </span>
+    </div>
+
+    <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
+
+  </form>
+
+  <mat-divider />
+
+  <app-formula-definition-form
+    #formulaForm
+    [initialExpression]="formulaExpression()"
+    [initialIsActive]="formulaIsActive()"
+    [saving]="formulaSaving()"
+    [saveError]="formulaSaveError()"
+    (valueChanged)="onFormulaValueChanged($event)"
+    (saveRequested)="onFormulaSaveRequested($event)"
+  />
+
+  <div class="formula-save-row">
+    <button mat-stroked-button type="button" (click)="formulaForm.save()" aria-label="Apply formula">
+      <mat-icon>calculate</mat-icon> Apply Formula
+    </button>
+  </div>
+
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  <span class="action-spacer"></span>
+  <button mat-flat-button [disabled]="form.invalid" (click)="save()">
+    <mat-icon>save</mat-icon> {{ isEdit ? 'Update' : 'Create' }}
+  </button>
+  <button mat-flat-button mat-dialog-close class="btn-secondary">
+    <mat-icon>close</mat-icon> Cancel
+  </button>
+</mat-dialog-actions>

@@ -72,16 +72,16 @@ export const routes: Routes = [
                                 .then(m => m.BatchComponent),
                     },
                     {
-                        path: 'run-review',
-                        loadComponent: () =>
-                            import('./features/payroll/run-review/run-review')
-                                .then(m => m.RunReviewComponent),
-                    },
-                    {
                         path: 'salary-advance',
                         loadComponent: () =>
                             import('./features/payroll/salary-advance/salary-advance')
                                 .then(m => m.SalaryAdvance),
+                    },
+                    {
+                        path: 'bonus',
+                        loadComponent: () =>
+                            import('./features/payroll/bonus-batch/bonus-batch')
+                                .then(m => m.BonusBatch),
                     },
                     {
                         path: 'loan-application',
@@ -94,6 +94,12 @@ export const routes: Routes = [
                         loadComponent: () =>
                             import('./features/payroll/salary-increment/salary-increment')
                                 .then(m => m.SalaryIncrementComponent),
+                    },
+                    {
+                        path: 'gratuity',
+                        loadComponent: () =>
+                            import('./features/payroll/gratuity/gratuity')
+                                .then(m => m.GratuityComponent),
                     },
                 ],
             },
@@ -187,6 +193,13 @@ export const routes: Routes = [
                 loadComponent: () =>
                     import('./features/settings/late-deduction-config/late-deduction-config')
                         .then(m => m.LateDeductionConfig)
+            },
+
+            {
+                path: 'gratuity-config',
+                loadComponent: () =>
+                    import('./features/settings/gratuity-config/gratuity-config')
+                        .then(m => m.GratuityConfigComponent)
             },
 
             {

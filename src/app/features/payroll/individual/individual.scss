@@ -52,10 +52,10 @@
 }
 
 .top-bar-emp-search {
-  flex: 1;
-  min-width: 220px;
-  max-width: 340px;
+  width: 260px;
   --mdc-outlined-text-field-container-height: 36px;
+  --mat-form-field-container-height: 36px;
+  --mat-form-field-container-vertical-padding: 6px;
 }
 
 .save-indicator {

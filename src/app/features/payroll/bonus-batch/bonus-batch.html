@@ -1,0 +1,85 @@
+<div class="page-shell" [formGroup]="periodForm">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="page-header-left">
+      <div class="page-header-icon" aria-hidden="true">
+        <mat-icon>redeem</mat-icon>
+      </div>
+      <h1 class="page-title">Bonus</h1>
+    </div>
+
+    <div class="page-header-right">
+      <mat-form-field appearance="outline" class="period-month" subscriptSizing="dynamic">
+        <mat-label>Month</mat-label>
+        <mat-select formControlName="month" (selectionChange)="onPeriodChange()">
+          @for (m of months; track m.value) {
+            <mat-option [value]="m.value">{{ m.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="period-year" subscriptSizing="dynamic">
+        <mat-label>Year</mat-label>
+        <mat-select formControlName="year" (selectionChange)="onPeriodChange()">
+          @for (y of years; track y) {
+            <mat-option [value]="y">{{ y }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </header>
+
+  <!-- ── Loading bar ─────────────────────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="loading-bar" aria-live="polite">
+      <mat-spinner diameter="16" />
+      <span>Loading…</span>
+    </div>
+  }
+
+  <!-- ── Bonus pivot ─────────────────────────────────────────────────────── -->
+  <app-pivot
+    label="Bonus"
+    [codes]="bonusNames()"
+    [rows]="pivotRows()"
+    [amounts]="bonusMatrix()"
+    (amountChange)="onAmountChange($event)">
+  </app-pivot>
+
+  <!-- ── Footer ─────────────────────────────────────────────────────────── -->
+  <footer class="page-footer">
+    <span class="grand-total-chip">
+      Total Bonus: <strong>{{ bonusTotal() | number:'1.2-2' }}</strong>
+    </span>
+
+    @if (saveSuccess()) {
+      <div class="status-banner status-banner--success" role="status" aria-live="polite">
+        <mat-icon>check_circle</mat-icon>
+        <span>Saved for {{ periodLabel }}</span>
+      </div>
+    }
+    @if (saveError()) {
+      <div class="status-banner status-banner--error" role="alert">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ saveError() }}</span>
+      </div>
+    }
+
+    <button mat-flat-button
+            [disabled]="saving() || periodForm.invalid"
+            (click)="save()"
+            aria-label="Save bonuses">
+      <span class="btn-content">
+        @if (saving()) {
+          <mat-spinner diameter="18" />
+          <span>Saving…</span>
+        } @else {
+          <mat-icon>save</mat-icon>
+          <span>Save</span>
+        }
+      </span>
+    </button>
+  </footer>
+
+</div>

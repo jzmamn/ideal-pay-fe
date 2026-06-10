@@ -51,7 +51,6 @@ export const SUB_STEPS = [
   { uiKey: 'nopay',     label: 'NoPay'               },
   { uiKey: 'late',      label: 'Late Deduction'      },
   { uiKey: 'loans',     label: 'Loans'               },
-  { uiKey: 'bonus',     label: 'Bonus'               },
 ] as const;
 
 // Sri Lanka PAYE monthly tax brackets (annual thresholds ÷ 12)

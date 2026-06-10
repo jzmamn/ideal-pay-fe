@@ -7,6 +7,17 @@
         <mat-icon>person</mat-icon>
       </div>
       <h1 class="page-title">Individual Payroll</h1>
+
+      <app-table-autocomplete
+        class="top-bar-emp-search"
+        [formControl]="employeeCtrl"
+        label="Employee"
+        placeholder="Search by name or employee #…"
+        src="/employee?isActive=true"
+        [columns]="employeeCols"
+        [displayFn]="empDisplayFn"
+        (itemSelected)="onEmployeeSelected($event)"
+      />
     </div>
 
     <div class="page-header-right">
@@ -27,17 +38,6 @@
           }
         </mat-select>
       </mat-form-field>
-
-      <app-table-autocomplete
-        class="top-bar-emp-search"
-        [formControl]="employeeCtrl"
-        label="Employee"
-        placeholder="Search by name or employee #…"
-        src="/employee?isActive=true"
-        [columns]="employeeCols"
-        [displayFn]="empDisplayFn"
-        (itemSelected)="onEmployeeSelected($event)"
-      />
 
       @if (lastSavedLabel()) {
         <span class="save-indicator">
@@ -346,14 +346,6 @@
                   <div class="comp-empty-state">
                     <mat-icon>account_balance</mat-icon>
                     <p>Loans coming soon.</p>
-                  </div>
-                }
-
-                <!-- Bonus -->
-                @if (step.uiKey === 'bonus') {
-                  <div class="comp-empty-state">
-                    <mat-icon>redeem</mat-icon>
-                    <p>Bonus coming soon.</p>
                   </div>
                 }
 

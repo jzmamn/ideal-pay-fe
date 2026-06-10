@@ -1,0 +1,93 @@
+:host { display: block; }
+
+.page-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: #f8fafc;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 20px 0 24px;
+  height: 56px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.page-header-left  { display: flex; align-items: center; gap: 12px; }
+.page-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.page-header-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 8px;
+  background: #fef9c3; color: #b45309; flex-shrink: 0;
+  mat-icon { font-size: 20px; width: 20px; height: 20px; }
+}
+
+.page-title {
+  margin: 0; font-size: 15px; font-weight: 700;
+  color: #0f172a; white-space: nowrap;
+}
+
+.period-month {
+  width: 140px;
+  --mdc-outlined-text-field-container-height: 36px;
+  --mat-form-field-container-height: 36px;
+  --mat-form-field-container-vertical-padding: 6px;
+}
+
+.period-year {
+  width: 100px;
+  --mdc-outlined-text-field-container-height: 36px;
+  --mat-form-field-container-height: 36px;
+  --mat-form-field-container-vertical-padding: 6px;
+}
+
+.loading-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 20px; background: #eff6ff;
+  border-bottom: 1px solid #bfdbfe;
+  font-size: 12px; color: #1d4ed8; flex-shrink: 0;
+}
+
+.page-footer {
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 12px; padding: 12px 20px;
+  border-top: 1px solid #e2e8f0; background: #fff;
+  position: sticky; bottom: 0; z-index: 10;
+  flex-shrink: 0; margin-top: auto;
+}
+
+.grand-total-chip {
+  font-size: 13px; color: #475569; white-space: nowrap; margin-right: auto;
+  strong { font-size: 15px; font-weight: 700; color: #b45309; }
+}
+
+.status-banner {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px; border-radius: 6px;
+  font-size: 13px; font-weight: 500;
+  mat-icon { font-size: 18px; width: 18px; height: 18px; flex-shrink: 0; }
+
+  &--success {
+    background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d;
+    mat-icon { color: #16a34a; }
+  }
+  &--error {
+    background: #fef2f2; border: 1px solid #fecaca; color: #dc2626;
+    mat-icon { color: #dc2626; }
+  }
+}
+
+.btn-content {
+  display: inline-flex; align-items: center; gap: 6px;
+  mat-icon { font-size: 18px; width: 18px; height: 18px; line-height: 18px; flex-shrink: 0; }
+}

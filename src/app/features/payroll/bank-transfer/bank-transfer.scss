@@ -79,6 +79,9 @@
 
 .single-bank-field {
   width: 260px;
+  --mdc-outlined-text-field-container-height: 36px;
+  --mat-form-field-container-height: 36px;
+  --mat-form-field-container-vertical-padding: 6px;
 }
 
 // ── Toggle buttons ────────────────────────────────────────────────────────────
