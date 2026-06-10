@@ -121,8 +121,8 @@ export class BonusService {
       liableNoPay:    data.liableNoPay!,
       formula:        data.formula ?? null,
       formulaEnabled: data.formulaEnabled!,
-      createdBy:      1,
-      modifiedBy:     1,
+      createdBy:      1, // TODO: replace with AuthService user id
+      modifiedBy:     1, // TODO: replace with AuthService user id
     };
   }
 }
