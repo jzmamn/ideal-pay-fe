@@ -291,6 +291,11 @@ export const routes: Routes = [
             },
 
             {
+                path: 'license',
+                loadComponent: () => import('./features/admin/license/license').then(m => m.LicenseComponent)
+            },
+
+            {
                 path: 'employee',
                 loadComponent: () =>
                     import('./features/settings/employee/employee')
@@ -365,3 +370,4 @@ export const routes: Routes = [
     { path: '**', redirectTo: 'login' },
 
 ];
+

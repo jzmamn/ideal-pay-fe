@@ -1,0 +1,14 @@
+<div class="license-page">
+  <div class="page-header"><div><h2>Software License</h2><p>Import and validate the signed license for this installation.</p></div>
+    <div class="actions">
+      <label class="import-button"><input type="file" accept=".lic,text/plain" (change)="importFile($event)" /><mat-icon>upload_file</mat-icon> Import License</label>
+      <button mat-flat-button (click)="validate()" [disabled]="loading()"><mat-icon>verified</mat-icon> Validate</button>
+    </div>
+  </div>
+  @if (loading()) { <div class="loading"><mat-spinner diameter="32" /></div> }
+  @if (license(); as item) {
+    <mat-card><mat-card-header><mat-card-title>{{ item.plan }}</mat-card-title><mat-card-subtitle>{{ item.status }} · {{ item.message }}</mat-card-subtitle></mat-card-header>
+      <mat-card-content><div class="grid"><div><span>License ID</span><strong>{{ item.licenseId }}</strong></div><div><span>Employees</span><strong>{{ item.employeeCount }} / {{ item.employeeLimit }}</strong></div><div><span>Valid From</span><strong>{{ item.validFrom }}</strong></div><div><span>Valid Till</span><strong>{{ item.validTill }}</strong></div><div><span>Maintenance</span><strong>{{ item.maintenanceAvailable ? 'Available' : 'Not available' }}</strong></div></div></mat-card-content>
+    </mat-card>
+  } @else if (!loading()) { <mat-card><mat-card-content>No valid license is currently available.</mat-card-content></mat-card> }
+</div>

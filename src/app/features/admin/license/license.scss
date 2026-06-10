@@ -1,0 +1,9 @@
+.license-page { padding: 24px; max-width: 1050px; margin: 0 auto; }
+.page-header { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; margin-bottom:24px; }
+.page-header h2 { margin:0 0 6px; } .page-header p { margin:0; color:#667085; }
+.actions { display:flex; gap:10px; align-items:center; }
+.import-button { display:flex; align-items:center; gap:8px; cursor:pointer; padding:10px 16px; border:1px solid #c9ced6; border-radius:4px; }
+.import-button input { display:none; }
+.loading { display:flex; justify-content:center; padding:50px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:20px; padding:20px 0; }
+.grid div { display:flex; flex-direction:column; gap:5px; } .grid span { color:#667085; font-size:12px; text-transform:uppercase; } .grid strong { overflow-wrap:anywhere; }
