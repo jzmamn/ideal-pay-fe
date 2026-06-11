@@ -154,6 +154,8 @@
         </mat-select>
       </mat-form-field>
 
+      <app-export-button entity="EMP_SALARY_ADVANCE" [payrollMonth]="payrollMonthStr" />
+
       <button mat-stroked-button
               [disabled]="draftLoading() || periodForm.invalid"
               (click)="viewDraft()"

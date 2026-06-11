@@ -1,0 +1,146 @@
+.wizard-shell {
+  padding: 16px 24px;
+  max-width: 1100px;
+}
+
+.wizard-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+
+  h2 {
+    flex: 1;
+    margin: 0;
+  }
+}
+
+.wizard-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  background: var(--mat-sys-error-container, #ffd9d9);
+  color: var(--mat-sys-on-error-container, #93000a);
+}
+
+.setup-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.file-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.file-name {
+  color: var(--mat-sys-on-surface-variant, #666);
+  font-size: 0.9rem;
+}
+
+.step-hint {
+  margin: 12px 0;
+}
+
+.format-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--mat-sys-surface-container, #f5f5f5);
+  font-size: 0.85rem;
+}
+
+.format-hint-label {
+  color: var(--mat-sys-on-surface-variant, #666);
+}
+
+.format-field {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--mat-sys-surface-container-high, #ececec);
+
+  &--required {
+    font-weight: 700;
+  }
+}
+
+.format-hint-note {
+  flex-basis: 100%;
+  color: var(--mat-sys-on-surface-variant, #888);
+  font-size: 0.78rem;
+}
+
+.mapping-table {
+  border-collapse: collapse;
+
+  th, td {
+    text-align: left;
+    padding: 4px 16px 4px 0;
+  }
+
+  .field-cell {
+    font-weight: 600;
+    padding-right: 32px;
+  }
+}
+
+.mapping-select {
+  width: 260px;
+}
+
+.step-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.confirm-card {
+  margin-top: 16px;
+  padding: 16px 20px;
+  border: 1px solid var(--mat-sys-outline-variant, #ddd);
+  border-radius: 12px;
+  max-width: 480px;
+
+  h3 {
+    margin-top: 0;
+  }
+}
+
+.confirm-summary {
+  margin: 0;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px dashed var(--mat-sys-outline-variant, #eee);
+  }
+
+  dt {
+    color: var(--mat-sys-on-surface-variant, #666);
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 600;
+  }
+}
+
+.confirm-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  color: var(--mat-sys-error, #ba1a1a);
+}

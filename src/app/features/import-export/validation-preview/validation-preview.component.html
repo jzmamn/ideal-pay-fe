@@ -1,0 +1,51 @@
+<div class="summary-bar" role="status">
+  <span class="chip chip--total">
+    <mat-icon aria-hidden="true">table_rows</mat-icon>
+    {{ preview().totalRows }} rows
+  </span>
+  <span class="chip chip--valid">
+    <mat-icon aria-hidden="true">check_circle</mat-icon>
+    {{ preview().validRows }} valid
+  </span>
+  <span class="chip chip--error" [class.chip--zero]="preview().errorRows === 0">
+    <mat-icon aria-hidden="true">error</mat-icon>
+    {{ preview().errorRows }} with errors
+  </span>
+</div>
+
+<div class="table-wrapper">
+  <table aria-label="Import row validation preview">
+    <thead>
+      <tr>
+        <th scope="col" class="row-col">Row</th>
+        @for (field of fields(); track field) {
+          <th scope="col">{{ field }}</th>
+        }
+        <th scope="col">Issues</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of preview().rows; track row.rowNum) {
+        <tr [class.error-row]="row.errors.length > 0">
+          <td class="row-col">{{ row.rowNum }}</td>
+          @for (field of fields(); track field) {
+            <td [class.error-cell]="errorMessage(row, field) !== null"
+                [matTooltip]="errorMessage(row, field) ?? ''"
+                [matTooltipDisabled]="errorMessage(row, field) === null">
+              {{ row.values[field] }}
+            </td>
+          }
+          <td class="issues-col">
+            @if (row.errors.length > 0) {
+              <span class="issue-text" [matTooltip]="rowMessages(row)">
+                {{ row.errors.length }} issue{{ row.errors.length === 1 ? '' : 's' }}
+              </span>
+            } @else {
+              <mat-icon class="ok-icon" aria-label="Row valid">check</mat-icon>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

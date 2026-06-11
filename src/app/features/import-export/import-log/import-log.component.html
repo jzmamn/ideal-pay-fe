@@ -1,0 +1,76 @@
+<div class="log-shell">
+
+  <div class="log-header">
+    <h2>Import History</h2>
+    <button mat-stroked-button type="button" routerLink="/import-export">
+      <mat-icon aria-hidden="true">upload_file</mat-icon> New import
+    </button>
+    <button mat-icon-button type="button" aria-label="Refresh import history"
+            (click)="reload()">
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="log-loading">
+      <mat-progress-spinner diameter="32" mode="indeterminate" aria-label="Loading" />
+    </div>
+  } @else if (logs().length === 0) {
+    <div class="log-empty">
+      <mat-icon aria-hidden="true">info_outline</mat-icon>
+      <p>No imports yet.</p>
+    </div>
+  } @else {
+    <div class="table-wrapper">
+      <table aria-label="Past imports">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">File</th>
+            <th scope="col">Data type</th>
+            <th scope="col">Month</th>
+            <th scope="col" class="num-col">Valid</th>
+            <th scope="col" class="num-col">Errors</th>
+            <th scope="col">Status</th>
+            <th scope="col">By</th>
+            <th scope="col">When</th>
+            <th scope="col" class="action-col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of logs(); track entry.id) {
+            <tr>
+              <td>{{ entry.id }}</td>
+              <td class="file-cell">{{ entry.fileName }}</td>
+              <td>{{ entry.entity }}</td>
+              <td>{{ entry.payrollMonth }}</td>
+              <td class="num-col">{{ entry.validRows }}</td>
+              <td class="num-col" [class.has-errors]="entry.errorRows > 0">
+                {{ entry.errorRows }}
+              </td>
+              <td><span [class]="badgeClass(entry.status)">{{ entry.status }}</span></td>
+              <td>{{ entry.createdBy }}</td>
+              <td>{{ entry.createdAt | date:'yyyy-MM-dd HH:mm' }}</td>
+              <td class="action-col">
+                <button mat-stroked-button type="button"
+                        [disabled]="!canRollback(entry)"
+                        [matTooltip]="entry.status === 'LOCKED'
+                          ? 'Locked — rows already processed by a payroll run'
+                          : 'Delete every row created by this import'"
+                        [attr.aria-label]="'Roll back import ' + entry.id"
+                        (click)="rollback(entry)">
+                  @if (rollingBackId() === entry.id) {
+                    <mat-icon aria-hidden="true">hourglass_top</mat-icon>
+                  } @else {
+                    <mat-icon aria-hidden="true">undo</mat-icon>
+                  }
+                  Rollback
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

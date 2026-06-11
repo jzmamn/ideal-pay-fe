@@ -1,7 +1,9 @@
 import {
   ChangeDetectionStrategy, Component,
-  computed, signal,
+  computed, inject, signal,
 } from '@angular/core';
+import { IndividualSalaryService } from '../../shared/individual-salary.service';
+import { ExportButtonComponent } from '../../../../../import-export/export-button/export-button.component';
 import { DecimalPipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -32,15 +34,21 @@ const MOCK_LOANS: LoanItem[] = [
     DecimalPipe, ReactiveFormsModule,
     MatButtonModule, MatFormFieldModule, MatIconModule,
     MatInputModule, MatTooltipModule,
+    ExportButtonComponent,
   ],
   templateUrl: './loans.component.html',
   styleUrl: './loans.component.scss',
 })
 export class LoansComponent {
+  private readonly salarySvc = inject(IndividualSalaryService);
+
   readonly items        = signal<LoanItem[]>(MOCK_LOANS);
   readonly editingIndex = signal<number | null>(null);
 
   readonly total = computed(() => this.items().reduce((s, i) => s + i.amount, 0));
+
+  readonly payrollMonth = computed(() =>
+    `${this.salarySvc.periodYear()}-${String(this.salarySvc.periodMonth()).padStart(2, '0')}`);
 
   readonly editAmountCtrl = new FormControl<number | null>(null, {
     validators: [Validators.required, Validators.min(0)],

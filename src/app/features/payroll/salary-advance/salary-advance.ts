@@ -16,6 +16,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 import { BatchService, BatchSaveEntry, BatchSavePayload, PivotRow } from '../batch/batch.service';
 import { SalaryAdvanceService, SalAdvEntry } from './salary-advance.service';
+import { ExportButtonComponent } from '../../import-export/export-button/export-button.component';
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -37,6 +38,7 @@ interface SalAdvFlatRow {
     MatButtonModule, MatFormFieldModule,
     MatIconModule, MatInputModule,
     MatProgressSpinnerModule, MatSelectModule, MatTooltipModule,
+    ExportButtonComponent,
   ],
   templateUrl: './salary-advance.html',
   styleUrl:    './salary-advance.scss',
@@ -73,6 +75,11 @@ export class SalaryAdvance {
   get periodLabel(): string {
     const { month, year } = this.periodForm.getRawValue();
     return `${this.months.find(x => x.value === month)?.label ?? ''} ${year}`;
+  }
+
+  get payrollMonthStr(): string {
+    const { month, year } = this.periodForm.getRawValue();
+    return `${year}-${String(month).padStart(2, '0')}`;
   }
 
   // ── Entry view state ───────────────────────────────────────────────────

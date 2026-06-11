@@ -105,6 +105,13 @@ export const routes: Routes = [
             },
 
             {
+                path: 'import-export',
+                loadChildren: () =>
+                    import('./features/import-export/import-export.routes')
+                        .then(m => m.IMPORT_EXPORT_ROUTES),
+            },
+
+            {
                 path: 'reports',
                 loadComponent: () =>
                     import('./features/reports/reports')

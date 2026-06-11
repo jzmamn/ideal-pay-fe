@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { IndividualSalaryService } from '../../shared/individual-salary.service';
+import { ExportButtonComponent } from '../../../../../import-export/export-button/export-button.component';
 
 interface VariableAllowanceItem {
   id: number;
@@ -25,6 +26,7 @@ interface VariableAllowanceItem {
     DecimalPipe, ReactiveFormsModule,
     MatButtonModule, MatFormFieldModule, MatIconModule,
     MatInputModule, MatTooltipModule,
+    ExportButtonComponent,
   ],
   templateUrl: './variable-allowance.component.html',
   styleUrl: './variable-allowance.component.scss',
@@ -36,6 +38,9 @@ export class VariableAllowanceComponent {
   readonly editingIndex = signal<number | null>(null);
 
   readonly total = computed(() => this.items().reduce((s, i) => s + i.amount, 0));
+
+  readonly payrollMonth = computed(() =>
+    `${this.svc.periodYear()}-${String(this.svc.periodMonth()).padStart(2, '0')}`);
 
   readonly editAmountCtrl = new FormControl<number | null>(null, {
     validators: [Validators.required, Validators.min(0)],

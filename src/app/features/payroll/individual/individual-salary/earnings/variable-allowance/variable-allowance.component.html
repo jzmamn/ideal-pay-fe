@@ -5,6 +5,7 @@
       <mat-icon aria-hidden="true">trending_up</mat-icon>
       <span id="var-allowance-heading" class="panel-title">Variable Allowance</span>
     </div>
+    <app-export-button entity="EMP_VA" [payrollMonth]="payrollMonth()" />
   </div>
 
   @if (items().length > 0) {

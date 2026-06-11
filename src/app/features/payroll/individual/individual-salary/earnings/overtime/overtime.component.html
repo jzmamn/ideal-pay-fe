@@ -5,6 +5,7 @@
       <mat-icon aria-hidden="true">schedule</mat-icon>
       <span id="overtime-heading" class="panel-title">Overtime</span>
     </div>
+    <app-export-button entity="EMP_OT" [payrollMonth]="payrollMonth()" />
   </div>
 
   @if (items().length > 0) {

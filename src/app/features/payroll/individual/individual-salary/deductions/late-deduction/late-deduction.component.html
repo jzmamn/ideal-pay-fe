@@ -5,6 +5,7 @@
       <mat-icon aria-hidden="true">schedule</mat-icon>
       <span id="late-heading" class="panel-title">Late Deduction</span>
     </div>
+    <app-export-button entity="EMP_LATE" [payrollMonth]="payrollMonth()" />
     <p class="formula-note">
       Hourly Rate = Monthly Salary ÷ (Working Days × 8) &nbsp;|&nbsp;
       Deduction = Hourly Rate × Late Hours

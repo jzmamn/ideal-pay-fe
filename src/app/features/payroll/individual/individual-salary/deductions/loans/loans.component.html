@@ -5,6 +5,7 @@
       <mat-icon aria-hidden="true">account_balance</mat-icon>
       <span id="loans-heading" class="panel-title">Loans</span>
     </div>
+    <app-export-button entity="EMP_LOAN" [payrollMonth]="payrollMonth()" />
   </div>
 
   @if (items().length > 0) {

@@ -1,0 +1,170 @@
+<div class="wizard-shell">
+
+  <div class="wizard-header">
+    <h2>Import Payroll Data</h2>
+    <button mat-stroked-button type="button" (click)="downloadTemplate('xlsx')">
+      <mat-icon aria-hidden="true">grid_on</mat-icon> XLSX template
+    </button>
+    <button mat-stroked-button type="button" (click)="downloadTemplate('csv')">
+      <mat-icon aria-hidden="true">description</mat-icon> CSV template
+    </button>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="wizard-error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon> {{ errorMessage() }}
+    </div>
+  }
+
+  <mat-stepper linear="false" #stepper>
+
+    <!-- ── Step 1: File & target ─────────────────────────────────────── -->
+    <mat-step label="Choose file" [editable]="!busy()">
+      <form [formGroup]="setupForm" class="setup-form">
+
+        <mat-form-field appearance="outline">
+          <mat-label>Data type</mat-label>
+          <mat-select formControlName="entity">
+            @for (e of entities; track e.value) {
+              <mat-option [value]="e.value">{{ e.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Payroll month</mat-label>
+          <input matInput type="month" formControlName="payrollMonth"
+                 aria-label="Payroll month (YYYY-MM)">
+          @if (setupForm.controls.payrollMonth.hasError('pattern')) {
+            <mat-error>Use the format YYYY-MM</mat-error>
+          }
+        </mat-form-field>
+
+        <div class="file-picker">
+          <button mat-flat-button type="button" (click)="fileInput.click()">
+            <mat-icon aria-hidden="true">attach_file</mat-icon> Choose file
+          </button>
+          <input #fileInput type="file" accept=".xlsx,.csv" hidden
+                 aria-label="Import file (.xlsx or .csv)"
+                 (change)="onFileSelected($event)">
+          <span class="file-name">{{ file()?.name ?? 'No file selected (.xlsx or .csv)' }}</span>
+        </div>
+      </form>
+
+      @if (selectedFormat(); as fmt) {
+        <div class="format-hint">
+          <span class="format-hint-label">Expected columns:</span>
+          @for (field of fmt.expectedFields; track field) {
+            <code class="format-field"
+                  [class.format-field--required]="fmt.requiredFields.includes(field)">
+              {{ field }}
+            </code>
+          }
+          <span class="format-hint-note">
+            Bold columns are required · accepted files: {{ fmt.supportedFormats.join(', ') }}
+          </span>
+        </div>
+      }
+
+      <div class="step-actions">
+        <button mat-flat-button type="button"
+                [disabled]="!file() || setupForm.invalid || busy()"
+                (click)="upload()">
+          @if (busy()) { <mat-icon aria-hidden="true">hourglass_top</mat-icon> }
+          Upload &amp; validate
+        </button>
+      </div>
+    </mat-step>
+
+    <!-- ── Step 2: Column mapping ────────────────────────────────────── -->
+    <mat-step label="Map columns" [editable]="!busy()">
+      @if (preview(); as p) {
+        <p class="step-hint">
+          Match each expected field to a column from
+          <strong>{{ p.fileName }}</strong>.
+        </p>
+
+        <table class="mapping-table" aria-label="Column mapping">
+          <thead>
+            <tr>
+              <th scope="col">Expected field</th>
+              <th scope="col">File column</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (field of p.expectedFields; track field) {
+              <tr>
+                <td class="field-cell">{{ field }}</td>
+                <td>
+                  <mat-form-field appearance="outline" class="mapping-select">
+                    <mat-select [value]="mappedHeader(field)"
+                                [aria-label]="'Column for ' + field"
+                                (selectionChange)="setMapping(field, $event.value)">
+                      <mat-option value="">— not mapped —</mat-option>
+                      @for (header of p.detectedHeaders; track header) {
+                        <mat-option [value]="header">{{ header }}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      <div class="step-actions">
+        <button mat-stroked-button matStepperPrevious type="button">Back</button>
+        <button mat-flat-button type="button" [disabled]="busy()" (click)="revalidate()">
+          @if (busy()) { <mat-icon aria-hidden="true">hourglass_top</mat-icon> }
+          Apply mapping &amp; validate
+        </button>
+      </div>
+    </mat-step>
+
+    <!-- ── Step 3: Validation preview ────────────────────────────────── -->
+    <mat-step label="Review rows" [editable]="!busy()">
+      @if (preview(); as p) {
+        <app-validation-preview [preview]="p" />
+      }
+
+      <div class="step-actions">
+        <button mat-stroked-button matStepperPrevious type="button">Back</button>
+        <button mat-flat-button matStepperNext type="button"
+                [disabled]="!canCommit()">Continue</button>
+      </div>
+    </mat-step>
+
+    <!-- ── Step 4: Confirm & commit ──────────────────────────────────── -->
+    <mat-step label="Confirm">
+      @if (preview(); as p) {
+        <div class="confirm-card">
+          <h3>Ready to import</h3>
+          <dl class="confirm-summary">
+            <div><dt>File</dt><dd>{{ p.fileName }}</dd></div>
+            <div><dt>Data type</dt><dd>{{ p.entity }}</dd></div>
+            <div><dt>Payroll month</dt><dd>{{ p.payrollMonth }}</dd></div>
+            <div><dt>Rows to insert</dt><dd>{{ p.validRows }}</dd></div>
+            <div><dt>Rows skipped (errors)</dt><dd>{{ p.errorRows }}</dd></div>
+          </dl>
+          @if (p.errorRows > 0) {
+            <p class="confirm-warning" role="alert">
+              <mat-icon aria-hidden="true">warning_amber</mat-icon>
+              {{ p.errorRows }} row(s) with validation errors will be skipped.
+            </p>
+          }
+        </div>
+      }
+
+      <div class="step-actions">
+        <button mat-stroked-button matStepperPrevious type="button">Back</button>
+        <button mat-flat-button type="button"
+                [disabled]="!canCommit()" (click)="commit()">
+          @if (busy()) { <mat-icon aria-hidden="true">hourglass_top</mat-icon> }
+          Commit import
+        </button>
+      </div>
+    </mat-step>
+
+  </mat-stepper>
+</div>

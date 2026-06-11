@@ -2,6 +2,8 @@ import {
   ChangeDetectionStrategy, Component, DestroyRef,
   computed, inject, signal,
 } from '@angular/core';
+import { IndividualSalaryService } from '../../shared/individual-salary.service';
+import { ExportButtonComponent } from '../../../../../import-export/export-button/export-button.component';
 import { DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -27,18 +29,23 @@ interface VariableDeductionItem {
     DecimalPipe, ReactiveFormsModule,
     MatButtonModule, MatFormFieldModule, MatIconModule,
     MatInputModule, MatTooltipModule,
+    ExportButtonComponent,
   ],
   templateUrl: './variable-deduction.component.html',
   styleUrl: './variable-deduction.component.scss',
 })
 export class VariableDeductionComponent {
   private readonly svc        = inject(VariableDeductionService);
+  private readonly salarySvc  = inject(IndividualSalaryService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly items        = signal<VariableDeductionItem[]>([]);
   readonly editingIndex = signal<number | null>(null);
 
   readonly total = computed(() => this.items().reduce((s, i) => s + i.amount, 0));
+
+  readonly payrollMonth = computed(() =>
+    `${this.salarySvc.periodYear()}-${String(this.salarySvc.periodMonth()).padStart(2, '0')}`);
 
   readonly editAmountCtrl = new FormControl<number | null>(null, {
     validators: [Validators.required, Validators.min(0)],

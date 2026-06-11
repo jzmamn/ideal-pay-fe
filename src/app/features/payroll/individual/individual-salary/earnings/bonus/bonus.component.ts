@@ -22,6 +22,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { EmployeeBonusResponse, EmployeeBonusRequest } from './employee-bonus.model';
 import { EmployeeBonusService } from './employee-bonus.service';
+import { IndividualSalaryService } from '../../shared/individual-salary.service';
+import { ExportButtonComponent } from '../../../../../import-export/export-button/export-button.component';
 
 @Component({
   selector: 'app-bonus',
@@ -35,6 +37,7 @@ import { EmployeeBonusService } from './employee-bonus.service';
     MatIconModule,
     MatInputModule,
     MatTooltipModule,
+    ExportButtonComponent,
   ],
   templateUrl: './bonus.component.html',
   styleUrl: './bonus.component.scss',
@@ -43,8 +46,12 @@ export class BonusComponent {
   private readonly bonusSvc  = inject(EmployeeBonusService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly snackBar   = inject(MatSnackBar);
+  private readonly salarySvc  = inject(IndividualSalaryService);
 
   readonly empId = input<number | null>(null);
+
+  readonly payrollMonth = computed(() =>
+    `${this.salarySvc.periodYear()}-${String(this.salarySvc.periodMonth()).padStart(2, '0')}`);
 
   readonly bonuses      = signal<EmployeeBonusResponse[]>([]);
   readonly editingIndex = signal<number | null>(null);

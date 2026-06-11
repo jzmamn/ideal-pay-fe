@@ -5,6 +5,7 @@
       <mat-icon aria-hidden="true">event_busy</mat-icon>
       <span id="nopay-heading" class="panel-title">No Pay (LOP)</span>
     </div>
+    <app-export-button entity="EMP_NOPAY" [payrollMonth]="payrollMonth()" />
   </div>
 
   @if (items().length > 0) {

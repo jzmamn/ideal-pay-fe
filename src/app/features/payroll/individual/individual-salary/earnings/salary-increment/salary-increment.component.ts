@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { computed, ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,6 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { IndividualSalaryService } from '../../shared/individual-salary.service';
 import { PayrollEmployeeGridComponent } from '../../shared/payroll-employee-grid/payroll-employee-grid.component';
 import { GridColumnDef, PayrollEntryRow } from '../../payroll.models';
+import { ExportButtonComponent } from '../../../../../import-export/export-button/export-button.component';
 
 @Component({
   selector: 'app-salary-increment',
@@ -15,6 +16,7 @@ import { GridColumnDef, PayrollEntryRow } from '../../payroll.models';
   imports: [
     ReactiveFormsModule, MatButtonModule, MatFormFieldModule,
     MatInputModule, MatSelectModule, MatIconModule, PayrollEmployeeGridComponent,
+    ExportButtonComponent,
   ],
   template: `
     <div class="inc-controls">
@@ -38,6 +40,7 @@ import { GridColumnDef, PayrollEntryRow } from '../../payroll.models';
         <button mat-stroked-button (click)="applyBulk()">Apply to all</button>
       </div>
       <div class="inc-io-actions">
+        <app-export-button entity="EMP_SAL_INCR" [payrollMonth]="payrollMonth()" />
         <button mat-stroked-button type="button" (click)="exportCsv()" aria-label="Export salary increment data as CSV">
           <mat-icon>download</mat-icon> Export
         </button>
@@ -63,6 +66,9 @@ import { GridColumnDef, PayrollEntryRow } from '../../payroll.models';
 })
 export class SalaryIncrementComponent {
   readonly svc = inject(IndividualSalaryService);
+
+  readonly payrollMonth = computed(() =>
+    `${this.svc.periodYear()}-${String(this.svc.periodMonth()).padStart(2, '0')}`);
   private readonly fb = inject(FormBuilder);
 
   readonly incTypes = [

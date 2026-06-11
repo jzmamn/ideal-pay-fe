@@ -1,6 +1,6 @@
 import {
   ChangeDetectionStrategy, Component, DestroyRef,
-  computed, inject, signal, OnInit,
+  computed, effect, inject, signal, untracked, OnInit,
 } from '@angular/core';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -214,6 +214,22 @@ export class IndividualComponent implements OnInit {
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
 
+  constructor() {
+    // Reload profile when period changes while an employee is already selected
+    effect(() => {
+      this.svc.periodMonth();
+      this.svc.periodYear();
+      const emp = untracked(() => this.selectedEmployee());
+      if (emp) {
+        this.employeeProfile.set(null);
+        this.sidebarProfile.set(null);
+        this.lates.set([]);
+        this.workflowStep.set('prepare');
+        this.loadProfile(emp.id);
+      }
+    }, { allowSignalWrites: true });
+  }
+
   ngOnInit(): void {
     this.svc.loadEntries();
   }
@@ -236,14 +252,17 @@ export class IndividualComponent implements OnInit {
   private loadProfile(empId: number): void {
     this.profileLoading.set(true);
 
-    this.profileSvc.getEmployeeProfileByEmployee(empId, false)
+    const month = this.svc.periodMonth().toString().padStart(2, '0');
+    const payrollMonth = `${this.svc.periodYear()}-${month}`;
+
+    this.profileSvc.getEmployeeProfileByEmployee(empId, false, payrollMonth)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next:  profile => { this.employeeProfile.set(profile); this.profileLoading.set(false); },
         error: ()      => this.profileLoading.set(false),
       });
 
-    this.profileSvc.getEmployeeProfileByEmployee(empId, true)
+    this.profileSvc.getEmployeeProfileByEmployee(empId, true, payrollMonth)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next:  profile => this.sidebarProfile.set(profile),
@@ -251,8 +270,6 @@ export class IndividualComponent implements OnInit {
       });
 
     // Load late deduction for current period — cancel any in-flight request from a prior employee selection
-    const month = this.svc.periodMonth().toString().padStart(2, '0');
-    const payrollMonth = `${this.svc.periodYear()}-${month}`;
     this.latesLoad$.next();
     this.profileSvc.getLatesByEmployee(empId)
       .pipe(takeUntil(this.latesLoad$), takeUntilDestroyed(this.destroyRef))

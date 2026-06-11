@@ -11,6 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { lastValueFrom } from 'rxjs';
 import { IndividualSalaryService } from '../../shared/individual-salary.service';
+import { ExportButtonComponent } from '../../../../../import-export/export-button/export-button.component';
 import { EmployeeProfileService } from '../../../../../settings/employee/employee-profile.service';
 import type { EmployeeLateRequest } from '../../../../../settings/employee/employee-profile.service';
 
@@ -35,6 +36,7 @@ const WORKING_HOURS_PER_DAY = 8;
     DecimalPipe, ReactiveFormsModule,
     MatButtonModule, MatFormFieldModule, MatIconModule,
     MatInputModule, MatTooltipModule,
+    ExportButtonComponent,
   ],
   templateUrl: './late-deduction.component.html',
   styleUrl: './late-deduction.component.scss',
@@ -47,6 +49,9 @@ export class LateDeductionComponent {
   readonly editingIndex = signal<number | null>(null);
 
   readonly total = computed(() => this.items().reduce((s, i) => s + i.amount, 0));
+
+  readonly payrollMonth = computed(() =>
+    `${this.svc.periodYear()}-${String(this.svc.periodMonth()).padStart(2, '0')}`);
 
   readonly editHoursCtrl = new FormControl<number | null>(null, {
     validators: [Validators.required, Validators.min(0)],

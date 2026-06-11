@@ -6,6 +6,7 @@
       <mat-icon aria-hidden="true">card_giftcard</mat-icon>
       <span id="bonus-heading" class="panel-title">Bonus</span>
     </div>
+    <app-export-button entity="EMP_BONUS" [payrollMonth]="payrollMonth()" />
   </div>
 
   @if (bonuses().length > 0) {

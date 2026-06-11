@@ -11,6 +11,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { OvertimeService } from '../../../../../settings/overtime/overtime.service';
+import { IndividualSalaryService } from '../../shared/individual-salary.service';
+import { ExportButtonComponent } from '../../../../../import-export/export-button/export-button.component';
 
 interface OvertimeItem {
   id: number;
@@ -33,17 +35,22 @@ const MOCK_OVERTIME_TYPES: OvertimeItem[] = [
     DecimalPipe, ReactiveFormsModule,
     MatButtonModule, MatFormFieldModule, MatIconModule,
     MatInputModule, MatTooltipModule,
+    ExportButtonComponent,
   ],
   templateUrl: './overtime.component.html',
   styleUrl: './overtime.component.scss',
 })
 export class OvertimeComponent {
   private readonly overtimeSvc = inject(OvertimeService);
+  private readonly salarySvc   = inject(IndividualSalaryService);
 
   readonly items        = signal<OvertimeItem[]>([]);
   readonly editingIndex = signal<number | null>(null);
 
   readonly total = computed(() => this.items().reduce((s, i) => s + i.amount, 0));
+
+  readonly payrollMonth = computed(() =>
+    `${this.salarySvc.periodYear()}-${String(this.salarySvc.periodMonth()).padStart(2, '0')}`);
 
   readonly editAmountCtrl = new FormControl<number | null>(null, {
     validators: [Validators.required, Validators.min(0)],

@@ -4,6 +4,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { IndividualSalaryService } from '../../shared/individual-salary.service';
 import { PayrollEmployeeGridComponent } from '../../shared/payroll-employee-grid/payroll-employee-grid.component';
 import { GridColumnDef, PayrollEntryRow } from '../../payroll.models';
+import { ExportButtonComponent } from '../../../../../import-export/export-button/export-button.component';
 
 const MS_PER_YEAR = 1000 * 60 * 60 * 24 * 365.25;
 
@@ -14,10 +15,11 @@ function yearsOfService(joinedDate: string): number {
 @Component({
   selector: 'app-gratuity',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, MatButtonToggleModule, PayrollEmployeeGridComponent],
+  imports: [ReactiveFormsModule, MatButtonToggleModule, PayrollEmployeeGridComponent, ExportButtonComponent],
   template: `
     <div class="gratuity-header">
       <p class="formula">Formula: <code>(Basic × Years of Service × 15) / 26</code></p>
+      <app-export-button entity="EMP_GRATUITY" [payrollMonth]="payrollMonth()" />
       <mat-button-toggle-group [formControl]="modeCtrl" aria-label="Gratuity mode">
         <mat-button-toggle value="include">Include in this payroll run</mat-button-toggle>
         <mat-button-toggle value="separate">Schedule separately</mat-button-toggle>
@@ -38,6 +40,9 @@ function yearsOfService(joinedDate: string): number {
 })
 export class GratuityComponent {
   readonly svc = inject(IndividualSalaryService);
+
+  readonly payrollMonth = computed(() =>
+    `${this.svc.periodYear()}-${String(this.svc.periodMonth()).padStart(2, '0')}`);
   private readonly fb = inject(FormBuilder);
 
   readonly modeCtrl = this.fb.nonNullable.control('include');

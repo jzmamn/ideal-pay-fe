@@ -5,6 +5,7 @@
       <mat-icon aria-hidden="true">remove_circle_outline</mat-icon>
       <span id="var-ded-heading" class="panel-title">Variable Deductions</span>
     </div>
+    <app-export-button entity="EMP_VD" [payrollMonth]="payrollMonth()" />
   </div>
 
   @if (items().length > 0) {

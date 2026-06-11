@@ -69,8 +69,9 @@ export class EmployeeProfileService {
       .pipe(map(r => r.data));
   }
 
-  getEmployeeProfileByEmployee(empId: number, assignedOnly = false): Observable<EmployeePayrollComponentsResponse> {
-    const params = new HttpParams().set('assignedOnly', String(assignedOnly));
+  getEmployeeProfileByEmployee(empId: number, assignedOnly = false, payrollMonth?: string): Observable<EmployeePayrollComponentsResponse> {
+    let params = new HttpParams().set('assignedOnly', String(assignedOnly));
+    if (payrollMonth) params = params.set('payrollMonth', payrollMonth);
     return this.http.get<ApiResponse<EmployeePayrollComponentsResponse>>(`${this.base}/emp-profile/${empId}`, { params })
       .pipe(map(r => r.data));
   }
