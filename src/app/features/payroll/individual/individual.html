@@ -63,6 +63,35 @@
             </div>
           }
 
+          <!-- Load button -->
+          @if (selectedEmployee()) {
+            <div class="load-bar">
+              <button mat-stroked-button
+                      [disabled]="loadingComponents() || profileLoading()"
+                      (click)="loadComponents()"
+                      aria-label="Load payroll components for this employee">
+                @if (loadingComponents()) {
+                  <mat-spinner diameter="16" />
+                } @else {
+                  <mat-icon>sync</mat-icon>
+                }
+                {{ loadingComponents() ? 'Loading…' : 'Load Components' }}
+              </button>
+              @if (loadComponentsInfo()) {
+                <div class="load-info" role="status" aria-live="polite">
+                  <mat-icon>check_circle</mat-icon>
+                  {{ loadComponentsInfo() }}
+                </div>
+              }
+              @if (loadComponentsError()) {
+                <div class="load-error" role="alert" aria-live="assertive">
+                  <mat-icon>error</mat-icon>
+                  {{ loadComponentsError() }}
+                </div>
+              }
+            </div>
+          }
+
           <mat-tab-group class="category-tabs"
                          [selectedIndex]="selectedSubStep()"
                          (selectedIndexChange)="selectedSubStep.set($event)"
@@ -71,7 +100,7 @@
             @for (step of SUB_STEPS; track step.uiKey) {
               <mat-tab [label]="step.label">
 
-                <!-- Fixed Allowance -->
+                <!-- Fixed Allowance (read-only after load) -->
                 @if (step.uiKey === 'fixedAlw') {
                   <div class="comp-table-wrap">
                     <table class="comp-table">
@@ -84,19 +113,14 @@
                       <tbody>
                         @if (!fixedAllowances().length) {
                           <tr><td colspan="4" class="comp-empty">
-                            {{ selectedEmployee() ? 'No fixed allowances assigned.' : 'Select an employee to load components.' }}
+                            {{ selectedEmployee() ? 'Click Load Components to assign fixed allowances.' : 'Select an employee to load components.' }}
                           </td></tr>
                         } @else {
-                          @for (row of fixedAllowances(); track $index; let i = $index) {
+                          @for (row of fixedAllowances(); track $index) {
                             <tr>
                               <td class="col-code">{{ row.faCode }}</td>
                               <td class="col-name">{{ row.faName }}</td>
-                              <td class="col-amount">
-                                <input class="comp-input" type="number" min="0" step="0.01"
-                                       [value]="row.amount"
-                                       (change)="updateFixedAllowance(i, { amount: +$any($event.target).value })"
-                                       aria-label="Amount for {{ row.faName }}" />
-                              </td>
+                              <td class="col-amount comp-readonly">{{ row.amount | number:'1.2-2' }}</td>
                               <td class="col-month">{{ row.payrollMonth }}</td>
                             </tr>
                           }
@@ -141,39 +165,36 @@
                   </div>
                 }
 
-                <!-- Overtime -->
+                <!-- Overtime — rate read-only (set by load), hours editable, amount auto-computed -->
                 @if (step.uiKey === 'overtime') {
                   <div class="comp-table-wrap">
                     <table class="comp-table">
                       <thead><tr>
                         <th class="col-code">Code</th>
                         <th class="col-name">Component</th>
+                        <th class="col-rate">Rate/Hr</th>
                         <th class="col-hours">Hours</th>
                         <th class="col-amount">Amount</th>
                         <th class="col-month">Month</th>
                       </tr></thead>
                       <tbody>
                         @if (!overtimes().length) {
-                          <tr><td colspan="5" class="comp-empty">
-                            {{ selectedEmployee() ? 'No overtime assigned.' : 'Select an employee to load components.' }}
+                          <tr><td colspan="6" class="comp-empty">
+                            {{ selectedEmployee() ? 'Click Load Components to assign overtime rates.' : 'Select an employee to load components.' }}
                           </td></tr>
                         } @else {
                           @for (row of overtimes(); track $index; let i = $index) {
                             <tr>
                               <td class="col-code">{{ row.overtimeCode }}</td>
                               <td class="col-name">{{ row.overtimeName }}</td>
+                              <td class="col-rate comp-readonly">{{ (row.rate ?? 0) | number:'1.4-4' }}</td>
                               <td class="col-hours">
                                 <input class="comp-input" type="number" min="0" step="0.5"
                                        [value]="row.hours"
                                        (change)="updateOvertime(i, { hours: +$any($event.target).value })"
                                        aria-label="Hours for {{ row.overtimeName }}" />
                               </td>
-                              <td class="col-amount">
-                                <input class="comp-input" type="number" min="0" step="0.01"
-                                       [value]="row.amount"
-                                       (change)="updateOvertime(i, { amount: +$any($event.target).value })"
-                                       aria-label="Amount for {{ row.overtimeName }}" />
-                              </td>
+                              <td class="col-amount comp-readonly">{{ row.amount | number:'1.2-2' }}</td>
                               <td class="col-month">{{ row.payrollMonth }}</td>
                             </tr>
                           }
@@ -183,7 +204,7 @@
                   </div>
                 }
 
-                <!-- Fixed Deduction -->
+                <!-- Fixed Deduction (read-only after load) -->
                 @if (step.uiKey === 'fixedDed') {
                   <div class="comp-table-wrap">
                     <table class="comp-table">
@@ -196,19 +217,14 @@
                       <tbody>
                         @if (!fixedDeductions().length) {
                           <tr><td colspan="4" class="comp-empty">
-                            {{ selectedEmployee() ? 'No fixed deductions assigned.' : 'Select an employee to load components.' }}
+                            {{ selectedEmployee() ? 'Click Load Components to assign fixed deductions.' : 'Select an employee to load components.' }}
                           </td></tr>
                         } @else {
-                          @for (row of fixedDeductions(); track $index; let i = $index) {
+                          @for (row of fixedDeductions(); track $index) {
                             <tr>
                               <td class="col-code">{{ row.fdCode }}</td>
                               <td class="col-name">{{ row.fdName }}</td>
-                              <td class="col-amount">
-                                <input class="comp-input" type="number" min="0" step="0.01"
-                                       [value]="row.amount"
-                                       (change)="updateFixedDeduction(i, { amount: +$any($event.target).value })"
-                                       aria-label="Amount for {{ row.fdName }}" />
-                              </td>
+                              <td class="col-amount comp-readonly">{{ row.amount | number:'1.2-2' }}</td>
                               <td class="col-month">{{ row.payrollMonth }}</td>
                             </tr>
                           }
@@ -253,39 +269,36 @@
                   </div>
                 }
 
-                <!-- NoPay -->
+                <!-- NoPay — rate read-only (set by load), days editable, amount auto-computed -->
                 @if (step.uiKey === 'nopay') {
                   <div class="comp-table-wrap">
                     <table class="comp-table">
                       <thead><tr>
                         <th class="col-code">Code</th>
-                        <th class="col-name">Nopay Type</th>
+                        <th class="col-name">NoPay Type</th>
+                        <th class="col-rate">Rate/Day</th>
                         <th class="col-days">Days</th>
                         <th class="col-amount">Amount</th>
                         <th class="col-month">Month</th>
                       </tr></thead>
                       <tbody>
                         @if (!nopays().length) {
-                          <tr><td colspan="5" class="comp-empty">
-                            {{ selectedEmployee() ? 'No NoPay entries for this period.' : 'Select an employee to load components.' }}
+                          <tr><td colspan="6" class="comp-empty">
+                            {{ selectedEmployee() ? 'Click Load Components to assign no-pay rates.' : 'Select an employee to load components.' }}
                           </td></tr>
                         } @else {
                           @for (row of nopays(); track $index; let i = $index) {
                             <tr>
                               <td class="col-code">{{ row.nopayCode }}</td>
-                              <td class="col-name comp-readonly">{{ $any(row).nopayMasterDays }}</td>
+                              <td class="col-name">{{ row.nopayName }}</td>
+                              <td class="col-rate comp-readonly">{{ (row.rate ?? 0) | number:'1.4-4' }}</td>
                               <td class="col-days">
                                 <input class="comp-input" type="number" min="0" step="0.5"
                                        [value]="row.days"
                                        (change)="updateNopay(i, { days: +$any($event.target).value })"
-                                       aria-label="Nopay days for {{ row.nopayCode }}" />
+                                       aria-label="NoPay days for {{ row.nopayName }}" />
                               </td>
-                              <td class="col-amount">
-                                <input class="comp-input" type="number" min="0" step="0.01"
-                                       [value]="row.amount"
-                                       (change)="updateNopay(i, { amount: +$any($event.target).value })"
-                                       aria-label="Amount for {{ row.nopayCode }}" />
-                              </td>
+                              <td class="col-amount comp-readonly">{{ row.amount | number:'1.2-2' }}</td>
                               <td class="col-month">{{ row.payrollMonth }}</td>
                             </tr>
                           }
@@ -295,16 +308,16 @@
                   </div>
                 }
 
-                <!-- Late Deduction -->
+                <!-- Late Deduction — rate read-only (server or fallback), hours editable, amount auto-computed -->
                 @if (step.uiKey === 'late') {
                   <div class="comp-table-wrap">
                     <div class="comp-formula-chip">
-                      Formula: Late Deduction = Basic Salary ÷ ({{ WORKING_DAYS }} days × 8 hrs) × Late Hours
+                      Rate/Hr = Basic Salary ÷ (Working Days × 8) — set by Load Components
                     </div>
                     <table class="comp-table">
                       <thead><tr>
                         <th class="col-name">Employee</th>
-                        <th class="col-amount">Hourly Rate</th>
+                        <th class="col-amount">Rate/Hr</th>
                         <th class="col-hours">Late Hours</th>
                         <th class="col-amount">Deduction</th>
                         <th class="col-month">Month</th>
@@ -321,7 +334,7 @@
                                 {{ selectedEmployee()?.firstName }} {{ selectedEmployee()?.lastName }}
                               </td>
                               <td class="col-amount comp-readonly">
-                                {{ lateHourlyRate() | number:'1.4-4' }}
+                                {{ (row.rate ?? lateHourlyRate()) | number:'1.4-4' }}
                               </td>
                               <td class="col-hours">
                                 <input class="comp-input" type="number" min="0" step="0.5"

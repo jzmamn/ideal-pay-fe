@@ -158,6 +158,7 @@
   .col-code   { width: 100px; color: #64748b; font-family: monospace; font-size: 12px; }
   .col-name   { min-width: 180px; }
   .col-amount { width: 130px; }
+  .col-rate   { width: 110px; }
   .col-hours  { width: 100px; }
   .col-days   { width: 100px; }
   .col-month  { width: 110px; font-size: 12px; color: #64748b; }
@@ -529,6 +530,37 @@ mat-divider { margin: 3px 0; }
   font-size: 14px;
   color: #15803d;
   strong { font-size: 20px; color: #16a34a; }
+}
+
+// ── Load bar ──────────────────────────────────────────────────────────────
+.load-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0 12px;
+  flex-wrap: wrap;
+
+  button { min-width: 160px; }
+
+  mat-spinner { display: inline-flex; }
+}
+
+.load-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #15803d;
+  mat-icon { font-size: 16px; width: 16px; height: 16px; color: #16a34a; }
+}
+
+.load-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #dc2626;
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
 }
 
 // ── Action bar ────────────────────────────────────────────────────────────

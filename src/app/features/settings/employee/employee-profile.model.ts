@@ -96,6 +96,8 @@ export interface EmployeeNopayRequest {
 export interface EmployeeNopayResponse {
   id: number;
   days: number;
+  /** Server-stored rate (basicSalary / workingDays). Read-only; set by load. */
+  rate?: number;
   amount: number;
   payrollMonth: string;
   isProcessed: boolean;
@@ -134,6 +136,8 @@ export interface EmployeeOvertimeRequest {
 export interface EmployeeOvertimeResponse {
   id: number;
   hours: number;
+  /** Server-stored rate (basicSalary / (workingDays * 8)). Read-only; set by load. */
+  rate?: number;
   amount: number;
   payrollMonth: string;
   isProcessed: boolean;
@@ -159,6 +163,8 @@ export interface EmployeeOvertimeResponse {
 export interface EmployeeLateResponse {
   id: number;
   hours: number;
+  /** Server-stored rate (basicSalary / (workingDays * hoursPerDay)). Read-only; set by load. */
+  rate?: number;
   amount: number;
   payrollMonth: string;
   isProcessed: boolean;

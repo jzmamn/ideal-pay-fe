@@ -15,6 +15,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { IndividualSalaryService } from './individual-salary/shared/individual-salary.service';
+import { BatchService } from '../batch/batch.service';
 import { EmployeeProfileService } from '../../settings/employee/employee-profile.service';
 import { PayrollRunService } from '../shared/payroll-run.service';
 import { PayrollRunResponse } from '../shared/payroll-run.model';
@@ -87,6 +88,7 @@ function calcIncomeTax(taxableIncome: number): number {
 export class IndividualComponent implements OnInit {
   readonly svc             = inject(IndividualSalaryService);
   private readonly profileSvc  = inject(EmployeeProfileService);
+  private readonly batchSvc    = inject(BatchService);
   private readonly payrollRunSvc = inject(PayrollRunService);
   private readonly destroyRef  = inject(DestroyRef);
   private readonly fb          = inject(FormBuilder);
@@ -102,8 +104,11 @@ export class IndividualComponent implements OnInit {
   readonly workflowStep     = signal<WorkflowStep>('prepare');
   readonly lates            = signal<EmployeeLateResponse[]>([]);
   private readonly latesLoad$ = new Subject<void>();
-  readonly saving           = signal(false);
-  readonly submitting       = signal(false);
+  readonly saving              = signal(false);
+  readonly submitting          = signal(false);
+  readonly loadingComponents   = signal(false);
+  readonly loadComponentsInfo  = signal<string | null>(null);
+  readonly loadComponentsError = signal<string | null>(null);
   readonly isDisbursed      = signal(false);
   readonly lastSavedAt      = signal<Date | null>(null);
   readonly draftRun         = signal<PayrollRunResponse | null>(null);
@@ -171,9 +176,12 @@ export class IndividualComponent implements OnInit {
   readonly sidebarNPItems = computed(() =>
     (this.sidebarProfile()?.nopays             ?? []).filter(r => (r.amount ?? 0) > 0 || (r.days ?? 0) > 0));
 
-  readonly WORKING_DAYS       = 26;
-  readonly lateHourlyRate     = computed(() =>
-    (this.selectedEmployee()?.basicSalary ?? 0) / (this.WORKING_DAYS * 8));
+  /** Fallback rate when no server load has been performed yet. */
+  private readonly lateHourlyRateFallback = computed(() =>
+    (this.selectedEmployee()?.basicSalary ?? 0) / (26 * 8));
+  /** Displayed rate: prefers the server-stored rate from the loaded record. */
+  readonly lateHourlyRate = computed(() =>
+    this.lates()[0]?.rate ?? this.lateHourlyRateFallback());
 
   readonly fixedAllowances    = computed(() => this.employeeProfile()?.fixedAllowances    ?? []);
   readonly fixedDeductions    = computed(() => this.employeeProfile()?.fixedDeductions    ?? []);
@@ -290,6 +298,40 @@ export class IndividualComponent implements OnInit {
       });
   }
 
+  // ── Load components ────────────────────────────────────────────────────────
+
+  /**
+   * Calls the server-side load endpoint for the selected employee.
+   * Evaluates formulas, stores FA/FD amounts and OT/NoPay/Late rates,
+   * then refreshes the profile so the UI shows the server-computed values.
+   */
+  async loadComponents(): Promise<void> {
+    const emp = this.selectedEmployee();
+    if (!emp) return;
+    this.loadingComponents.set(true);
+    this.loadComponentsInfo.set(null);
+    this.loadComponentsError.set(null);
+    try {
+      const summary = await lastValueFrom(
+        this.batchSvc.loadComponentsForEmployee(
+          emp.id,
+          this.svc.periodMonth(),
+          this.svc.periodYear(),
+          1, // TODO: replace with authenticated user id
+        ),
+      );
+      const msg = `Loaded: ${summary.recordsUpserted} record(s) updated.` +
+        (summary.errors?.length ? ` Warnings: ${summary.errors.join('; ')}` : '');
+      this.loadComponentsInfo.set(msg);
+      // Refresh the profile so FA/FD amounts and OT/NoPay/Late rates are shown
+      this.loadProfile(emp.id);
+    } catch {
+      this.loadComponentsError.set('Failed to load components. Please try again.');
+    } finally {
+      this.loadingComponents.set(false);
+    }
+  }
+
   // ── Row update helpers ─────────────────────────────────────────────────────
 
   updateFixedAllowance(idx: number, changes: Partial<EmployeeFixedAllowanceResponse>): void {
@@ -332,7 +374,13 @@ export class IndividualComponent implements OnInit {
     this.employeeProfile.update(p => {
       if (!p) return p;
       const list = [...p.overtimes];
-      list[idx] = { ...list[idx], ...changes };
+      const current = list[idx];
+      const updated = { ...current, ...changes };
+      // Auto-compute amount when hours change and a server rate is available
+      if ('hours' in changes && current.rate != null) {
+        updated.amount = Math.round(current.rate * (changes.hours ?? 0) * 100) / 100;
+      }
+      list[idx] = updated;
       return { ...p, overtimes: list };
     });
   }
@@ -341,7 +389,13 @@ export class IndividualComponent implements OnInit {
     this.employeeProfile.update(p => {
       if (!p) return p;
       const list = [...p.nopays];
-      list[idx] = { ...list[idx], ...changes };
+      const current = list[idx];
+      const updated = { ...current, ...changes };
+      // Auto-compute amount when days change and a server rate is available
+      if ('days' in changes && current.rate != null) {
+        updated.amount = Math.round(current.rate * (changes.days ?? 0) * 100) / 100;
+      }
+      list[idx] = updated;
       return { ...p, nopays: list };
     });
   }
@@ -349,11 +403,11 @@ export class IndividualComponent implements OnInit {
   updateLate(idx: number, changes: Partial<EmployeeLateResponse>): void {
     this.lates.update(list => {
       const next = [...list];
-      const updated = { ...next[idx], ...changes };
+      const current = next[idx];
+      const updated = { ...current, ...changes };
       if ('hours' in changes) {
-        updated.amount = parseFloat(
-          (this.lateHourlyRate() * (changes.hours ?? 0)).toFixed(2)
-        );
+        const rate = current.rate ?? this.lateHourlyRateFallback();
+        updated.amount = Math.round(rate * (changes.hours ?? 0) * 100) / 100;
       }
       next[idx] = updated;
       return next;

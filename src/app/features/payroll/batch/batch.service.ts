@@ -96,6 +96,25 @@ export class BatchService {
   }
 
   /**
+   * Triggers the server-side component load for a SINGLE employee.
+   * Stores emp_fa, emp_fd, emp_ot.rate, emp_np.rate, emp_late.rate, emp_bonus records.
+   * Call `loadProfile()` on the individual screen afterwards to refresh displayed data.
+   */
+  loadComponentsForEmployee(
+    empId: number,
+    periodMonth: number,
+    periodYear: number,
+    userId: number,
+  ): Observable<LoadSummaryResponse> {
+    return this.http
+      .post<ApiResponse<LoadSummaryResponse>>(
+        `${this.baseUrl}/load/employee?empId=${empId}&month=${periodMonth}&year=${periodYear}&userId=${userId}`,
+        {},
+      )
+      .pipe(map(r => r.data));
+  }
+
+  /**
    * Upsert / delete batch entries.
    * amount > 0  → upsert
    * amount = 0  → delete existing record
