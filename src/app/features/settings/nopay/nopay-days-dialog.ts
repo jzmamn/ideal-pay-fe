@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -9,6 +9,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { NoPayDays } from '../../../shared/models/master-data.models';
 import { MasterDataService } from '../../../shared/services/master-data.service';
+import { FormulaDefinitionForm } from '../../../shared/components/formula-definition/formula-definition-form/formula-definition-form';
+import { FormulaDefinitionFormValue } from '../../../shared/components/formula-definition/formula-definition.models';
 
 @Component({
   selector: 'app-nopay-days-dialog',
@@ -22,6 +24,7 @@ import { MasterDataService } from '../../../shared/services/master-data.service'
     ReactiveFormsModule,
     MatSlideToggleModule,
     MatDividerModule,
+    FormulaDefinitionForm,
   ],
   host: { class: 'mat-dialog-host' },
   templateUrl: './nopay-days-dialog.html',
@@ -44,15 +47,40 @@ export class NopayDaysDialog {
     isActive:    [this.item?.isActive    ?? true],
   });
 
+  // ── Formula state ──────────────────────────────────────────────────────────
+  readonly formulaExpression = signal(this.item?.formula        ?? '');
+  readonly formulaIsActive   = signal(this.item?.formulaEnabled ?? false);
+  readonly formulaSaving     = signal(false);
+  readonly formulaSaveError  = signal<string | null>(null);
+
+  private readonly latestFormula = signal<FormulaDefinitionFormValue>({
+    expression: this.item?.formula        ?? '',
+    isActive:   this.item?.formulaEnabled ?? false,
+  });
+
+  onFormulaValueChanged(value: FormulaDefinitionFormValue): void {
+    this.latestFormula.set(value);
+    this.formulaIsActive.set(value.isActive);
+  }
+
+  onFormulaSaveRequested(value: FormulaDefinitionFormValue): void {
+    this.latestFormula.set(value);
+    this.formulaExpression.set(value.expression);
+    this.formulaIsActive.set(value.isActive);
+  }
+
   save(): void {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
-    const v   = this.form.getRawValue();
+    const v  = this.form.getRawValue();
+    const fv = this.latestFormula();
     const dto = {
-      code:        v.code!,
-      name:        v.name!,
-      days:        v.days!,
-      description: v.description ?? undefined,
-      isActive:    v.isActive!,
+      code:           v.code!,
+      name:           v.name!,
+      days:           v.days!,
+      description:    v.description ?? undefined,
+      isActive:       v.isActive!,
+      formula:        fv.expression || undefined,
+      formulaEnabled: fv.isActive,
     };
     if (this.isEdit) {
       this.masterSvc.updateMaster('nopay', v.id!, dto).subscribe({

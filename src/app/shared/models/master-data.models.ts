@@ -44,6 +44,9 @@ export interface EmployeeStatus extends MasterEntity {
 export interface NoPayDays extends MasterEntity {
   days: number;
   description?: string;
+  liableNoPay?: boolean;
+  formula?: string;
+  formulaEnabled?: boolean;
 }
 
 export interface Company extends MasterEntity {

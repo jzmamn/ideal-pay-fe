@@ -47,6 +47,21 @@
 
   </form>
 
+  <app-formula-definition-form
+    #formulaForm
+    [initialExpression]="formulaExpression()"
+    [initialIsActive]="formulaIsActive()"
+    [saving]="formulaSaving()"
+    [saveError]="formulaSaveError()"
+    (valueChanged)="onFormulaValueChanged($event)"
+    (saveRequested)="onFormulaSaveRequested($event)"
+  />
+  <div class="formula-save-row">
+    <button mat-stroked-button type="button" (click)="formulaForm.save()" aria-label="Save formula">
+      <mat-icon>save</mat-icon> Save Formula
+    </button>
+  </div>
+
 </mat-dialog-content>
 
 <mat-dialog-actions>
