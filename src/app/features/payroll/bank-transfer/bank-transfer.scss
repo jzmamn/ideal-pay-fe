@@ -53,6 +53,20 @@
   --mat-form-field-container-vertical-padding: 6px;
 }
 
+.transfer-type-field {
+  width: 160px;
+  --mdc-outlined-text-field-container-height: 36px;
+  --mat-form-field-container-height: 36px;
+  --mat-form-field-container-vertical-padding: 6px;
+}
+
+.load-btn {
+  height: 36px;
+  line-height: 36px;
+  --mdc-protected-button-container-height: 36px;
+  --mdc-filled-button-container-height: 36px;
+}
+
 // ── Body ──────────────────────────────────────────────────────────────────────
 
 .page-body {
@@ -63,18 +77,52 @@
   gap: 20px;
 }
 
-.mode-row {
+// ── Controls row ─────────────────────────────────────────────────────────────
+
+.controls-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
+  padding: 12px 16px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
 }
 
-.mode-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: #475569;
-  white-space: nowrap;
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  .filter-icon {
+    color: #94a3b8;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+}
+
+.employee-lookup-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 260px;
+
+  app-table-autocomplete {
+    flex: 1;
+    --mdc-outlined-text-field-container-height: 36px;
+    --mat-form-field-container-height: 36px;
+    --mat-form-field-container-vertical-padding: 6px;
+  }
+
+  .clear-btn {
+    margin-top: -4px;
+    flex-shrink: 0;
+  }
 }
 
 .single-bank-field {

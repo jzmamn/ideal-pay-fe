@@ -1,12 +1,12 @@
 import { DecimalPipe, DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy, Component,
-  DestroyRef, computed, inject, signal,
+  DestroyRef, ViewChild, computed, inject, signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { TableAutocomplete, type TableColumn } from '../../../shared/components/table-autocomplete/table-autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -23,7 +23,9 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { forkJoin } from 'rxjs';
 import { BankService } from '../../infrastructure/banks/bank.service';
-import { Bank } from '../../../shared/models/master-data.models';
+import { JobCategoryService } from '../../infrastructure/job-categories/job-category.service';
+import { BranchService } from '../../infrastructure/branches/branch.service';
+import { Bank, JobCategory, Branch } from '../../../shared/models/master-data.models';
 import {
   BankGroup, BankTransferRow, BankTransferTemplate,
   TRANSFER_TYPE_LABELS, TransferType,
@@ -34,8 +36,6 @@ import {
   BankTemplateDialogData,
   BankTemplateDialogResult,
 } from './bank-template-dialog/bank-template-dialog';
-
-export type TransferMode = 'by-bank' | 'single-bank';
 
 // ── File generation ──────────────────────────────────────────────────────────
 
@@ -109,6 +109,7 @@ const TRANSFER_TYPES: { value: TransferType; label: string }[] = [
   { value: 'SALARY',          label: TRANSFER_TYPE_LABELS.SALARY          },
   { value: 'SALARY_ADVANCE',  label: TRANSFER_TYPE_LABELS.SALARY_ADVANCE  },
   { value: 'FIXED_ALLOWANCE', label: TRANSFER_TYPE_LABELS.FIXED_ALLOWANCE },
+  { value: 'BONUS',           label: TRANSFER_TYPE_LABELS.BONUS           },
 ];
 
 @Component({
@@ -117,7 +118,6 @@ const TRANSFER_TYPES: { value: TransferType; label: string }[] = [
   imports: [
     ReactiveFormsModule,
     MatButtonModule,
-    MatButtonToggleModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -132,22 +132,27 @@ const TRANSFER_TYPES: { value: TransferType; label: string }[] = [
     MatBadgeModule,
     DecimalPipe, DatePipe,
     MatCheckboxModule,
+    TableAutocomplete,
   ],
   templateUrl: './bank-transfer.html',
   styleUrl:    './bank-transfer.scss',
 })
 export class BankTransfer {
-  private readonly fb         = inject(FormBuilder);
-  private readonly svc        = inject(BankTransferService);
-  private readonly bankSvc    = inject(BankService);
-  private readonly dialog     = inject(MatDialog);
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly fb             = inject(FormBuilder);
+  private readonly svc            = inject(BankTransferService);
+  private readonly bankSvc        = inject(BankService);
+  private readonly jobCategorySvc = inject(JobCategoryService);
+  private readonly branchSvc      = inject(BranchService);
+  private readonly dialog         = inject(MatDialog);
+  private readonly destroyRef     = inject(DestroyRef);
 
   // ── Reference data ────────────────────────────────────────────────────────
 
-  readonly banks      = signal<Bank[]>([]);
-  readonly templates  = signal<BankTransferTemplate[]>([]);
-  readonly refLoading = signal(false);
+  readonly banks         = signal<Bank[]>([]);
+  readonly templates     = signal<BankTransferTemplate[]>([]);
+  readonly jobCategories = signal<JobCategory[]>([]);
+  readonly branches      = signal<Branch[]>([]);
+  readonly refLoading    = signal(false);
 
   // ── Period + type + mode form ─────────────────────────────────────────────
 
@@ -169,34 +174,59 @@ export class BankTransfer {
 
   readonly selectedType = signal<TransferType>('SALARY');
 
-  /** Transfer mode: group by each employee's bank, or use one selected bank for all. */
-  readonly mode = signal<TransferMode>('by-bank');
-
-  /** Template selected in single-bank mode. */
+  /** Selected template for file generation. */
   readonly selectedTemplateId = signal<number | null>(null);
 
-  readonly singleBankTemplate = computed(() => {
-    const explicit = this.selectedTemplateId();
-    if (explicit === null) return null;
-    return this.templates().find(t => t.id === explicit) ?? null;
+  // ── Filters ───────────────────────────────────────────────────────────────
+
+  @ViewChild('empAc') private readonly _empAc?: TableAutocomplete;
+
+  readonly filterType          = signal<'employee' | 'jobCategory' | 'branch' | null>(null);
+  readonly filterEmpId         = signal<number | null>(null);
+  readonly filterJobCategoryId = signal<number | null>(null);
+  readonly filterBranchId      = signal<number | null>(null);
+
+  setFilterType(type: 'employee' | 'jobCategory' | 'branch' | null): void {
+    this.filterType.set(type);
+    this.filterEmpId.set(null);
+    this.filterJobCategoryId.set(null);
+    this.filterBranchId.set(null);
+    this._empAc?.writeValue(null);
+  }
+
+  readonly employeeItems = computed(() => {
+    const seen = new Set<number>();
+    return this.rows().filter(r => {
+      if (seen.has(r.empId)) return false;
+      seen.add(r.empId);
+      return true;
+    }).map(r => ({ id: r.empId, employeeNo: r.employeeNo, name: r.empName }));
   });
 
-  /** A virtual BankGroup covering all rows, using the selected template's bank. */
-  readonly singleBankGroup = computed<BankGroup | null>(() => {
-    if (this.mode() !== 'single-bank') return null;
-    const tmpl = this.singleBankTemplate();
-    if (!tmpl) return null;
-    const rows = this.rows();
-    return {
-      bankId:        tmpl.bankId,
-      bankCode:      tmpl.bankCode,
-      bankName:      tmpl.bankName,
-      template:      tmpl,
-      rows,
-      total:         rows.reduce((s, r) => s + r.totalAmount, 0),
-      fileGenerated: false,
-    };
-  });
+  readonly employeeCols: TableColumn<{ id: number; employeeNo: string; name: string }>[] = [
+    { key: 'employeeNo', label: 'Emp #' },
+    { key: 'name',       label: 'Name'  },
+  ];
+
+  readonly empDisplayFn = (e: { id: number; employeeNo: string; name: string }) =>
+    `${e.name} — ${e.employeeNo}`;
+
+  onEmployeeSelected(item: unknown): void {
+    this.filterEmpId.set((item as { id: number }).id);
+  }
+
+  clearEmployeeFilter(): void {
+    this.filterEmpId.set(null);
+    this._empAc?.writeValue(null);
+  }
+
+  onJobCategorySelected(id: number | null): void {
+    this.filterJobCategoryId.set(id);
+  }
+
+  onBranchSelected(id: number | null): void {
+    this.filterBranchId.set(id);
+  }
 
   // ── Transfer state ────────────────────────────────────────────────────────
 
@@ -206,11 +236,25 @@ export class BankTransfer {
   readonly markingIds = signal<Set<number>>(new Set<number>());
   readonly markError  = signal<string | null>(null);
 
-  /** Rows grouped by each employee's own bank (by-bank mode). */
+  readonly filteredRows = computed(() => {
+    const empId    = this.filterEmpId();
+    const jcId     = this.filterJobCategoryId();
+    const branchId = this.filterBranchId();
+    return this.rows().filter(r => {
+      if (empId    !== null && r.empId         !== empId)    return false;
+      if (jcId     !== null && r.jobCategoryId !== jcId)     return false;
+      if (branchId !== null && r.branchId      !== branchId) return false;
+      return true;
+    });
+  });
+
+  /** Rows grouped by each employee's own bank. */
   readonly bankGroups = computed<BankGroup[]>(() => {
-    const allRows = this.rows();
-    const tmpls   = this.templates();
-    const map     = new Map<string, BankGroup>();
+    const allRows      = this.filteredRows();
+    const tmpls        = this.templates();
+    const selectedId   = this.selectedTemplateId();
+    const selectedTmpl = selectedId !== null ? (tmpls.find(t => t.id === selectedId) ?? null) : null;
+    const map          = new Map<string, BankGroup>();
 
     for (const row of allRows) {
       const key      = row.bankCode ?? '__NONE__';
@@ -224,7 +268,7 @@ export class BankTransfer {
           bankId:        row.bankId,
           bankCode:      row.bankCode,
           bankName:      row.bankName ?? 'Unknown Bank',
-          template:      tmpls.find(t => t.bankCode === row.bankCode) ?? null,
+          template:      selectedTmpl ?? tmpls.find(t => t.bankCode === row.bankCode) ?? null,
           rows:          [row],
           total:         row.totalAmount,
           fileGenerated: false,
@@ -234,9 +278,9 @@ export class BankTransfer {
     return Array.from(map.values());
   });
 
-  readonly pendingCount     = computed(() => this.rows().filter(r => r.transferStatus === 'PENDING').length);
-  readonly transferredCount = computed(() => this.rows().filter(r => r.transferStatus === 'TRANSFERRED').length);
-  readonly grandTotal       = computed(() => this.rows().reduce((s, r) => s + r.totalAmount, 0));
+  readonly pendingCount     = computed(() => this.filteredRows().filter(r => r.transferStatus === 'PENDING').length);
+  readonly transferredCount = computed(() => this.filteredRows().filter(r => r.transferStatus === 'TRANSFERRED').length);
+  readonly grandTotal       = computed(() => this.filteredRows().reduce((s, r) => s + r.totalAmount, 0));
   readonly hasRows          = computed(() => this.rows().length > 0);
 
   // ── Row selection ─────────────────────────────────────────────────────────
@@ -318,21 +362,23 @@ export class BankTransfer {
     return `${MONTHS.find(m => m.value === month)?.label ?? ''} ${year}`;
   }
 
-  setMode(m: TransferMode): void {
-    this.mode.set(m);
-    this.selectedTemplateId.set(null);
-  }
-
   // ── Reference data load ───────────────────────────────────────────────────
 
   private _loadRef(): void {
     this.refLoading.set(true);
-    forkJoin({ banks: this.bankSvc.getAll(), templates: this.svc.getTemplates() })
+    forkJoin({
+      banks:         this.bankSvc.getAll(),
+      templates:     this.svc.getTemplates(),
+      jobCategories: this.jobCategorySvc.getAll(),
+      branches:      this.branchSvc.getAll(),
+    })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ banks, templates }) => {
+        next: ({ banks, templates, jobCategories, branches }) => {
           this.banks.set(banks);
           this.templates.set(templates);
+          this.jobCategories.set(jobCategories);
+          this.branches.set(branches);
           this.refLoading.set(false);
         },
         error: () => this.refLoading.set(false),

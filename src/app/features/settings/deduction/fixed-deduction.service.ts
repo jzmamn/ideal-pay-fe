@@ -18,7 +18,6 @@ interface ApiFixedDeduction {
   code: string;
   name: string;
   description: string | null;
-  amount: number;
   isActive: boolean;
   liableForEpf: boolean;
   liableForEtf: boolean;
@@ -35,7 +34,7 @@ interface ApiFixedDeduction {
 }
 
 type ApiFixedDeductionPayload = Pick<ApiFixedDeduction,
-  'name' | 'description' | 'amount' | 'isActive' |
+  'name' | 'description' | 'isActive' |
   'liableForEpf' | 'liableForEtf' | 'liableForPaye' | 'liableNoPay' |
   'formula' | 'formulaEnabled' | 'createdBy' | 'modifiedBy'
 >;
@@ -61,7 +60,7 @@ export class FixedDeductionService {
     const payload: ApiFixedDeductionPayload = {
       name:           data.name,
       description:    data.description,
-      amount:         data.amount!,
+
       isActive:       data.isActive,
       liableForEpf:   data.liableForEpf,
       liableForEtf:   data.liableForEtf,
@@ -81,7 +80,7 @@ export class FixedDeductionService {
     const payload: ApiFixedDeductionPayload = {
       name:           data.name,
       description:    data.description,
-      amount:         data.amount!,
+
       isActive:       data.isActive,
       liableForEpf:   data.liableForEpf,
       liableForEtf:   data.liableForEtf,
@@ -107,7 +106,6 @@ export class FixedDeductionService {
       item.description,
       item.isActive,
       DeductionType.FIXED,
-      item.amount,
       item.liableForEpf,
       item.liableForEtf,
       item.liableForPaye,

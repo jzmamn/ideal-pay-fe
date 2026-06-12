@@ -55,7 +55,6 @@ export class BonusDialog {
     code:          [{ value: this.row?.code ?? '', disabled: true }],
     name:          [this.row?.name          ?? '', Validators.required],
     description:   [this.row?.description   ?? null as string | null],
-    amount:        [this.row?.amount        ?? null as number | null, [Validators.required, Validators.min(0)]],
     isActive:      [this.row?.isActive      ?? true],
     isTaxable:     [this.row?.isTaxable     ?? false],
     liableForEpf:  [this.row?.liableForEpf  ?? false],
@@ -77,6 +76,7 @@ export class BonusDialog {
 
   onFormulaValueChanged(value: FormulaDefinitionFormValue): void {
     this.latestFormula.set(value);
+    this.formulaIsActive.set(value.isActive);
   }
 
   onFormulaSaveRequested(value: FormulaDefinitionFormValue): void {
@@ -97,7 +97,6 @@ export class BonusDialog {
     const base = {
       name:           raw.name!,
       description:    raw.description ?? null,
-      amount:         raw.amount,
       isActive:       raw.isActive!,
       isTaxable:      raw.isTaxable!,
       liableForEpf:   raw.liableForEpf!,
@@ -112,9 +111,9 @@ export class BonusDialog {
       this.dialogRef.close({
         action: 'update',
         data: new BonusModel(
-          this.row!.id, this.row!.code, base.name, base.description, base.amount,
+          this.row!.id, this.row!.code, base.name, base.description,
           base.isActive, base.isTaxable, base.liableForEpf, base.liableForEtf,
-          base.liableForPaye, base.liableNoPay, base.formula, base.formulaEnabled,
+          base.liableForPaye, base.liableNoPay, base.formula ?? undefined, base.formulaEnabled,
         ),
       });
     } else {

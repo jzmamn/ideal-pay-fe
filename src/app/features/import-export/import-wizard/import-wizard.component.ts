@@ -4,7 +4,7 @@ import {
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -19,12 +19,13 @@ import {
   ImportPreview, ImportService,
 } from '../import.service';
 import { ValidationPreviewComponent } from '../validation-preview/validation-preview.component';
+import { ExportButtonComponent } from '../export-button/export-button.component';
 
 const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 /**
  * Four-step import wizard:
- * 1. pick file + entity + payroll month → upload & stage
+ * 1. pick entity + payroll month + file → upload & stage
  * 2. map file columns to expected fields → re-validate
  * 3. row-by-row validation preview
  * 4. confirm & commit → import log
@@ -33,10 +34,10 @@ const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
   selector: 'app-import-wizard',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    ReactiveFormsModule,
+    ReactiveFormsModule, RouterLink,
     MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule,
     MatProgressSpinnerModule, MatSelectModule, MatStepperModule,
-    ValidationPreviewComponent,
+    ValidationPreviewComponent, ExportButtonComponent,
   ],
   templateUrl: './import-wizard.component.html',
   styleUrl: './import-wizard.component.scss',
@@ -171,6 +172,10 @@ export class ImportWizardComponent {
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────
+
+  entityLabel(entity: ImportEntity): string {
+    return IMPORT_ENTITIES.find(e => e.value === entity)?.label ?? entity;
+  }
 
   private fail(err: unknown): void {
     this.busy.set(false);

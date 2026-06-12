@@ -114,9 +114,8 @@ export class EmployeeForm {
     isActive:      [true],
     remarks:       [''],
 
-    employeeTypeId: [null as number | null, Validators.required],
-    contractFrom:   [{ value: null as Date | null, disabled: true }],
-    contractTo:     [{ value: null as Date | null, disabled: true }],
+    employeeTypeId:  [null as number | null, Validators.required],
+    empTypeEndDate:  [{ value: null as Date | null, disabled: true }],
 
     nopayDaysId:   [null as number | null, Validators.required],
     epfNo:         [''],
@@ -125,7 +124,7 @@ export class EmployeeForm {
     jobCategoryId: [null as number | null, Validators.required],
     designationId: [null as number | null, Validators.required],
     branchId:      [null as number | null, Validators.required],
-    gradeId:       [null as number | null],
+    gradeId:       [null as number | null, Validators.required],
     bankId:        [null as number | null],
     bankBranchId:  [null as number | null],
     accountNo:     [''],
@@ -137,7 +136,7 @@ export class EmployeeForm {
     adrsLine1:       [''],
     adrsLine2:       [''],
     city:            [''],
-    districtId:      [null as number | null],
+    district:        [''],
     country:         [null as number | null, Validators.required],
     contactPerson:   [''],
     cpAddress:       [''],
@@ -177,20 +176,17 @@ export class EmployeeForm {
     this.masterSvc.loadAll();
 
     effect(() => {
-      const type  = this.masterSvc.activeEmployeeTypes().find(t => t.id === this._empTypeId());
-      const start = this.form.controls.contractFrom;
-      const end   = this.form.controls.contractTo;
+      const type       = this.masterSvc.activeEmployeeTypes().find(t => t.id === this._empTypeId());
+      const endDateCtrl = this.form.controls.empTypeEndDate;
       if (type?.dateRange) {
-        start.enable({ emitEvent: false });
-        end.enable({ emitEvent: false });
+        endDateCtrl.enable({ emitEvent: false });
         const emp = this.service.selected();
         if (emp && this._empTypeId() === emp.employeeTypeId) {
-          start.setValue(parseDate(emp.contractFrom), { emitEvent: false });
-          end.setValue(parseDate(emp.contractTo),   { emitEvent: false });
+          endDateCtrl.setValue(parseDate(emp.empTypeEndDate), { emitEvent: false });
         }
       } else {
-        start.disable({ emitEvent: false });
-        end.disable({ emitEvent: false });
+        endDateCtrl.setValue(null, { emitEvent: false });
+        endDateCtrl.disable({ emitEvent: false });
       }
     });
 
@@ -226,9 +222,8 @@ export class EmployeeForm {
         epfNo:         emp.epfNo,
         etfNo:         emp.etfNo,
 
-        employeeTypeId: emp.employeeTypeId,
-        contractFrom:   parseDate(emp.contractFrom),
-        contractTo:     parseDate(emp.contractTo),
+        employeeTypeId:  emp.employeeTypeId,
+        empTypeEndDate:  parseDate(emp.empTypeEndDate),
 
         nopayDaysId:   emp.nopayDaysId,
         jobCategoryId: emp.jobCategoryId,
@@ -246,7 +241,7 @@ export class EmployeeForm {
         adrsLine1:       emp.adrsLine1,
         adrsLine2:       emp.adrsLine2,
         city:            emp.city,
-        districtId:      emp.districtId,
+        district:        emp.district ?? '',
         country:         emp.countryId,
         contactPerson:   emp.contactPerson,
         cpAddress:       emp.cpAddress,
@@ -281,7 +276,7 @@ export class EmployeeForm {
     const tabGroups = [
       ['firstName', 'lastName', 'country'],
       ['employeeNo', 'joinedDate', 'employeeTypeId', 'nopayDaysId', 'jobCategoryId', 'designationId', 'branchId', 'statusId'],
-      ['basicSalary'],
+      ['basicSalary', 'gradeId'],
     ];
     const index = tabGroups.findIndex(keys =>
       keys.some(k => this.form.get(k)?.invalid)
@@ -312,9 +307,8 @@ export class EmployeeForm {
       basicSalary:   v.basicSalary ?? 0,
       joinedDate:    formatDate(v.joinedDate)!,
 
-      employeeTypeId: v.employeeTypeId!,
-      contractFrom:   orUndef(formatDate(v.contractFrom)),
-      contractTo:     orUndef(formatDate(v.contractTo)),
+      employeeTypeId:  v.employeeTypeId!,
+      empTypeEndDate:  orUndef(formatDate(v.empTypeEndDate)),
 
       nopayDaysId:   v.nopayDaysId!,
       jobCategoryId: v.jobCategoryId!,
@@ -333,7 +327,7 @@ export class EmployeeForm {
       adrsLine1:       orUndef(v.adrsLine1 ?? ''),
       adrsLine2:       orUndef(v.adrsLine2 ?? ''),
       city:            orUndef(v.city ?? ''),
-      districtId:      v.districtId ?? undefined,
+      district:        orUndef(v.district ?? ''),
       countryId:       v.country!,
       contactPerson:   orUndef(v.contactPerson ?? ''),
       cpAddress:       orUndef(v.cpAddress ?? ''),

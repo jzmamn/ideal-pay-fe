@@ -5,7 +5,6 @@ export class AllowanceModel {
   code: string;
   name: string;
   description: string | null;
-  amount: number | undefined;
   isActive: boolean;
   isTaxable: boolean;
   liableForEpf: boolean;
@@ -21,7 +20,6 @@ export class AllowanceModel {
     code: string,
     name: string,
     description: string | null,
-    amount: number | undefined,
     isActive: boolean,
     isTaxable: boolean,
     liableForEpf: boolean,
@@ -36,7 +34,6 @@ export class AllowanceModel {
     this.code = code;
     this.name = name;
     this.description = description;
-    this.amount = amount;
     this.isActive = isActive;
     this.isTaxable = isTaxable;
     this.liableForEpf = liableForEpf;

@@ -1,166 +1,266 @@
 <div class="wizard-shell">
 
   <div class="wizard-header">
-    <h2>Import Payroll Data</h2>
-    <button mat-stroked-button type="button" (click)="downloadTemplate('xlsx')">
-      <mat-icon aria-hidden="true">grid_on</mat-icon> XLSX template
-    </button>
-    <button mat-stroked-button type="button" (click)="downloadTemplate('csv')">
-      <mat-icon aria-hidden="true">description</mat-icon> CSV template
-    </button>
+    <div class="wizard-title-row">
+      <mat-icon class="wizard-title-icon" aria-hidden="true">upload_file</mat-icon>
+      <h2>Import Payroll Data</h2>
+    </div>
+    <a mat-stroked-button routerLink="log" aria-label="View import history">
+      <mat-icon aria-hidden="true">history</mat-icon> Import History
+    </a>
   </div>
 
   @if (errorMessage()) {
     <div class="wizard-error" role="alert">
-      <mat-icon aria-hidden="true">error_outline</mat-icon> {{ errorMessage() }}
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <span>{{ errorMessage() }}</span>
     </div>
   }
 
   <mat-stepper linear="false" #stepper>
 
     <!-- ── Step 1: File & target ─────────────────────────────────────── -->
-    <mat-step label="Choose file" [editable]="!busy()">
-      <form [formGroup]="setupForm" class="setup-form">
+    <mat-step label="Choose File" [editable]="!busy()">
+      <div class="step-content">
 
-        <mat-form-field appearance="outline">
-          <mat-label>Data type</mat-label>
-          <mat-select formControlName="entity">
-            @for (e of entities; track e.value) {
-              <mat-option [value]="e.value">{{ e.label }}</mat-option>
+        <section class="step-section">
+          <div class="section-label">
+            <mat-icon aria-hidden="true">tune</mat-icon>
+            <span>What are you importing?</span>
+          </div>
+
+          <form [formGroup]="setupForm" class="setup-form">
+            <mat-form-field appearance="outline">
+              <mat-label>Data type</mat-label>
+              <mat-select formControlName="entity">
+                @for (e of entities; track e.value) {
+                  <mat-option [value]="e.value">{{ e.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Payroll month</mat-label>
+              <input matInput type="month" formControlName="payrollMonth"
+                     aria-label="Payroll month (YYYY-MM)">
+              @if (setupForm.controls.payrollMonth.hasError('pattern')) {
+                <mat-error>Use the format YYYY-MM</mat-error>
+              }
+            </mat-form-field>
+          </form>
+        </section>
+
+        @if (selectedFormat(); as fmt) {
+          <section class="step-section">
+            <div class="section-label">
+              <mat-icon aria-hidden="true">view_column</mat-icon>
+              <span>Expected columns</span>
+            </div>
+            <div class="format-fields">
+              @for (field of fmt.expectedFields; track field) {
+                <span class="format-field"
+                      [class.format-field--required]="fmt.requiredFields.includes(field)"
+                      [title]="fmt.requiredFields.includes(field) ? field + ' (required)' : field + ' (optional)'">
+                  {{ field }}
+                  @if (fmt.requiredFields.includes(field)) {
+                    <span class="required-star" aria-label="required">*</span>
+                  }
+                </span>
+              }
+            </div>
+            <p class="format-note">
+              <mat-icon aria-hidden="true" class="note-icon">info</mat-icon>
+              Fields marked <strong>*</strong> are required.
+              Accepted file formats: {{ fmt.supportedFormats.join(', ') }}.
+            </p>
+          </section>
+
+          <section class="step-section template-section">
+            <div class="section-label">
+              <mat-icon aria-hidden="true">download</mat-icon>
+              <span>Download template</span>
+            </div>
+            <div class="template-actions">
+              <button mat-stroked-button type="button" (click)="downloadTemplate('xlsx')"
+                      aria-label="Download XLSX template for selected data type">
+                <mat-icon aria-hidden="true">grid_on</mat-icon>
+                XLSX template
+              </button>
+              <button mat-stroked-button type="button" (click)="downloadTemplate('csv')"
+                      aria-label="Download CSV template for selected data type">
+                <mat-icon aria-hidden="true">description</mat-icon>
+                CSV template
+              </button>
+              <app-export-button
+                [entity]="setupForm.controls.entity.value"
+                [payrollMonth]="setupForm.controls.payrollMonth.value"
+                format="xlsx"
+                aria-label="Export existing data as XLSX" />
+            </div>
+          </section>
+        }
+
+        <section class="step-section">
+          <div class="section-label">
+            <mat-icon aria-hidden="true">attach_file</mat-icon>
+            <span>Select file to import</span>
+          </div>
+          <div class="file-drop-zone" [class.file-drop-zone--selected]="file()">
+            <mat-icon class="drop-icon" aria-hidden="true">
+              {{ file() ? 'insert_drive_file' : 'cloud_upload' }}
+            </mat-icon>
+            @if (file()) {
+              <span class="file-name-display">{{ file()!.name }}</span>
+              <span class="file-size">{{ (file()!.size / 1024).toFixed(1) }} KB</span>
+            } @else {
+              <span class="drop-label">Click to choose a file</span>
+              <span class="drop-hint">.xlsx or .csv</span>
             }
-          </mat-select>
-        </mat-form-field>
+            <input type="file" accept=".xlsx,.csv" class="file-input"
+                   aria-label="Import file (.xlsx or .csv)"
+                   (change)="onFileSelected($event)">
+          </div>
+        </section>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Payroll month</mat-label>
-          <input matInput type="month" formControlName="payrollMonth"
-                 aria-label="Payroll month (YYYY-MM)">
-          @if (setupForm.controls.payrollMonth.hasError('pattern')) {
-            <mat-error>Use the format YYYY-MM</mat-error>
-          }
-        </mat-form-field>
-
-        <div class="file-picker">
-          <button mat-flat-button type="button" (click)="fileInput.click()">
-            <mat-icon aria-hidden="true">attach_file</mat-icon> Choose file
-          </button>
-          <input #fileInput type="file" accept=".xlsx,.csv" hidden
-                 aria-label="Import file (.xlsx or .csv)"
-                 (change)="onFileSelected($event)">
-          <span class="file-name">{{ file()?.name ?? 'No file selected (.xlsx or .csv)' }}</span>
-        </div>
-      </form>
-
-      @if (selectedFormat(); as fmt) {
-        <div class="format-hint">
-          <span class="format-hint-label">Expected columns:</span>
-          @for (field of fmt.expectedFields; track field) {
-            <code class="format-field"
-                  [class.format-field--required]="fmt.requiredFields.includes(field)">
-              {{ field }}
-            </code>
-          }
-          <span class="format-hint-note">
-            Bold columns are required · accepted files: {{ fmt.supportedFormats.join(', ') }}
-          </span>
-        </div>
-      }
+      </div>
 
       <div class="step-actions">
         <button mat-flat-button type="button"
                 [disabled]="!file() || setupForm.invalid || busy()"
                 (click)="upload()">
-          @if (busy()) { <mat-icon aria-hidden="true">hourglass_top</mat-icon> }
+          @if (busy()) {
+            <mat-icon aria-hidden="true">hourglass_top</mat-icon>
+          } @else {
+            <mat-icon aria-hidden="true">cloud_upload</mat-icon>
+          }
           Upload &amp; validate
         </button>
       </div>
     </mat-step>
 
     <!-- ── Step 2: Column mapping ────────────────────────────────────── -->
-    <mat-step label="Map columns" [editable]="!busy()">
-      @if (preview(); as p) {
-        <p class="step-hint">
-          Match each expected field to a column from
-          <strong>{{ p.fileName }}</strong>.
-        </p>
+    <mat-step label="Map Columns" [editable]="!busy()">
+      <div class="step-content">
+        @if (preview(); as p) {
+          <p class="step-hint">
+            Match each expected field to a column detected in
+            <strong>{{ p.fileName }}</strong>.
+            Unmapped fields will be left blank.
+          </p>
 
-        <table class="mapping-table" aria-label="Column mapping">
-          <thead>
-            <tr>
-              <th scope="col">Expected field</th>
-              <th scope="col">File column</th>
-            </tr>
-          </thead>
-          <tbody>
+          <div class="mapping-grid">
+            <div class="mapping-grid-header">
+              <span>Expected field</span>
+              <span>File column</span>
+            </div>
             @for (field of p.expectedFields; track field) {
-              <tr>
-                <td class="field-cell">{{ field }}</td>
-                <td>
-                  <mat-form-field appearance="outline" class="mapping-select">
-                    <mat-select [value]="mappedHeader(field)"
-                                [aria-label]="'Column for ' + field"
-                                (selectionChange)="setMapping(field, $event.value)">
-                      <mat-option value="">— not mapped —</mat-option>
-                      @for (header of p.detectedHeaders; track header) {
-                        <mat-option [value]="header">{{ header }}</mat-option>
-                      }
-                    </mat-select>
-                  </mat-form-field>
-                </td>
-              </tr>
+              <div class="mapping-row">
+                <span class="field-name">{{ field }}</span>
+                <mat-form-field appearance="outline" class="mapping-select">
+                  <mat-select [value]="mappedHeader(field)"
+                              [aria-label]="'Column for ' + field"
+                              (selectionChange)="setMapping(field, $event.value)">
+                    <mat-option value="">— not mapped —</mat-option>
+                    @for (header of p.detectedHeaders; track header) {
+                      <mat-option [value]="header">{{ header }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
             }
-          </tbody>
-        </table>
-      }
+          </div>
+        }
+      </div>
 
       <div class="step-actions">
-        <button mat-stroked-button matStepperPrevious type="button">Back</button>
+        <button mat-stroked-button matStepperPrevious type="button">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon> Back
+        </button>
         <button mat-flat-button type="button" [disabled]="busy()" (click)="revalidate()">
-          @if (busy()) { <mat-icon aria-hidden="true">hourglass_top</mat-icon> }
-          Apply mapping &amp; validate
+          @if (busy()) {
+            <mat-icon aria-hidden="true">hourglass_top</mat-icon>
+          } @else {
+            <mat-icon aria-hidden="true">check_circle</mat-icon>
+          }
+          Apply &amp; validate
         </button>
       </div>
     </mat-step>
 
     <!-- ── Step 3: Validation preview ────────────────────────────────── -->
-    <mat-step label="Review rows" [editable]="!busy()">
-      @if (preview(); as p) {
-        <app-validation-preview [preview]="p" />
-      }
+    <mat-step label="Review Rows" [editable]="!busy()">
+      <div class="step-content">
+        @if (preview(); as p) {
+          <app-validation-preview [preview]="p" />
+        }
+      </div>
 
       <div class="step-actions">
-        <button mat-stroked-button matStepperPrevious type="button">Back</button>
-        <button mat-flat-button matStepperNext type="button"
-                [disabled]="!canCommit()">Continue</button>
+        <button mat-stroked-button matStepperPrevious type="button">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon> Back
+        </button>
+        <button mat-flat-button matStepperNext type="button" [disabled]="!canCommit()">
+          Continue <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+        </button>
       </div>
     </mat-step>
 
     <!-- ── Step 4: Confirm & commit ──────────────────────────────────── -->
     <mat-step label="Confirm">
-      @if (preview(); as p) {
-        <div class="confirm-card">
-          <h3>Ready to import</h3>
-          <dl class="confirm-summary">
-            <div><dt>File</dt><dd>{{ p.fileName }}</dd></div>
-            <div><dt>Data type</dt><dd>{{ p.entity }}</dd></div>
-            <div><dt>Payroll month</dt><dd>{{ p.payrollMonth }}</dd></div>
-            <div><dt>Rows to insert</dt><dd>{{ p.validRows }}</dd></div>
-            <div><dt>Rows skipped (errors)</dt><dd>{{ p.errorRows }}</dd></div>
-          </dl>
-          @if (p.errorRows > 0) {
-            <p class="confirm-warning" role="alert">
-              <mat-icon aria-hidden="true">warning_amber</mat-icon>
-              {{ p.errorRows }} row(s) with validation errors will be skipped.
-            </p>
-          }
-        </div>
-      }
+      <div class="step-content">
+        @if (preview(); as p) {
+          <div class="confirm-card">
+            <div class="confirm-header">
+              <mat-icon class="confirm-icon" aria-hidden="true">fact_check</mat-icon>
+              <h3>Ready to import</h3>
+            </div>
+
+            <dl class="confirm-summary">
+              <div class="confirm-row">
+                <dt><mat-icon aria-hidden="true">insert_drive_file</mat-icon> File</dt>
+                <dd>{{ p.fileName }}</dd>
+              </div>
+              <div class="confirm-row">
+                <dt><mat-icon aria-hidden="true">category</mat-icon> Data type</dt>
+                <dd>{{ entityLabel(p.entity) }}</dd>
+              </div>
+              <div class="confirm-row">
+                <dt><mat-icon aria-hidden="true">calendar_month</mat-icon> Payroll month</dt>
+                <dd>{{ p.payrollMonth }}</dd>
+              </div>
+              <div class="confirm-row confirm-row--valid">
+                <dt><mat-icon aria-hidden="true">check_circle</mat-icon> Rows to insert</dt>
+                <dd>{{ p.validRows }}</dd>
+              </div>
+              @if (p.errorRows > 0) {
+                <div class="confirm-row confirm-row--error">
+                  <dt><mat-icon aria-hidden="true">error</mat-icon> Rows with errors</dt>
+                  <dd>{{ p.errorRows }} <span class="will-skip">(will be skipped)</span></dd>
+                </div>
+              }
+            </dl>
+
+            @if (p.errorRows > 0) {
+              <div class="confirm-warning" role="alert">
+                <mat-icon aria-hidden="true">warning_amber</mat-icon>
+                <span>{{ p.errorRows }} row(s) with validation errors will be skipped on import.</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
 
       <div class="step-actions">
-        <button mat-stroked-button matStepperPrevious type="button">Back</button>
-        <button mat-flat-button type="button"
+        <button mat-stroked-button matStepperPrevious type="button">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon> Back
+        </button>
+        <button mat-flat-button type="button" color="primary"
                 [disabled]="!canCommit()" (click)="commit()">
-          @if (busy()) { <mat-icon aria-hidden="true">hourglass_top</mat-icon> }
+          @if (busy()) {
+            <mat-icon aria-hidden="true">hourglass_top</mat-icon>
+          } @else {
+            <mat-icon aria-hidden="true">save</mat-icon>
+          }
           Commit import
         </button>
       </div>

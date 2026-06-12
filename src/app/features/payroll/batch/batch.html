@@ -57,6 +57,21 @@
       </mat-form-field>
 
       <button mat-stroked-button
+              [disabled]="loadingComponents() || periodForm.invalid"
+              (click)="loadComponents()"
+              aria-label="Load component amounts from configured formulas">
+        <span class="btn-content">
+          @if (loadingComponents()) {
+            <mat-spinner diameter="16" />
+            <span>Loading…</span>
+          } @else {
+            <mat-icon>download</mat-icon>
+            <span>Load</span>
+          }
+        </span>
+      </button>
+
+      <button mat-stroked-button
               [disabled]="draftLoading() || periodForm.invalid"
               (click)="viewDraft()"
               aria-label="View draft for selected period">
@@ -73,6 +88,19 @@
     </div>
   </header>
 
+  @if (loadComponentsInfo()) {
+    <div class="status-banner status-banner--success" role="status" aria-live="polite">
+      <mat-icon>check_circle</mat-icon>
+      <span>{{ loadComponentsInfo() }}</span>
+    </div>
+  }
+  @if (loadComponentsError()) {
+    <div class="status-banner status-banner--error" role="alert">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ loadComponentsError() }}</span>
+    </div>
+  }
+
   @if (loading()) {
     <div class="loading-bar" aria-live="polite">
       <mat-spinner diameter="16" />
@@ -84,335 +112,413 @@
                  [selectedIndex]="selectedSubStep()"
                  (selectedIndexChange)="selectedSubStep.set($event)"
                  animationDuration="0">
-    @for (step of SUB_STEPS; track step.uiKey) {
-      <mat-tab [label]="step.label">
 
-        @if (step.uiKey === 'nopay') {
+    <!-- ── Fixed Allowances (read-only) ──────────────────────────────── -->
+    <mat-tab label="Fixed Allowance">
+      <app-pivot
+        [codes]="namesFor('fixedAlw')"
+        [rows]="pivotRows()"
+        [amounts]="matrices()['fixedAlw']"
+        [readOnly]="true"
+        label="Fixed Allowance"
+        (amountChange)="onAmountChange('fixedAlw', $event)">
+      </app-pivot>
+    </mat-tab>
 
-          <!-- ── NoPay table ──────────────────────────────────────── -->
-          <div class="np-wrapper">
+    <!-- ── Variable Allowances ────────────────────────────────────────── -->
+    <mat-tab label="Variable Allowance">
+      <app-pivot
+        [codes]="namesFor('varAlw')"
+        [rows]="pivotRows()"
+        [amounts]="matrices()['varAlw']"
+        label="Variable Allowance"
+        (amountChange)="onAmountChange('varAlw', $event)">
+      </app-pivot>
+    </mat-tab>
 
-            <div class="table-toolbar">
-              <div class="table-toolbar-left">
-                <span class="table-label">NoPay</span>
-                <div class="toolbar-sep" aria-hidden="true"></div>
-                <div class="search-field">
-                  <mat-icon class="search-icon">search</mat-icon>
-                  <input class="search-input"
-                         [value]="nopayFilter()"
-                         (input)="nopayFilter.set($any($event.target).value)"
-                         placeholder="Search employees…"
-                         aria-label="Filter employees" />
-                  @if (nopayFilter()) {
-                    <button class="search-clear" (click)="nopayFilter.set('')" aria-label="Clear filter">
-                      <mat-icon>close</mat-icon>
-                    </button>
-                  }
-                </div>
-                <span class="filter-count" aria-live="polite">
-                  @if (nopayFilter()) {
-                    {{ filteredNopayRows().length }} / {{ nopayRowsCount() }}
-                  }
-                </span>
-              </div>
-              <div class="table-toolbar-right">
-                <button mat-stroked-button aria-label="Import">
-                  <mat-icon>upload</mat-icon>
-                  <span>Import</span>
+    <!-- ── Overtime (flat: rate read-only, hours editable, amount auto) ─ -->
+    <mat-tab label="Overtime">
+      <div class="np-wrapper">
+        <div class="table-toolbar">
+          <div class="table-toolbar-left">
+            <span class="table-label">Overtime</span>
+            <div class="toolbar-sep" aria-hidden="true"></div>
+            <div class="search-field">
+              <mat-icon class="search-icon">search</mat-icon>
+              <input class="search-input"
+                     [value]="otFilter()"
+                     (input)="otFilter.set($any($event.target).value)"
+                     placeholder="Search employees…"
+                     aria-label="Filter employees" />
+              @if (otFilter()) {
+                <button class="search-clear" (click)="otFilter.set('')" aria-label="Clear filter">
+                  <mat-icon>close</mat-icon>
                 </button>
-                <button mat-stroked-button aria-label="Export">
-                  <mat-icon>download</mat-icon>
-                  <span>Export</span>
+              }
+            </div>
+            <span class="filter-count" aria-live="polite">
+              @if (otFilter()) { {{ filteredOtRows().length }} / {{ otRowsCount() }} }
+            </span>
+          </div>
+          <div class="table-toolbar-right">
+            <span class="formula-chip">Amount = Rate × Hours</span>
+            <button mat-stroked-button aria-label="Import"><mat-icon>upload</mat-icon><span>Import</span></button>
+            <button mat-stroked-button aria-label="Export"><mat-icon>download</mat-icon><span>Export</span></button>
+          </div>
+        </div>
+
+        <table aria-label="Overtime">
+          <thead>
+            <tr>
+              <th scope="col" class="emp-id-col">Emp ID</th>
+              <th scope="col" class="emp-name-col">Employee Name</th>
+              <th scope="col" class="np-rule-col">OT Type</th>
+              <th scope="col" class="amount-col" title="Rate per hour — set during Load">Rate / Hr</th>
+              <th scope="col" class="amount-col">Hours</th>
+              <th scope="col" class="amount-col">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (filteredOtRows().length === 0) {
+              <tr><td colspan="6" class="np-empty">No overtime entries for this period. Use Load to initialise.</td></tr>
+            } @else {
+              @for (item of filteredOtRows(); track item.idx; let even = $even) {
+                <tr [class.row-even]="even">
+                  <td class="emp-id-cell">{{ item.row.employeeNo }}</td>
+                  <td class="emp-name-cell">{{ item.row.payrollName }}</td>
+                  <td class="np-rule-cell">{{ item.row.otLabel }}</td>
+
+                  <!-- Rate — read-only -->
+                  <td class="value-cell readonly-cell" aria-label="OT rate per hour">
+                    <span class="cell-value">{{ item.row.rate | number:'1.4-4' }}</span>
+                  </td>
+
+                  <!-- Hours — editable -->
+                  <td class="value-cell"
+                      [class.cell-editing]="isOtEditing(item.idx)"
+                      (click)="startOtEdit(item.idx)"
+                      [attr.aria-label]="item.row.payrollName + ' OT hours'">
+                    @if (isOtEditing(item.idx)) {
+                      <input type="number" min="0" step="0.5"
+                             class="cell-input"
+                             [formControl]="otEditCtrl"
+                             (blur)="saveOtEdit()"
+                             (keydown.enter)="saveOtEdit()"
+                             (keydown.escape)="cancelOtEdit()"
+                             [attr.aria-label]="item.row.payrollName + ' OT hours input'" />
+                    } @else {
+                      <span class="cell-value">{{ item.row.hours | number:'1.2-2' }}</span>
+                    }
+                  </td>
+
+                  <!-- Amount — auto-computed, read-only -->
+                  <td class="value-cell readonly-cell" aria-label="OT amount">
+                    <span class="cell-value">{{ item.row.amount | number:'1.2-2' }}</span>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td class="total-label">Totals</td>
+              <td class="total-name-spacer"></td>
+              <td class="total-np-spacer"></td>
+              <td class="total-amount"></td>
+              <td class="total-amount"><span class="total-amount-inner">{{ otHoursTotal() | number:'1.2-2' }}</span></td>
+              <td class="total-amount"><span class="total-amount-inner">{{ otAmountTotal() | number:'1.2-2' }}</span></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </mat-tab>
+
+    <!-- ── Fixed Deductions (read-only) ──────────────────────────────── -->
+    <mat-tab label="Fixed Deduction">
+      <app-pivot
+        [codes]="namesFor('fixedDed')"
+        [rows]="pivotRows()"
+        [amounts]="matrices()['fixedDed']"
+        [readOnly]="true"
+        label="Fixed Deduction"
+        (amountChange)="onAmountChange('fixedDed', $event)">
+      </app-pivot>
+    </mat-tab>
+
+    <!-- ── Variable Deductions ────────────────────────────────────────── -->
+    <mat-tab label="Variable Deduction">
+      <app-pivot
+        [codes]="namesFor('varDed')"
+        [rows]="pivotRows()"
+        [amounts]="matrices()['varDed']"
+        label="Variable Deduction"
+        (amountChange)="onAmountChange('varDed', $event)">
+      </app-pivot>
+    </mat-tab>
+
+    <!-- ── NoPay (rate read-only, days editable, amount auto-computed) ── -->
+    <mat-tab label="NoPay">
+      <div class="np-wrapper">
+        <div class="table-toolbar">
+          <div class="table-toolbar-left">
+            <span class="table-label">NoPay</span>
+            <div class="toolbar-sep" aria-hidden="true"></div>
+            <div class="search-field">
+              <mat-icon class="search-icon">search</mat-icon>
+              <input class="search-input"
+                     [value]="nopayFilter()"
+                     (input)="nopayFilter.set($any($event.target).value)"
+                     placeholder="Search employees…"
+                     aria-label="Filter employees" />
+              @if (nopayFilter()) {
+                <button class="search-clear" (click)="nopayFilter.set('')" aria-label="Clear filter">
+                  <mat-icon>close</mat-icon>
                 </button>
-              </div>
+              }
             </div>
-
-            <table aria-label="NoPay">
-              <thead>
-                <tr>
-                  <th scope="col" class="emp-id-col">Emp ID</th>
-                  <th scope="col" class="emp-name-col">Employee Name</th>
-                  <th scope="col" class="np-rule-col">Nopay Rule</th>
-                  <th scope="col" class="amount-col">Rule Days</th>
-                  <th scope="col" class="amount-col">Days</th>
-                  <th scope="col" class="amount-col">Amount</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                @if (filteredNopayRows().length === 0) {
-                  <tr>
-                    <td colspan="6" class="np-empty">No NoPay entries for this period.</td>
-                  </tr>
-                } @else {
-                  @for (item of filteredNopayRows(); track item.idx; let even = $even) {
-                    <tr [class.row-even]="even">
-                      <td class="emp-id-cell">{{ item.row.employeeNo }}</td>
-                      <td class="emp-name-cell">{{ item.row.payrollName }}</td>
-                      <td class="np-rule-cell">{{ item.row.nopayRule ?? '—' }}</td>
-                      <td class="value-cell readonly-cell">
-                        <span class="cell-value">{{ item.row.nopayRuleDays ?? '—' }}</span>
-                      </td>
-
-                      <!-- Days -->
-                      <td class="value-cell"
-                          [class.cell-editing]="isNopayEditing(item.idx, 'days')"
-                          (click)="startNopayEdit(item.idx, 'days')"
-                          [attr.aria-label]="item.row.payrollName + ' days'">
-                        @if (isNopayEditing(item.idx, 'days')) {
-                          <input type="number" min="0" step="0.01"
-                                 class="cell-input"
-                                 [formControl]="nopayEditCtrl"
-                                 (blur)="saveNopayEdit()"
-                                 (keydown.enter)="saveNopayEdit()"
-                                 (keydown.escape)="cancelNopayEdit()"
-                                 [attr.aria-label]="item.row.payrollName + ' days input'" />
-                        } @else {
-                          <span class="cell-value">{{ item.row.days | number:'1.2-2' }}</span>
-                        }
-                      </td>
-
-                      <!-- Amount -->
-                      <td class="value-cell"
-                          [class.cell-editing]="isNopayEditing(item.idx, 'amount')"
-                          (click)="startNopayEdit(item.idx, 'amount')"
-                          [attr.aria-label]="item.row.payrollName + ' amount'">
-                        @if (isNopayEditing(item.idx, 'amount')) {
-                          <input type="number" min="0" step="0.01"
-                                 class="cell-input"
-                                 [formControl]="nopayEditCtrl"
-                                 (blur)="saveNopayEdit()"
-                                 (keydown.enter)="saveNopayEdit()"
-                                 (keydown.escape)="cancelNopayEdit()"
-                                 [attr.aria-label]="item.row.payrollName + ' amount input'" />
-                        } @else {
-                          <span class="cell-value">{{ item.row.amount | number:'1.2-2' }}</span>
-                        }
-                      </td>
-                    </tr>
-                  }
-                }
-              </tbody>
-
-              <tfoot>
-                <tr>
-                  <td class="total-label">Totals</td>
-                  <td class="total-name-spacer"></td>
-                  <td class="total-np-spacer"></td>
-                  <td class="total-amount"></td>
-                  <td class="total-amount">
-                    <span class="total-amount-inner">{{ nopayDaysTotal() | number:'1.2-2' }}</span>
-                  </td>
-                  <td class="total-amount">
-                    <span class="total-amount-inner">{{ nopayAmountTotal() | number:'1.2-2' }}</span>
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-
+            <span class="filter-count" aria-live="polite">
+              @if (nopayFilter()) { {{ filteredNopayRows().length }} / {{ nopayRowsCount() }} }
+            </span>
           </div>
+          <div class="table-toolbar-right">
+            <span class="formula-chip">Amount = Rate × Days</span>
+            <button mat-stroked-button aria-label="Import"><mat-icon>upload</mat-icon><span>Import</span></button>
+            <button mat-stroked-button aria-label="Export"><mat-icon>download</mat-icon><span>Export</span></button>
+          </div>
+        </div>
 
-        } @else if (step.uiKey === 'late') {
+        <table aria-label="NoPay">
+          <thead>
+            <tr>
+              <th scope="col" class="emp-id-col">Emp ID</th>
+              <th scope="col" class="emp-name-col">Employee Name</th>
+              <th scope="col" class="np-rule-col">NoPay Type</th>
+              <th scope="col" class="amount-col" title="Rate per day — set during Load">Rate / Day</th>
+              <th scope="col" class="amount-col">Days</th>
+              <th scope="col" class="amount-col">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (filteredNopayRows().length === 0) {
+              <tr><td colspan="6" class="np-empty">No NoPay entries for this period. Use Load to initialise.</td></tr>
+            } @else {
+              @for (item of filteredNopayRows(); track item.idx; let even = $even) {
+                <tr [class.row-even]="even">
+                  <td class="emp-id-cell">{{ item.row.employeeNo }}</td>
+                  <td class="emp-name-cell">{{ item.row.payrollName }}</td>
+                  <td class="np-rule-cell">{{ item.row.npLabel }}</td>
 
-          <!-- ── Late Deduction table ────────────────────────────── -->
-          <div class="np-wrapper sa-wrapper">
+                  <!-- Rate — read-only -->
+                  <td class="value-cell readonly-cell" aria-label="NoPay rate per day">
+                    <span class="cell-value">{{ item.row.rate | number:'1.4-4' }}</span>
+                  </td>
 
-            <div class="table-toolbar">
-              <div class="table-toolbar-left">
-                <span class="table-label">Late Deduction</span>
-                <div class="toolbar-sep" aria-hidden="true"></div>
-                <div class="search-field">
-                  <mat-icon class="search-icon">search</mat-icon>
-                  <input class="search-input"
-                         [value]="lateFilter()"
-                         (input)="lateFilter.set($any($event.target).value)"
-                         placeholder="Search employees…"
-                         aria-label="Filter employees" />
-                  @if (lateFilter()) {
-                    <button class="search-clear" (click)="lateFilter.set('')" aria-label="Clear filter">
-                      <mat-icon>close</mat-icon>
-                    </button>
-                  }
-                </div>
-                <span class="filter-count" aria-live="polite">
-                  @if (lateFilter()) { {{ filteredLateRows().length }} / {{ lateRowsCount() }} }
-                </span>
-              </div>
-              <div class="table-toolbar-right">
-                <span class="formula-chip">
-                  Deduction = Monthly Salary ÷ (Working Days × 8) × Late Hours
-                </span>
-              </div>
+                  <!-- Days — editable -->
+                  <td class="value-cell"
+                      [class.cell-editing]="isNopayEditing(item.idx)"
+                      (click)="startNopayEdit(item.idx)"
+                      [attr.aria-label]="item.row.payrollName + ' days'">
+                    @if (isNopayEditing(item.idx)) {
+                      <input type="number" min="0" step="0.5"
+                             class="cell-input"
+                             [formControl]="nopayEditCtrl"
+                             (blur)="saveNopayEdit()"
+                             (keydown.enter)="saveNopayEdit()"
+                             (keydown.escape)="cancelNopayEdit()"
+                             [attr.aria-label]="item.row.payrollName + ' days input'" />
+                    } @else {
+                      <span class="cell-value">{{ item.row.days | number:'1.2-2' }}</span>
+                    }
+                  </td>
+
+                  <!-- Amount — auto-computed, read-only -->
+                  <td class="value-cell readonly-cell" aria-label="NoPay amount">
+                    <span class="cell-value">{{ item.row.amount | number:'1.2-2' }}</span>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td class="total-label">Totals</td>
+              <td class="total-name-spacer"></td>
+              <td class="total-np-spacer"></td>
+              <td class="total-amount"></td>
+              <td class="total-amount"><span class="total-amount-inner">{{ nopayDaysTotal() | number:'1.2-2' }}</span></td>
+              <td class="total-amount"><span class="total-amount-inner">{{ nopayAmountTotal() | number:'1.2-2' }}</span></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </mat-tab>
+
+    <!-- ── Late Deduction (rate read-only, hours editable, amount auto) ─ -->
+    <mat-tab label="Late Deduction">
+      <div class="np-wrapper sa-wrapper">
+        <div class="table-toolbar">
+          <div class="table-toolbar-left">
+            <span class="table-label">Late Deduction</span>
+            <div class="toolbar-sep" aria-hidden="true"></div>
+            <div class="search-field">
+              <mat-icon class="search-icon">search</mat-icon>
+              <input class="search-input"
+                     [value]="lateFilter()"
+                     (input)="lateFilter.set($any($event.target).value)"
+                     placeholder="Search employees…"
+                     aria-label="Filter employees" />
+              @if (lateFilter()) {
+                <button class="search-clear" (click)="lateFilter.set('')" aria-label="Clear filter">
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
             </div>
-
-            <table aria-label="Late Deduction">
-              <thead>
-                <tr>
-                  <th scope="col" class="emp-id-col">Emp ID</th>
-                  <th scope="col" class="emp-name-col">Employee Name</th>
-                  <th scope="col" class="amount-col">Late Hours</th>
-                  <th scope="col" class="amount-col">Deduction</th>
-                  <th scope="col" class="status-col">Processed</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                @if (filteredLateRows().length === 0) {
-                  <tr>
-                    <td colspan="5" class="np-empty">No late deduction entries for this period.</td>
-                  </tr>
-                } @else {
-                  @for (item of filteredLateRows(); track item.idx; let even = $even) {
-                    <tr [class.row-even]="even">
-                      <td class="emp-id-cell">{{ item.row.employeeNo }}</td>
-                      <td class="emp-name-cell">{{ item.row.payrollName }}</td>
-
-                      <!-- Late Hours -->
-                      <td class="value-cell"
-                          [class.cell-editing]="isLateEditing(item.idx, 'hours')"
-                          [class.readonly-cell]="item.row.isProcessed"
-                          (click)="startLateEdit(item.idx, 'hours')"
-                          [attr.aria-label]="item.row.payrollName + ' late hours'">
-                        @if (isLateEditing(item.idx, 'hours')) {
-                          <input type="number" min="0" step="0.5"
-                                 class="cell-input"
-                                 [formControl]="lateEditCtrl"
-                                 (blur)="saveLateEdit()"
-                                 (keydown.enter)="saveLateEdit()"
-                                 (keydown.escape)="cancelLateEdit()"
-                                 [attr.aria-label]="item.row.payrollName + ' late hours input'" />
-                        } @else {
-                          <span class="cell-value">{{ item.row.hours | number:'1.2-2' }}</span>
-                        }
-                      </td>
-
-                      <!-- Deduction Amount -->
-                      <td class="value-cell"
-                          [class.cell-editing]="isLateEditing(item.idx, 'amount')"
-                          [class.readonly-cell]="item.row.isProcessed"
-                          (click)="startLateEdit(item.idx, 'amount')"
-                          [attr.aria-label]="item.row.payrollName + ' late amount'">
-                        @if (isLateEditing(item.idx, 'amount')) {
-                          <input type="number" min="0" step="0.01"
-                                 class="cell-input"
-                                 [formControl]="lateEditCtrl"
-                                 (blur)="saveLateEdit()"
-                                 (keydown.enter)="saveLateEdit()"
-                                 (keydown.escape)="cancelLateEdit()"
-                                 [attr.aria-label]="item.row.payrollName + ' late amount input'" />
-                        } @else {
-                          <span class="cell-value">{{ item.row.amount | number:'1.2-2' }}</span>
-                        }
-                      </td>
-
-                      <!-- Processed badge -->
-                      <td class="status-cell">
-                        @if (item.row.isProcessed) {
-                          <span class="badge badge--processed">Processed</span>
-                        } @else {
-                          <span class="badge badge--pending">Pending</span>
-                        }
-                      </td>
-                    </tr>
-                  }
-                }
-              </tbody>
-
-              <tfoot>
-                <tr>
-                  <td class="total-label">Totals</td>
-                  <td class="total-name-spacer"></td>
-                  <td class="total-amount">
-                    <span class="total-amount-inner">{{ lateHoursTotal() | number:'1.2-2' }}</span>
-                  </td>
-                  <td class="total-amount">
-                    <span class="total-amount-inner">{{ lateAmountTotal() | number:'1.2-2' }}</span>
-                  </td>
-                  <td class="total-amount"></td>
-                </tr>
-              </tfoot>
-            </table>
-
+            <span class="filter-count" aria-live="polite">
+              @if (lateFilter()) { {{ filteredLateRows().length }} / {{ lateRowsCount() }} }
+            </span>
           </div>
+          <div class="table-toolbar-right">
+            <span class="formula-chip">Amount = Rate × Hours</span>
+          </div>
+        </div>
 
-        } @else if (step.uiKey === 'loans') {
+        <table aria-label="Late Deduction">
+          <thead>
+            <tr>
+              <th scope="col" class="emp-id-col">Emp ID</th>
+              <th scope="col" class="emp-name-col">Employee Name</th>
+              <th scope="col" class="amount-col" title="Rate per hour — set during Load">Rate / Hr</th>
+              <th scope="col" class="amount-col">Late Hours</th>
+              <th scope="col" class="amount-col">Deduction</th>
+              <th scope="col" class="status-col">Processed</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (filteredLateRows().length === 0) {
+              <tr><td colspan="6" class="np-empty">No late deduction entries for this period. Use Load to initialise.</td></tr>
+            } @else {
+              @for (item of filteredLateRows(); track item.idx; let even = $even) {
+                <tr [class.row-even]="even">
+                  <td class="emp-id-cell">{{ item.row.employeeNo }}</td>
+                  <td class="emp-name-cell">{{ item.row.payrollName }}</td>
 
-          <!-- ── Loans table ─────────────────────────────────────── -->
-          <div class="np-wrapper sa-wrapper">
-            <div class="table-toolbar">
-              <div class="table-toolbar-left">
-                <span class="table-label">Loans</span>
-                <div class="toolbar-sep" aria-hidden="true"></div>
-                <div class="search-field">
-                  <mat-icon class="search-icon">search</mat-icon>
-                  <input class="search-input" [value]="loanFilter()"
-                         (input)="loanFilter.set($any($event.target).value)"
-                         placeholder="Search employees…" aria-label="Filter employees" />
-                  @if (loanFilter()) {
-                    <button class="search-clear" (click)="loanFilter.set('')" aria-label="Clear filter">
-                      <mat-icon>close</mat-icon>
-                    </button>
-                  }
-                </div>
-                <span class="filter-count" aria-live="polite">
-                  @if (loanFilter()) { {{ filteredLoanRows().length }} / {{ loanRowsCount() }} }
-                </span>
-              </div>
+                  <!-- Rate — read-only -->
+                  <td class="value-cell readonly-cell" aria-label="Late rate per hour">
+                    <span class="cell-value">{{ item.row.rate | number:'1.4-4' }}</span>
+                  </td>
+
+                  <!-- Late Hours — editable unless processed -->
+                  <td class="value-cell"
+                      [class.cell-editing]="isLateEditing(item.idx)"
+                      [class.readonly-cell]="item.row.isProcessed"
+                      (click)="startLateEdit(item.idx)"
+                      [attr.aria-label]="item.row.payrollName + ' late hours'">
+                    @if (isLateEditing(item.idx)) {
+                      <input type="number" min="0" step="0.5"
+                             class="cell-input"
+                             [formControl]="lateEditCtrl"
+                             (blur)="saveLateEdit()"
+                             (keydown.enter)="saveLateEdit()"
+                             (keydown.escape)="cancelLateEdit()"
+                             [attr.aria-label]="item.row.payrollName + ' late hours input'" />
+                    } @else {
+                      <span class="cell-value">{{ item.row.hours | number:'1.2-2' }}</span>
+                    }
+                  </td>
+
+                  <!-- Deduction amount — auto-computed, read-only -->
+                  <td class="value-cell readonly-cell" aria-label="Late deduction amount">
+                    <span class="cell-value">{{ item.row.amount | number:'1.2-2' }}</span>
+                  </td>
+
+                  <td class="status-cell">
+                    @if (item.row.isProcessed) {
+                      <span class="badge badge--processed">Processed</span>
+                    } @else {
+                      <span class="badge badge--pending">Pending</span>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td class="total-label">Totals</td>
+              <td class="total-name-spacer"></td>
+              <td class="total-amount"></td>
+              <td class="total-amount"><span class="total-amount-inner">{{ lateHoursTotal() | number:'1.2-2' }}</span></td>
+              <td class="total-amount"><span class="total-amount-inner">{{ lateAmountTotal() | number:'1.2-2' }}</span></td>
+              <td class="total-amount"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </mat-tab>
+
+    <!-- ── Loans ──────────────────────────────────────────────────────── -->
+    <mat-tab label="Loans">
+      <div class="np-wrapper sa-wrapper">
+        <div class="table-toolbar">
+          <div class="table-toolbar-left">
+            <span class="table-label">Loans</span>
+            <div class="toolbar-sep" aria-hidden="true"></div>
+            <div class="search-field">
+              <mat-icon class="search-icon">search</mat-icon>
+              <input class="search-input" [value]="loanFilter()"
+                     (input)="loanFilter.set($any($event.target).value)"
+                     placeholder="Search employees…" aria-label="Filter employees" />
+              @if (loanFilter()) {
+                <button class="search-clear" (click)="loanFilter.set('')" aria-label="Clear filter">
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
             </div>
-            <table aria-label="Loans">
-              <thead>
-                <tr>
-                  <th scope="col" class="emp-id-col">Emp ID</th>
-                  <th scope="col" class="emp-name-col">Employee Name</th>
-                  <th scope="col" class="amount-col">Amount</th>
-                  <th scope="col" class="status-col">Processed</th>
-                </tr>
-              </thead>
-              <tbody>
-                @if (filteredLoanRows().length === 0) {
-                  <tr><td colspan="4" class="np-empty">No loan entries for this period.</td></tr>
-                } @else {
-                  @for (item of filteredLoanRows(); track item.idx; let even = $even) {
-                    <tr [class.row-even]="even">
-                      <td class="emp-id-cell">{{ item.row.employeeNo }}</td>
-                      <td class="emp-name-cell">{{ item.row.payrollName }}</td>
-                      <td class="value-cell readonly-cell">
-                        <span class="cell-value">{{ item.row.amount | number:'1.2-2' }}</span>
-                      </td>
-                      <td class="status-cell">
-                        @if (item.row.isProcessed) { <span class="badge badge--processed">Processed</span> }
-                        @else { <span class="badge badge--pending">Pending</span> }
-                      </td>
-                    </tr>
-                  }
-                }
-              </tbody>
-              <tfoot>
-                <tr>
-                  <td class="total-label">Totals</td>
-                  <td class="total-name-spacer"></td>
-                  <td class="total-amount"><span class="total-amount-inner">{{ loanAmountTotal() | number:'1.2-2' }}</span></td>
-                  <td class="total-amount"></td>
-                </tr>
-              </tfoot>
-            </table>
+            <span class="filter-count" aria-live="polite">
+              @if (loanFilter()) { {{ filteredLoanRows().length }} / {{ loanRowsCount() }} }
+            </span>
           </div>
+        </div>
+        <table aria-label="Loans">
+          <thead>
+            <tr>
+              <th scope="col" class="emp-id-col">Emp ID</th>
+              <th scope="col" class="emp-name-col">Employee Name</th>
+              <th scope="col" class="amount-col">Amount</th>
+              <th scope="col" class="status-col">Processed</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (filteredLoanRows().length === 0) {
+              <tr><td colspan="4" class="np-empty">No loan entries for this period.</td></tr>
+            } @else {
+              @for (item of filteredLoanRows(); track item.idx; let even = $even) {
+                <tr [class.row-even]="even">
+                  <td class="emp-id-cell">{{ item.row.employeeNo }}</td>
+                  <td class="emp-name-cell">{{ item.row.payrollName }}</td>
+                  <td class="value-cell readonly-cell">
+                    <span class="cell-value">{{ item.row.amount | number:'1.2-2' }}</span>
+                  </td>
+                  <td class="status-cell">
+                    @if (item.row.isProcessed) { <span class="badge badge--processed">Processed</span> }
+                    @else { <span class="badge badge--pending">Pending</span> }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td class="total-label">Totals</td>
+              <td class="total-name-spacer"></td>
+              <td class="total-amount"><span class="total-amount-inner">{{ loanAmountTotal() | number:'1.2-2' }}</span></td>
+              <td class="total-amount"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </mat-tab>
 
-        } @else {
-
-          <!-- ── Pivot table (all other tabs) ───────────────────── -->
-          <app-pivot
-            [codes]="namesFor(step.uiKey)"
-            [rows]="pivotRows()"
-            [amounts]="matrices()[step.uiKey]"
-            [label]="step.label"
-            (amountChange)="onAmountChange(step.uiKey, $event)">
-          </app-pivot>
-
-        }
-
-      </mat-tab>
-    }
   </mat-tab-group>
 
   <footer class="page-footer">

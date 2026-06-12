@@ -58,10 +58,11 @@
           <td class="emp-name-cell">{{ row.emp.name }}</td>
           @for (code of codes(); track code) {
             <td class="value-cell"
-                [class.cell-editing]="isEditing(row.idx, code)"
-                (click)="startCellEdit(row.idx, code)"
+                [class.cell-editing]="!readOnly() && isEditing(row.idx, code)"
+                [class.readonly-cell]="readOnly()"
+                (click)="!readOnly() && startCellEdit(row.idx, code)"
                 [attr.aria-label]="row.emp.name + ' ' + code">
-              @if (isEditing(row.idx, code)) {
+              @if (!readOnly() && isEditing(row.idx, code)) {
                 <input #editInputEl
                        type="number" min="0" step="0.01"
                        class="cell-input"

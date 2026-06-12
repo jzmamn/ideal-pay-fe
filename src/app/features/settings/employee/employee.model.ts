@@ -12,8 +12,7 @@ export interface EmployeeRequest {
   basicSalary?: number;
   joinedDate: string;
   employeeTypeId: number;
-  contractFrom?: string;
-  contractTo?: string;
+  empTypeEndDate?: string;
   nopayDaysId: number;
   jobCategoryId: number;
   designationId: number;
@@ -31,7 +30,7 @@ export interface EmployeeRequest {
   adrsLine1?: string;
   adrsLine2?: string;
   city?: string;
-  districtId?: number;
+  district?: string;
   countryId: number;
   contactPerson?: string;
   cpAddress?: string;
@@ -59,8 +58,7 @@ export interface EmployeeResponse {
   employeeTypeCode: string;
   employeeTypeName: string;
 
-  contractFrom?: string;
-  contractTo?: string;
+  empTypeEndDate?: string;
 
   nopayDaysId: number;
   nopayDaysCode: string;
@@ -103,8 +101,7 @@ export interface EmployeeResponse {
   adrsLine1?: string;
   adrsLine2?: string;
   city?: string;
-  districtId?: number;
-  districtName?: string;
+  district?: string;
 
   countryId: number;
   countryName: string;

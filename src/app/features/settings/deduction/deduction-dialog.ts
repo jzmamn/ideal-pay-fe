@@ -60,7 +60,6 @@ export class DeductionDialog {
     code:           [{ value: this.row?.code ?? '', disabled: true }, Validators.required],
     name:           [this.row?.name           ?? '', Validators.required],
     description:    [this.row?.description    ?? null as string | null],
-    amount:         [this.row?.amount         ?? null as number | null, this.isFixed ? [Validators.required, Validators.min(0)] : []],
     isActive:       [this.row?.isActive       ?? true],
     liableForEpf:  [this.row?.liableForEpf  ?? false],
     liableForEtf:  [this.row?.liableForEtf  ?? false],
@@ -81,6 +80,7 @@ export class DeductionDialog {
 
   onFormulaValueChanged(value: FormulaDefinitionFormValue): void {
     this.latestFormula.set(value);
+    this.formulaIsActive.set(value.isActive);
   }
 
   onFormulaSaveRequested(value: FormulaDefinitionFormValue): void {
@@ -97,7 +97,6 @@ export class DeductionDialog {
       code:           raw.code!,
       name:           raw.name!,
       description:    raw.description,
-      amount:         this.isFixed ? raw.amount! : undefined,
       isActive:       raw.isActive!,
       liableForEpf:  raw.liableForEpf!,
       liableForEtf:  raw.liableForEtf!,

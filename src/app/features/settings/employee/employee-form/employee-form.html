@@ -98,10 +98,10 @@
               <input matInput formControlName="city">
             </mat-form-field>
 
-            <app-searchable-dropdown
-              formControlName="districtId"
-              label="District"
-              [options]="masterSvc.activeDistricts()" />
+            <mat-form-field appearance="outline">
+              <mat-label>District</mat-label>
+              <input matInput formControlName="district">
+            </mat-form-field>
 
             <app-country-select formControlName="country" />
 
@@ -218,13 +218,10 @@
               [options]="masterSvc.activeEmployeeTypes()" />
 
             <mat-form-field appearance="outline">
-              <mat-label>Employee Type Period</mat-label>
-              <mat-date-range-input [rangePicker]="empTypePicker">
-                <input matStartDate formControlName="contractFrom" placeholder="Start date" readonly>
-                <input matEndDate formControlName="contractTo" placeholder="End date" readonly>
-              </mat-date-range-input>
-              <mat-datepicker-toggle matIconSuffix [for]="empTypePicker" />
-              <mat-date-range-picker #empTypePicker />
+              <mat-label>Employee Type End Date</mat-label>
+              <input matInput [matDatepicker]="empTypeEndPicker" formControlName="empTypeEndDate" readonly>
+              <mat-datepicker-toggle matIconSuffix [for]="empTypeEndPicker" />
+              <mat-datepicker #empTypeEndPicker />
             </mat-form-field>
 
             <app-searchable-dropdown
@@ -260,7 +257,7 @@
               }
             </mat-form-field>
 
-            <app-lookup [config]="gradeLookupConfig()" label="Grade" (selected)="onGradeSelected($event)" />
+            <app-lookup [config]="gradeLookupConfig()" label="Grade *" (selected)="onGradeSelected($event)" />
 
           </div>
 

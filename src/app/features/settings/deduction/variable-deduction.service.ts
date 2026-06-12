@@ -98,7 +98,6 @@ export class VariableDeductionService {
       item.description,
       item.isActive,
       DeductionType.VARIABLE,
-      undefined,
       item.liableForEpf,
       item.liableForEtf,
       item.liableForPaye,

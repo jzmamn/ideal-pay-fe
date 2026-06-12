@@ -1,157 +1,113 @@
-<h2 mat-dialog-title>Bank File Templates</h2>
-
-<mat-dialog-content class="dialog-body" [formGroup]="form">
-
-  <div class="dialog-layout">
-
-    <!-- Bank list (left panel) -->
-    <div class="bank-list-panel">
-      <p class="panel-label">Select a bank to configure its file template.</p>
-      <mat-nav-list dense>
-        @for (bank of banks; track bank.id) {
-          <a mat-list-item
-             [activated]="selectedBankId() === bank.id"
-             (click)="selectBank(bank.id)">
-            <span matListItemTitle>{{ bank.name }}</span>
-            <span matListItemLine class="bank-code">{{ bank.code }}</span>
-            @if (hasBankTemplate(bank.id)) {
-              <mat-icon matListItemMeta class="has-tmpl-icon"
-                        aria-label="Template configured"
-                        matTooltip="Template configured">check_circle</mat-icon>
-            }
-          </a>
-        }
-      </mat-nav-list>
-    </div>
-
-    <mat-divider [vertical]="true" />
-
-    <!-- Template editor (right panel) -->
-    <div class="editor-panel">
-      @if (!selectedBank()) {
-        <div class="editor-empty">
-          <mat-icon aria-hidden="true">description</mat-icon>
-          <p>Select a bank to view or edit its template.</p>
-        </div>
-      } @else {
-        <div class="editor-content">
-          <h3 class="editor-heading">
-            {{ selectedBank()!.name }}
-            <span class="bank-code-badge">{{ selectedBank()!.code }}</span>
-          </h3>
-
-          <!-- File extension -->
-          <mat-form-field appearance="outline" class="ext-field">
-            <mat-label>File Extension</mat-label>
-            <input matInput formControlName="fileExtension" placeholder="txt" maxlength="10" />
-          </mat-form-field>
-
-          <!-- Header -->
-          <div class="section-block">
-            <div class="section-header">
-              <span class="section-title">Header</span>
-              <div class="token-chips" aria-label="Insert header token">
-                @for (tok of TOKENS.header; track tok) {
-                  <span class="token-chip" role="button" tabindex="0"
-                        (click)="insertToken('headerTemplate', tok)"
-                        (keydown.enter)="insertToken('headerTemplate', tok)"
-                        [matTooltip]="'Insert ' + tok">{{ tok }}</span>
-                }
-              </div>
-            </div>
-            <mat-form-field appearance="outline" class="tmpl-field">
-              <mat-label>Header template (optional)</mat-label>
-              <textarea matInput formControlName="headerTemplate" rows="3"
-                        (click)="trackCursor('headerTemplate', $event)"
-                        (keyup)="trackCursor('headerTemplate', $event)"
-                        aria-label="Header template"></textarea>
-            </mat-form-field>
-          </div>
-
-          <!-- Detail -->
-          <div class="section-block">
-            <div class="section-header">
-              <span class="section-title">Detail <span class="required-star">*</span></span>
-              <div class="token-chips" aria-label="Insert detail token">
-                @for (tok of TOKENS.detail; track tok) {
-                  <span class="token-chip" role="button" tabindex="0"
-                        (click)="insertToken('detailTemplate', tok)"
-                        (keydown.enter)="insertToken('detailTemplate', tok)"
-                        [matTooltip]="'Insert ' + tok">{{ tok }}</span>
-                }
-              </div>
-            </div>
-            <mat-form-field appearance="outline" class="tmpl-field">
-              <mat-label>Detail template (one line per employee) *</mat-label>
-              <textarea matInput formControlName="detailTemplate" rows="3"
-                        (click)="trackCursor('detailTemplate', $event)"
-                        (keyup)="trackCursor('detailTemplate', $event)"
-                        aria-label="Detail template"></textarea>
-              @if (form.controls.detailTemplate.invalid && form.controls.detailTemplate.touched) {
-                <mat-error>Detail template is required.</mat-error>
-              }
-            </mat-form-field>
-          </div>
-
-          <!-- Footer -->
-          <div class="section-block">
-            <div class="section-header">
-              <span class="section-title">Footer</span>
-              <div class="token-chips" aria-label="Insert footer token">
-                @for (tok of TOKENS.footer; track tok) {
-                  <span class="token-chip" role="button" tabindex="0"
-                        (click)="insertToken('footerTemplate', tok)"
-                        (keydown.enter)="insertToken('footerTemplate', tok)"
-                        [matTooltip]="'Insert ' + tok">{{ tok }}</span>
-                }
-              </div>
-            </div>
-            <mat-form-field appearance="outline" class="tmpl-field">
-              <mat-label>Footer template (optional)</mat-label>
-              <textarea matInput formControlName="footerTemplate" rows="3"
-                        (click)="trackCursor('footerTemplate', $event)"
-                        (keyup)="trackCursor('footerTemplate', $event)"
-                        aria-label="Footer template"></textarea>
-            </mat-form-field>
-          </div>
-
-          @if (error()) {
-            <p class="error-msg" role="alert">{{ error() }}</p>
-          }
-
-          <div class="editor-actions">
-            @if (existingTemplate()) {
-              <button mat-stroked-button type="button" class="btn-delete"
-                      [disabled]="deleting()"
-                      (click)="deleteTemplate()"
-                      aria-label="Delete template">
-                @if (deleting()) {
-                  <mat-spinner diameter="16" />
-                } @else {
-                  <mat-icon>delete</mat-icon>
-                }
-                Delete
-              </button>
-            }
-            <button mat-flat-button type="button"
-                    [disabled]="form.invalid || saving()"
-                    (click)="save()">
-              @if (saving()) {
-                <mat-spinner diameter="16" />
-              } @else {
-                <mat-icon>save</mat-icon>
-              }
-              {{ existingTemplate() ? 'Update' : 'Save' }} Template
-            </button>
-          </div>
-        </div>
-      }
-    </div>
-
+<div mat-dialog-title class="dialog-title">
+  <div class="dialog-title-icon">
+    <mat-icon>account_balance</mat-icon>
   </div>
+  <span class="dialog-title-main">{{ selectedBank()?.name ?? 'Bank Template' }}</span>
+  <button mat-icon-button mat-dialog-close class="dialog-close-btn" aria-label="Close dialog">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content [formGroup]="form" class="dialog-content">
+
+  <mat-form-field appearance="outline" class="ext-field">
+    <mat-label>File Extension</mat-label>
+    <input matInput formControlName="fileExtension" placeholder="txt" maxlength="10" />
+  </mat-form-field>
+
+  <!-- Header -->
+  <div class="section-block">
+    <div class="section-header">
+      <span class="section-title">Header</span>
+      <div class="token-chips" aria-label="Insert header token">
+        @for (tok of TOKENS.header; track tok) {
+          <span class="token-chip" role="button" tabindex="0"
+                (click)="insertToken('headerTemplate', tok)"
+                (keydown.enter)="insertToken('headerTemplate', tok)"
+                [matTooltip]="'Insert ' + tok">{{ tok }}</span>
+        }
+      </div>
+    </div>
+    <mat-form-field appearance="outline" class="tmpl-field">
+      <mat-label>Header template (optional)</mat-label>
+      <textarea matInput formControlName="headerTemplate" rows="3"
+                (click)="trackCursor('headerTemplate', $event)"
+                (keyup)="trackCursor('headerTemplate', $event)"
+                aria-label="Header template"></textarea>
+    </mat-form-field>
+  </div>
+
+  <!-- Detail -->
+  <div class="section-block">
+    <div class="section-header">
+      <span class="section-title">Detail <span class="required-star">*</span></span>
+      <div class="token-chips" aria-label="Insert detail token">
+        @for (tok of TOKENS.detail; track tok) {
+          <span class="token-chip" role="button" tabindex="0"
+                (click)="insertToken('detailTemplate', tok)"
+                (keydown.enter)="insertToken('detailTemplate', tok)"
+                [matTooltip]="'Insert ' + tok">{{ tok }}</span>
+        }
+      </div>
+    </div>
+    <mat-form-field appearance="outline" class="tmpl-field">
+      <mat-label>Detail template (one line per employee) *</mat-label>
+      <textarea matInput formControlName="detailTemplate" rows="3"
+                (click)="trackCursor('detailTemplate', $event)"
+                (keyup)="trackCursor('detailTemplate', $event)"
+                aria-label="Detail template"></textarea>
+      @if (form.controls.detailTemplate.invalid && form.controls.detailTemplate.touched) {
+        <mat-error>Detail template is required.</mat-error>
+      }
+    </mat-form-field>
+  </div>
+
+  <!-- Footer -->
+  <div class="section-block">
+    <div class="section-header">
+      <span class="section-title">Footer</span>
+      <div class="token-chips" aria-label="Insert footer token">
+        @for (tok of TOKENS.footer; track tok) {
+          <span class="token-chip" role="button" tabindex="0"
+                (click)="insertToken('footerTemplate', tok)"
+                (keydown.enter)="insertToken('footerTemplate', tok)"
+                [matTooltip]="'Insert ' + tok">{{ tok }}</span>
+        }
+      </div>
+    </div>
+    <mat-form-field appearance="outline" class="tmpl-field">
+      <mat-label>Footer template (optional)</mat-label>
+      <textarea matInput formControlName="footerTemplate" rows="3"
+                (click)="trackCursor('footerTemplate', $event)"
+                (keyup)="trackCursor('footerTemplate', $event)"
+                aria-label="Footer template"></textarea>
+    </mat-form-field>
+  </div>
+
+  @if (error()) {
+    <p class="error-msg" role="alert">{{ error() }}</p>
+  }
 
 </mat-dialog-content>
 
-<mat-dialog-actions align="end">
-  <button mat-button type="button" (click)="close()">Close</button>
+<mat-dialog-actions>
+  @if (existingTemplate()) {
+    <button mat-flat-button class="btn-error" type="button"
+            [disabled]="deleting()"
+            (click)="deleteTemplate()"
+            aria-label="Delete template">
+      @if (deleting()) { <mat-spinner diameter="16" /> } @else { <mat-icon>delete</mat-icon> }
+      Delete
+    </button>
+  }
+  <span class="action-spacer"></span>
+  <button mat-flat-button class="btn-warn" type="button"
+          [disabled]="form.invalid || saving()"
+          (click)="save()">
+    @if (saving()) { <mat-spinner diameter="16" /> } @else { <mat-icon>save</mat-icon> }
+    {{ existingTemplate() ? 'Update' : 'Save' }} Template
+  </button>
+  <button mat-flat-button class="btn-secondary" type="button" (click)="close()">
+    <mat-icon>close</mat-icon> Cancel
+  </button>
 </mat-dialog-actions>

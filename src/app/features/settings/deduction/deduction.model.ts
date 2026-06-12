@@ -7,7 +7,6 @@ export class DeductionModel {
   description: string | null;
   isActive: boolean;
   type: DeductionType;
-  amount: number | undefined;
   liableForEpf: boolean;
   liableForEtf: boolean;
   liableForPaye: boolean;
@@ -22,7 +21,6 @@ export class DeductionModel {
     description: string | null,
     isActive: boolean,
     type = DeductionType.FIXED,
-    amount: number | undefined = undefined,
     liableForEpf = false,
     liableForEtf = false,
     liableForPaye = false,
@@ -36,7 +34,6 @@ export class DeductionModel {
     this.description = description;
     this.isActive = isActive;
     this.type = type;
-    this.amount = amount;
     this.liableForEpf = liableForEpf;
     this.liableForEtf = liableForEtf;
     this.liableForPaye = liableForPaye;

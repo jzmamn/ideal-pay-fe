@@ -1,0 +1,75 @@
+<div class="bft-page">
+
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Bank File Templates</h2>
+      <p class="page-subtitle">
+        Configure per-bank file templates used when generating bank transfer files.
+      </p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loader-row">
+      <mat-spinner diameter="28" />
+      <span>Loading bank templates…</span>
+    </div>
+  }
+
+  @if (!loading()) {
+
+    @if (templates().length === 0) {
+      <div class="empty-state">
+        <mat-icon class="empty-icon">account_balance</mat-icon>
+        <p>No bank file templates configured yet.</p>
+      </div>
+    }
+
+    @if (templates().length > 0) {
+      <table mat-table [dataSource]="templates()" class="templates-table">
+
+        <ng-container matColumnDef="bankName">
+          <th mat-header-cell *matHeaderCellDef>Bank</th>
+          <td mat-cell *matCellDef="let t" class="template-name">{{ t.bankName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="bankCode">
+          <th mat-header-cell *matHeaderCellDef>Code</th>
+          <td mat-cell *matCellDef="let t">
+            <span class="bank-code-badge">{{ t.bankCode }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="headerLines">
+          <th mat-header-cell *matHeaderCellDef>Header</th>
+          <td mat-cell *matCellDef="let t" class="meta-cell">
+            {{ t.headerTemplate ? 'Configured' : '—' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="footerLines">
+          <th mat-header-cell *matHeaderCellDef>Footer</th>
+          <td mat-cell *matCellDef="let t" class="meta-cell">
+            {{ t.footerTemplate ? 'Configured' : '—' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let t" class="actions-cell">
+            <button mat-icon-button (click)="openEditor(t)"
+                    aria-label="Edit bank template" matTooltip="Edit">
+              <mat-icon>edit</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+
+      </table>
+    }
+
+  }
+
+</div>

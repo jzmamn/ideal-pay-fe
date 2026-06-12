@@ -57,7 +57,7 @@ export class VariableDeductionComponent {
       map(list =>
         list
           .filter(d => d.isActive)
-          .map(d => ({ id: d.id, code: d.code, name: d.name, amount: d.amount ?? 0 }))
+          .map(d => ({ id: d.id, code: d.code, name: d.name, amount: 0 }))
       ),
     ).subscribe(items => this.items.set(items));
   }

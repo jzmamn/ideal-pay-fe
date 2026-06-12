@@ -24,6 +24,7 @@ export interface EmployeeFixedDeductionResponse {
   fdId: number;
   fdCode: string;
   fdName: string;
+  formulaEnabled: boolean;
 
   createdById: number;
   createdByCode: string;

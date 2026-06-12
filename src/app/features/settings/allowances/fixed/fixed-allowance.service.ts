@@ -18,7 +18,6 @@ interface ApiFixedAllowance {
   code: string;
   name: string;
   description: string | null;
-  amount: number;
   isActive: boolean;
   isTaxable: boolean;
   liableForEpf: boolean;
@@ -36,7 +35,7 @@ interface ApiFixedAllowance {
 }
 
 type ApiFixedAllowancePayload = Pick<ApiFixedAllowance,
-  'name' | 'description' | 'amount' | 'isActive' | 'isTaxable' |
+  'name' | 'description' | 'isActive' | 'isTaxable' |
   'liableForEpf' | 'liableForEtf' | 'liableForPaye' | 'liableNoPay' |
   'formula' | 'formulaEnabled' | 'createdBy' | 'modifiedBy'
 >;
@@ -62,7 +61,7 @@ export class FixedAllowanceService {
     const payload: ApiFixedAllowancePayload = {
       name:           data.name,
       description:    data.description,
-      amount:         data.amount!,
+
       isActive:       data.isActive,
       isTaxable:      data.isTaxable,
       liableForEpf:   data.liableForEpf,
@@ -83,7 +82,7 @@ export class FixedAllowanceService {
     const payload: ApiFixedAllowancePayload = {
       name:           data.name,
       description:    data.description,
-      amount:         data.amount!,
+
       isActive:       data.isActive,
       isTaxable:      data.isTaxable,
       liableForEpf:   data.liableForEpf,
@@ -108,7 +107,6 @@ export class FixedAllowanceService {
       item.code,
       item.name,
       item.description,
-      item.amount,
       item.isActive,
       item.isTaxable,
       item.liableForEpf,

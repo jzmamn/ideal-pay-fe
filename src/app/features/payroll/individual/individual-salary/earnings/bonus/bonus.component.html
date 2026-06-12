@@ -28,61 +28,65 @@
               <td>{{ bonus.bonusName }}</td>
               <td class="bonus-amount-cell">{{ bonus.bonusAmount | number: '1.2-2' }}</td>
               <td class="amount-cell">
-                @if (editingIndex() === i) {
-                  <mat-form-field appearance="outline" class="amount-field">
-                    <input
-                      matInput
-                      type="number"
-                      min="0"
-                      [formControl]="editAmountCtrl"
-                      [attr.aria-label]="'Edit amount for ' + bonus.bonusName"
-                    >
-                    @if (editAmountCtrl.hasError('required') && editAmountCtrl.touched) {
-                      <mat-error>Amount is required</mat-error>
-                    }
-                    @if (editAmountCtrl.hasError('min') && editAmountCtrl.touched) {
-                      <mat-error>Cannot be negative</mat-error>
-                    }
-                  </mat-form-field>
-                } @else {
-                  <span class="amount-value">{{ bonus.amount | number:'1.2-2' }}</span>
+                @if (!bonus.formulaEnabled) {
+                  @if (editingIndex() === i) {
+                    <mat-form-field appearance="outline" class="amount-field">
+                      <input
+                        matInput
+                        type="number"
+                        min="0"
+                        [formControl]="editAmountCtrl"
+                        [attr.aria-label]="'Edit amount for ' + bonus.bonusName"
+                      >
+                      @if (editAmountCtrl.hasError('required') && editAmountCtrl.touched) {
+                        <mat-error>Amount is required</mat-error>
+                      }
+                      @if (editAmountCtrl.hasError('min') && editAmountCtrl.touched) {
+                        <mat-error>Cannot be negative</mat-error>
+                      }
+                    </mat-form-field>
+                  } @else {
+                    <span class="amount-value">{{ bonus.amount | number:'1.2-2' }}</span>
+                  }
                 }
               </td>
               <td class="action-col">
-                @if (editingIndex() === i) {
-                  <button
-                    mat-icon-button
-                    type="button"
-                    color="primary"
-                    (click)="saveEdit(i)"
-                    [disabled]="saving()"
-                    [attr.aria-label]="'Save changes for ' + bonus.bonusName"
-                    matTooltip="Save"
-                  >
-                    <mat-icon>check</mat-icon>
-                  </button>
-                  <button
-                    mat-icon-button
-                    type="button"
-                    (click)="cancelEdit()"
-                    [disabled]="saving()"
-                    [attr.aria-label]="'Cancel editing ' + bonus.bonusName"
-                    matTooltip="Cancel"
-                  >
-                    <mat-icon>close</mat-icon>
-                  </button>
-                } @else {
-                  <button
-                    mat-icon-button
-                    type="button"
-                    class="btn-edit"
-                    [disabled]="editingIndex() !== null"
-                    (click)="startEdit(i)"
-                    [attr.aria-label]="'Edit amount for ' + bonus.bonusName"
-                    matTooltip="Edit amount"
-                  >
-                    <mat-icon>edit</mat-icon>
-                  </button>
+                @if (!bonus.formulaEnabled) {
+                  @if (editingIndex() === i) {
+                    <button
+                      mat-icon-button
+                      type="button"
+                      color="primary"
+                      (click)="saveEdit(i)"
+                      [disabled]="saving()"
+                      [attr.aria-label]="'Save changes for ' + bonus.bonusName"
+                      matTooltip="Save"
+                    >
+                      <mat-icon>check</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      type="button"
+                      (click)="cancelEdit()"
+                      [disabled]="saving()"
+                      [attr.aria-label]="'Cancel editing ' + bonus.bonusName"
+                      matTooltip="Cancel"
+                    >
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  } @else {
+                    <button
+                      mat-icon-button
+                      type="button"
+                      class="btn-edit"
+                      [disabled]="editingIndex() !== null"
+                      (click)="startEdit(i)"
+                      [attr.aria-label]="'Edit amount for ' + bonus.bonusName"
+                      matTooltip="Edit amount"
+                    >
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                  }
                 }
               </td>
             </tr>

@@ -13,7 +13,6 @@ interface ApiBonusResponse {
   code: string;
   name: string;
   description: string | null;
-  amount: number;
   isActive: boolean;
   isTaxable: boolean;
   liableForEpf: boolean;
@@ -33,7 +32,7 @@ interface ApiBonusResponse {
 }
 
 type ApiBonusPayload = Pick<ApiBonusResponse,
-  'name' | 'description' | 'amount' | 'isActive' | 'isTaxable' |
+  'name' | 'description' | 'isActive' | 'isTaxable' |
   'liableForEpf' | 'liableForEtf' | 'liableForPaye' | 'liableNoPay' |
   'formula' | 'formulaEnabled'
 > & { createdBy: number; modifiedBy: number };
@@ -72,9 +71,11 @@ export class BonusService {
     );
   }
 
-  update(id: number, data: Omit<BonusModel, 'code'>): Observable<void> {
+  update(id: number, data: Omit<BonusModel, 'code'>): Observable<BonusModel> {
     const payload = this.toPayload(data);
-    return this.http.put<void>(`${this.baseUrl}/${id}`, payload);
+    return this.http.put<ApiResponse<ApiBonusResponse>>(`${this.baseUrl}/${id}`, payload).pipe(
+      map(res => this.toModel(res.data)),
+    );
   }
 
   delete(id: number): Observable<void> {
@@ -96,7 +97,6 @@ export class BonusService {
       item.code,
       item.name,
       item.description,
-      item.amount,
       item.isActive,
       item.isTaxable,
       item.liableForEpf,
@@ -112,7 +112,6 @@ export class BonusService {
     return {
       name:           data.name!,
       description:    data.description ?? null,
-      amount:         data.amount!,
       isActive:       data.isActive!,
       isTaxable:      data.isTaxable!,
       liableForEpf:   data.liableForEpf!,

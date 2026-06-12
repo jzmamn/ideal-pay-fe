@@ -27,16 +27,18 @@
       </mat-form-field>
 
       <!-- Transfer type — single selection -->
-      <mat-button-toggle-group [value]="selectedType()"
-                               (change)="selectedType.set($event.value)"
-                               aria-label="Transfer type"
-                               hideSingleSelectionIndicator>
-        @for (type of TRANSFER_TYPES; track type.value) {
-          <mat-button-toggle [value]="type.value">{{ type.label }}</mat-button-toggle>
-        }
-      </mat-button-toggle-group>
+      <mat-form-field appearance="outline" class="transfer-type-field" subscriptSizing="dynamic">
+        <mat-label>Transfer Type</mat-label>
+        <mat-select [value]="selectedType()"
+                    (valueChange)="selectedType.set($event)"
+                    aria-label="Transfer type">
+          @for (type of TRANSFER_TYPES; track type.value) {
+            <mat-option [value]="type.value">{{ type.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
 
-      <button mat-flat-button type="button"
+      <button mat-flat-button type="button" class="load-btn"
               [disabled]="loading() || periodForm.invalid"
               (click)="load()">
         @if (loading()) { <mat-spinner diameter="18" /> } @else { <mat-icon>search</mat-icon> }
@@ -44,53 +46,95 @@
       </button>
     </div>
 
-    <div class="page-header-right">
-      <button mat-stroked-button type="button"
-              [disabled]="refLoading()"
-              (click)="openTemplateManager()"
-              aria-label="Manage bank transfer templates">
-        <mat-icon>settings</mat-icon>
-        Manage Bank Templates
-      </button>
-    </div>
-
   </header>
 
   <div class="page-body">
 
-  <!-- ── Mode row ────────────────────────────────────────────────────────── -->
-  <div class="mode-row">
-      <span class="mode-label">Transfer mode</span>
-      <mat-button-toggle-group [value]="mode()" (change)="setMode($event.value)"
-                               aria-label="Transfer mode" hideSingleSelectionIndicator>
-        <mat-button-toggle value="by-bank">
-          <mat-icon>account_balance</mat-icon>
-          By Employee Bank
-        </mat-button-toggle>
-        <mat-button-toggle value="single-bank">
-          <mat-icon>payments</mat-icon>
-          Single Bank (All Employees)
-        </mat-button-toggle>
-      </mat-button-toggle-group>
+  <!-- ── Controls row ─────────────────────────────────────────────────────── -->
+  <div class="controls-row">
 
-      <!-- Template selector — shown only in single-bank mode -->
-      @if (mode() === 'single-bank') {
-        <mat-form-field appearance="outline" class="single-bank-field">
-          <mat-label>Template</mat-label>
-          <mat-select [value]="selectedTemplateId()"
-                      (valueChange)="selectedTemplateId.set($event)"
+    <!-- Filter type selector + active filter -->
+    <div class="filter-group">
+      <mat-form-field appearance="outline" class="single-bank-field" subscriptSizing="dynamic">
+        <mat-label>Filter by</mat-label>
+        <mat-icon matPrefix aria-hidden="true">filter_list</mat-icon>
+        <mat-select [value]="filterType()"
+                    (valueChange)="setFilterType($event)"
+                    aria-label="Select filter type">
+          <mat-option [value]="null">None</mat-option>
+          <mat-option value="employee">Employee</mat-option>
+          <mat-option value="jobCategory">Job Category</mat-option>
+          <mat-option value="branch">Branch</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      @if (filterType() === 'employee') {
+        <div class="employee-lookup-wrap">
+          <app-table-autocomplete #empAc
+                                  label="Employee"
+                                  placeholder="Name or Emp #…"
+                                  [items]="employeeItems()"
+                                  [columns]="employeeCols"
+                                  [displayFn]="empDisplayFn"
+                                  (itemSelected)="onEmployeeSelected($event)" />
+          @if (filterEmpId() !== null) {
+            <button mat-icon-button type="button" class="clear-btn"
+                    (click)="clearEmployeeFilter()"
+                    aria-label="Clear employee filter">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </div>
+      }
+
+      @if (filterType() === 'jobCategory') {
+        <mat-form-field appearance="outline" class="single-bank-field" subscriptSizing="dynamic">
+          <mat-label>Job Category</mat-label>
+          <mat-select [value]="filterJobCategoryId()"
+                      (valueChange)="onJobCategorySelected($event)"
                       [disabled]="refLoading()"
-                      aria-label="Select bank file template">
-            @for (t of templates(); track t.id) {
-              <mat-option [value]="t.id">{{ t.bankName }}</mat-option>
+                      aria-label="Filter by job category">
+            <mat-option [value]="null">All</mat-option>
+            @for (jc of jobCategories(); track jc.id) {
+              <mat-option [value]="jc.id">{{ jc.name }}</mat-option>
             }
           </mat-select>
-          @if (templates().length === 0) {
-            <mat-hint>No templates — configure under Pay Slip Template</mat-hint>
-          }
+        </mat-form-field>
+      }
+
+      @if (filterType() === 'branch') {
+        <mat-form-field appearance="outline" class="single-bank-field" subscriptSizing="dynamic">
+          <mat-label>Branch</mat-label>
+          <mat-select [value]="filterBranchId()"
+                      (valueChange)="onBranchSelected($event)"
+                      [disabled]="refLoading()"
+                      aria-label="Filter by branch">
+            <mat-option [value]="null">All</mat-option>
+            @for (b of branches(); track b.id) {
+              <mat-option [value]="b.id">{{ b.name }}</mat-option>
+            }
+          </mat-select>
         </mat-form-field>
       }
     </div>
+
+    <!-- Template -->
+    <mat-form-field appearance="outline" class="single-bank-field" subscriptSizing="dynamic">
+      <mat-label>Template</mat-label>
+      <mat-select [value]="selectedTemplateId()"
+                  (valueChange)="selectedTemplateId.set($event)"
+                  [disabled]="refLoading()"
+                  aria-label="Select bank file template">
+        @for (t of templates(); track t.id) {
+          <mat-option [value]="t.id">{{ t.bankName }}</mat-option>
+        }
+      </mat-select>
+      @if (templates().length === 0) {
+        <mat-hint>No templates — configure under Manage Bank Templates</mat-hint>
+      }
+    </mat-form-field>
+
+  </div>
 
   <!-- ── Load error ─────────────────────────────────────────────────────── -->
   @if (loadError()) {
@@ -140,49 +184,44 @@
       </button>
     </div>
 
-    <!-- ═══ SINGLE-BANK MODE ════════════════════════════════════════════════ -->
-    @if (mode() === 'single-bank') {
+    <mat-accordion multi>
+      @for (group of bankGroups(); track group.bankCode) {
+        <mat-expansion-panel>
 
-      @if (!singleBankTemplate()) {
-        <div class="empty-state" role="status">
-          <mat-icon aria-hidden="true">account_balance</mat-icon>
-          <p>Select a template above to use its bank for all employees.</p>
-        </div>
-      } @else {
-        <div class="single-bank-panel">
-          <div class="single-bank-header">
-            <div>
-              <h3 class="single-bank-title">{{ singleBankTemplate()?.bankName }}</h3>
-              <span class="bank-code-badge">{{ singleBankTemplate()?.bankCode }}</span>
-            </div>
-            <div class="panel-actions">
-              <button mat-stroked-button type="button"
-                      [disabled]="!singleBankTemplate()"
-                      [matTooltip]="!singleBankTemplate() ? 'Configure a template first' : 'Download bank file'"
-                      (click)="generateFile(singleBankGroup()!)"
-                      aria-label="Generate and download bank transfer file">
-                <mat-icon>download</mat-icon>
-                Generate File
-              </button>
-              <button mat-flat-button type="button"
-                      [disabled]="!pendingCount() || !!markingIds().size"
-                      (click)="markAllTransferred()"
-                      aria-label="Mark all as transferred">
-                <mat-icon>check</mat-icon>
-                Mark Transferred
-              </button>
-            </div>
-          </div>
+          <mat-expansion-panel-header>
+            <mat-panel-title class="panel-title">
+              <mat-icon aria-hidden="true">account_balance</mat-icon>
+              {{ group.bankName }}
+              @if (group.bankCode) {
+                <span class="bank-code-badge">{{ group.bankCode }}</span>
+              }
+            </mat-panel-title>
+            <mat-panel-description class="panel-desc">
+              {{ group.rows.length }} employee(s) &nbsp;·&nbsp;
+              LKR {{ group.total | number:'1.2-2' }}
+              @if (!group.template) {
+                <span class="no-tmpl-warn"
+                      matTooltip="No file template configured for this bank">
+                  <mat-icon aria-label="No template">warning</mat-icon>
+                  No template
+                </span>
+              }
+              @if (groupPendingCount(group) === 0) {
+                <span class="all-done-badge">All transferred</span>
+              }
+            </mat-panel-description>
+          </mat-expansion-panel-header>
 
-          <table mat-table [dataSource]="rows()" aria-label="All employees transfer list"
+          <table mat-table [dataSource]="group.rows"
+                 [attr.aria-label]="'Transfer list for ' + group.bankName"
                  class="group-table">
 
             <ng-container matColumnDef="select">
               <th mat-header-cell *matHeaderCellDef>
-                <mat-checkbox [checked]="isAllSelected()"
-                              [indeterminate]="isAnyIndeterminate()"
-                              (change)="toggleAll()"
-                              aria-label="Select all employees" />
+                <mat-checkbox [checked]="isGroupAllSelected(group)"
+                              [indeterminate]="isGroupIndeterminate(group)"
+                              (change)="toggleGroup(group)"
+                              aria-label="Select all in group" />
               </th>
               <td mat-cell *matCellDef="let row">
                 <mat-checkbox [checked]="isSelected(row.runId)"
@@ -238,128 +277,28 @@
             <tr mat-row *matRowDef="let row; columns: displayedColumns;"
                 [class.row-transferred]="row.transferStatus === 'TRANSFERRED'"></tr>
           </table>
-        </div>
+
+          <div class="panel-actions">
+            <button mat-stroked-button type="button"
+                    [disabled]="!group.template"
+                    [matTooltip]="!group.template ? 'Configure a template first' : 'Download bank file'"
+                    (click)="generateFile(group)"
+                    aria-label="Generate and download bank transfer file">
+              <mat-icon>download</mat-icon>
+              Generate File
+            </button>
+            <button mat-flat-button type="button"
+                    [disabled]="groupPendingCount(group) === 0 || !!markingIds().size"
+                    (click)="markGroupTransferred(group)"
+                    aria-label="Mark this bank's pending rows as transferred">
+              <mat-icon>check</mat-icon>
+              Mark Transferred
+            </button>
+          </div>
+
+        </mat-expansion-panel>
       }
-
-    <!-- ═══ BY-BANK MODE ═════════════════════════════════════════════════════ -->
-    } @else {
-
-      <mat-accordion multi>
-        @for (group of bankGroups(); track group.bankCode) {
-          <mat-expansion-panel>
-
-            <mat-expansion-panel-header>
-              <mat-panel-title class="panel-title">
-                <mat-icon aria-hidden="true">account_balance</mat-icon>
-                {{ group.bankName }}
-                @if (group.bankCode) {
-                  <span class="bank-code-badge">{{ group.bankCode }}</span>
-                }
-              </mat-panel-title>
-              <mat-panel-description class="panel-desc">
-                {{ group.rows.length }} employee(s) &nbsp;·&nbsp;
-                LKR {{ group.total | number:'1.2-2' }}
-                @if (!group.template) {
-                  <span class="no-tmpl-warn"
-                        matTooltip="No file template configured for this bank">
-                    <mat-icon aria-label="No template">warning</mat-icon>
-                    No template
-                  </span>
-                }
-                @if (groupPendingCount(group) === 0) {
-                  <span class="all-done-badge">All transferred</span>
-                }
-              </mat-panel-description>
-            </mat-expansion-panel-header>
-
-            <table mat-table [dataSource]="group.rows"
-                   [attr.aria-label]="'Transfer list for ' + group.bankName"
-                   class="group-table">
-
-              <ng-container matColumnDef="select">
-                <th mat-header-cell *matHeaderCellDef>
-                  <mat-checkbox [checked]="isGroupAllSelected(group)"
-                                [indeterminate]="isGroupIndeterminate(group)"
-                                (change)="toggleGroup(group)"
-                                aria-label="Select all in group" />
-                </th>
-                <td mat-cell *matCellDef="let row">
-                  <mat-checkbox [checked]="isSelected(row.runId)"
-                                (change)="toggleRow(row.runId)"
-                                [attr.aria-label]="'Select ' + row.empName" />
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="employeeNo">
-                <th mat-header-cell *matHeaderCellDef>Emp #</th>
-                <td mat-cell *matCellDef="let row">{{ row.employeeNo }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="empName">
-                <th mat-header-cell *matHeaderCellDef>Name</th>
-                <td mat-cell *matCellDef="let row">{{ row.empName }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="accountNo">
-                <th mat-header-cell *matHeaderCellDef>Account No.</th>
-                <td mat-cell *matCellDef="let row">{{ row.accountNo || '—' }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="branchCode">
-                <th mat-header-cell *matHeaderCellDef>Branch</th>
-                <td mat-cell *matCellDef="let row">{{ row.branchCode || '—' }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="totalAmount">
-                <th mat-header-cell *matHeaderCellDef class="amount-col">Amount (LKR)</th>
-                <td mat-cell *matCellDef="let row" class="amount-col">
-                  {{ row.totalAmount | number:'1.2-2' }}
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef>Status</th>
-                <td mat-cell *matCellDef="let row">
-                  @if (isMarking(row.runId)) {
-                    <mat-spinner diameter="16" />
-                  } @else {
-                    <span [class]="'status-badge status-' + row.transferStatus.toLowerCase()">
-                      {{ row.transferStatus === 'TRANSFERRED' ? 'Transferred' : 'Pending' }}
-                    </span>
-                    @if (row.transferredAt) {
-                      <span class="transfer-date">{{ row.transferredAt | date:'dd MMM HH:mm' }}</span>
-                    }
-                  }
-                </td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns;"
-                  [class.row-transferred]="row.transferStatus === 'TRANSFERRED'"></tr>
-            </table>
-
-            <div class="panel-actions">
-              <button mat-stroked-button type="button"
-                      [disabled]="!group.template"
-                      [matTooltip]="!group.template ? 'Configure a template first' : 'Download bank file'"
-                      (click)="generateFile(group)"
-                      aria-label="Generate and download bank transfer file">
-                <mat-icon>download</mat-icon>
-                Generate File
-              </button>
-              <button mat-flat-button type="button"
-                      [disabled]="groupPendingCount(group) === 0 || !!markingIds().size"
-                      (click)="markGroupTransferred(group)"
-                      aria-label="Mark this bank's pending rows as transferred">
-                <mat-icon>check</mat-icon>
-                Mark Transferred
-              </button>
-            </div>
-
-          </mat-expansion-panel>
-        }
-      </mat-accordion>
-    }
+    </mat-accordion>
 
   } @else if (!loading()) {
     <div class="empty-state" role="status">

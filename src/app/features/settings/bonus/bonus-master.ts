@@ -29,7 +29,6 @@ export class BonusMaster implements OnInit {
       { key: 'id',             label: 'ID',              sortable: false },
       { key: 'code',           label: 'Code' },
       { key: 'name',           label: 'Name' },
-      { key: 'amount',         label: 'Amount',          type: 'currency' },
       { key: 'formulaEnabled', label: 'Formula',         type: 'icon', icon: 'functions', iconTooltip: 'Formula enabled', sortable: false },
       { key: 'isActive',       label: 'Active',          type: 'boolean' },
       { key: 'isTaxable',      label: 'Taxable',         type: 'boolean' },
@@ -88,8 +87,8 @@ export class BonusMaster implements OnInit {
       case 'update':
         this.bonusSvc.update(result.data.id, result.data)
           .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe(() => {
-            this.bonuses.update(list => list.map(b => b.id === result.data.id ? result.data : b));
+          .subscribe(updated => {
+            this.bonuses.update(list => list.map(b => b.id === updated.id ? updated : b));
           });
         break;
       case 'delete':

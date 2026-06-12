@@ -1,10 +1,11 @@
-export type TransferType   = 'SALARY' | 'SALARY_ADVANCE' | 'FIXED_ALLOWANCE';
+export type TransferType   = 'SALARY' | 'SALARY_ADVANCE' | 'FIXED_ALLOWANCE' | 'BONUS';
 export type TransferStatus = 'PENDING' | 'TRANSFERRED' | 'FAILED';
 
 export const TRANSFER_TYPE_LABELS: Record<TransferType, string> = {
   SALARY:           'Salary',
   SALARY_ADVANCE:   'Salary Advance',
   FIXED_ALLOWANCE:  'Fixed Allowances',
+  BONUS:            'Bonus',
 };
 
 // ── Bank file template ────────────────────────────────────────────────────────
@@ -43,6 +44,10 @@ export interface BankTransferRow {
   empId:                number;
   employeeNo:           string;
   empName:              string;
+  jobCategoryId:        number | null;
+  jobCategoryName:      string | null;
+  branchId:             number | null;
+  branchName:           string | null;
   bankId:               number | null;
   bankCode:             string | null;
   bankName:             string | null;
@@ -51,6 +56,7 @@ export interface BankTransferRow {
   salaryAmount:         number;
   salaryAdvanceAmount:  number;
   fixedAllowanceAmount: number;
+  bonusAmount:          number;
   /** Pre-computed by the service based on the selected TransferTypes. */
   totalAmount:          number;
   transferStatus:       TransferStatus;

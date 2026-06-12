@@ -53,6 +53,14 @@ export interface BatchSavePayload {
   entries:     BatchSaveEntry[];
 }
 
+// ── Load summary ──────────────────────────────────────────────────────────
+
+export interface LoadSummaryResponse {
+  employeesProcessed: number;
+  recordsUpserted:    number;
+  errors:             string[];
+}
+
 // ── Service ───────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
@@ -64,6 +72,25 @@ export class BatchService {
     return this.http
       .get<ApiResponse<BatchLoadResponse>>(
         `${this.baseUrl}?month=${periodMonth}&year=${periodYear}`
+      )
+      .pipe(map(r => r.data));
+  }
+
+  /**
+   * Triggers the server-side component load for all active employees.
+   * Evaluates formulas / uses configured amounts and writes emp_fa, emp_fd,
+   * emp_ot (rate), emp_np (rate), emp_late (rate), emp_bonus records.
+   * Call `load()` afterwards to refresh the pivot data.
+   */
+  loadComponents(
+    periodMonth: number,
+    periodYear: number,
+    userId: number,
+  ): Observable<LoadSummaryResponse> {
+    return this.http
+      .post<ApiResponse<LoadSummaryResponse>>(
+        `${this.baseUrl}/load?month=${periodMonth}&year=${periodYear}&userId=${userId}`,
+        {},
       )
       .pipe(map(r => r.data));
   }

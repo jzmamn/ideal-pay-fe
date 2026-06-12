@@ -41,7 +41,6 @@ export class Deduction implements OnInit {
       { key: 'name',           label: 'Name' },
       ...(this.deductionType() === DeductionType.FIXED
         ? [
-            { key: 'amount' as const, label: 'Amount', type: 'currency' as const },
             { key: 'formulaEnabled' as const, label: 'Formula', type: 'icon' as const, icon: 'functions', iconTooltip: 'Formula enabled', sortable: false },
           ]
         : []),
@@ -113,7 +112,7 @@ export class Deduction implements OnInit {
         service.update(result.data.id, result.data).subscribe(() => {
           const updated = new DeductionModel(
             result.data.id, result.data.code, result.data.name,
-            result.data.description, result.data.isActive, type, result.data.amount,
+            result.data.description, result.data.isActive, type,
             result.data.liableForEpf, result.data.liableForEtf, result.data.liableForPaye,
             result.data.liableNoPay, result.data.formula, result.data.formulaEnabled,
           );

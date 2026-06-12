@@ -29,10 +29,12 @@ export interface PivotAmountChange {
   styleUrl: './pivot.scss',
 })
 export class PivotComponent {
-  readonly codes   = input.required<readonly string[]>();
-  readonly rows    = input.required<PivotRow[]>();
-  readonly amounts = input.required<Record<string, number[]>>();
-  readonly label   = input('');
+  readonly codes    = input.required<readonly string[]>();
+  readonly rows     = input.required<PivotRow[]>();
+  readonly amounts  = input.required<Record<string, number[]>>();
+  readonly label    = input('');
+  /** When true, cells are read-only — no click-to-edit behaviour. */
+  readonly readOnly = input(false);
 
   readonly amountChange  = output<PivotAmountChange>();
   readonly importClick   = output<void>();

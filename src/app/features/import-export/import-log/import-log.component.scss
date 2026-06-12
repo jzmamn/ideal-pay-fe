@@ -1,34 +1,86 @@
+// ── Shell ─────────────────────────────────────────────────────────────────
+
 .log-shell {
-  padding: 16px 24px;
+  padding: 24px 28px;
 }
+
+// ── Header ────────────────────────────────────────────────────────────────
 
 .log-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.log-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
 
   h2 {
-    flex: 1;
     margin: 0;
+    font-size: 1.35rem;
+    font-weight: 600;
   }
 }
 
-.log-loading,
-.log-empty {
+.log-title-icon {
+  color: var(--mat-sys-primary, #1976d2);
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+}
+
+.log-header-actions {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 32px;
-  justify-content: center;
-  color: var(--mat-sys-on-surface-variant, #666);
 }
+
+// ── Loading / empty states ─────────────────────────────────────────────────
+
+.log-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 40px;
+  color: var(--mat-sys-on-surface-variant, #666);
+  font-size: 0.9rem;
+}
+
+.log-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 56px 32px;
+  color: var(--mat-sys-on-surface-variant, #666);
+  text-align: center;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    opacity: 0.4;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.95rem;
+  }
+}
+
+// ── Table wrapper ─────────────────────────────────────────────────────────
 
 .table-wrapper {
   overflow: auto;
   border: 1px solid var(--mat-sys-outline-variant, #ddd);
-  border-radius: 8px;
+  border-radius: 10px;
 }
+
+// ── Table ─────────────────────────────────────────────────────────────────
 
 table {
   width: 100%;
@@ -36,25 +88,64 @@ table {
   font-size: 0.875rem;
 
   th, td {
-    padding: 8px 12px;
+    padding: 10px 14px;
     text-align: left;
     border-bottom: 1px solid var(--mat-sys-outline-variant, #eee);
     white-space: nowrap;
   }
 
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr:hover {
+    background: var(--mat-sys-surface-container-lowest, #fafafa);
+  }
+
   th {
     background: var(--mat-sys-surface-container, #f5f5f5);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--mat-sys-on-surface-variant, #666);
   }
 }
 
-.file-cell {
-  max-width: 240px;
+.th-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+  margin-right: 3px;
+  opacity: 0.7;
+}
+
+// ── Columns ───────────────────────────────────────────────────────────────
+
+.id-col {
+  width: 48px;
+}
+
+.file-col {
+  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.month-col {
+  font-family: monospace;
+  font-size: 0.82rem;
+}
+
 .num-col {
   text-align: right;
+  width: 72px;
+}
+
+.valid-col {
+  color: var(--mat-sys-tertiary, #2e7d32);
+  font-weight: 500;
 }
 
 .has-errors {
@@ -62,10 +153,22 @@ table {
   font-weight: 600;
 }
 
+.muted {
+  color: var(--mat-sys-on-surface-variant, #777);
+  font-size: 0.82rem;
+}
+
+.action-col {
+  width: 48px;
+  text-align: center;
+}
+
+// ── Status badges ─────────────────────────────────────────────────────────
+
 .status-badge {
   display: inline-block;
-  padding: 2px 10px;
-  border-radius: 12px;
+  padding: 3px 10px;
+  border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.03em;
@@ -84,8 +187,4 @@ table {
 .status-badge--locked {
   background: var(--mat-sys-error-container, #ffd9d9);
   color: var(--mat-sys-on-error-container, #93000a);
-}
-
-.action-col {
-  width: 1%;
 }

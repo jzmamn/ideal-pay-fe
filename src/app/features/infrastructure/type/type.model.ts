@@ -2,7 +2,7 @@ export interface TypeRequest {
   name: string;
   description: string;
   isActive: boolean;
-  isDateRange: boolean;
+  endDate: boolean;
   createdBy: number;
   modifiedBy: number;
 }
@@ -13,7 +13,7 @@ export interface TypeResponse {
   name: string;
   description: string;
   isActive: boolean;
-  isDateRange: boolean;
+  endDate: boolean;
   createdById: number;
   createdByCode: string;
   createdByUserName: string;

@@ -60,7 +60,6 @@ export class AllowanceDialog {
     code:          [{ value: this.row?.code ?? '', disabled: true }, Validators.required],
     name:          [this.row?.name          ?? '', Validators.required],
     description:   [this.row?.description   ?? null as string | null],
-    amount:        [this.row?.amount        ?? null as number | null, this.isFixed ? [Validators.required, Validators.min(0)] : []],
     isActive:      [this.row?.isActive      ?? true],
     isTaxable:     [this.row?.isTaxable     ?? false],
     liableForEpf:  [this.row?.liableForEpf  ?? false],
@@ -82,6 +81,7 @@ export class AllowanceDialog {
 
   onFormulaValueChanged(value: FormulaDefinitionFormValue): void {
     this.latestFormula.set(value);
+    this.formulaIsActive.set(value.isActive);
   }
 
   onFormulaSaveRequested(value: FormulaDefinitionFormValue): void {
@@ -98,7 +98,7 @@ export class AllowanceDialog {
       code:           raw.code!,
       name:           raw.name!,
       description:    raw.description,
-      amount:         this.isFixed ? raw.amount! : undefined,
+      amount:         undefined as number | undefined,
       isActive:       raw.isActive!,
       isTaxable:      raw.isTaxable!,
       liableForEpf:   raw.liableForEpf!,

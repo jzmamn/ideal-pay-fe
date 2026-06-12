@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 14mm 14mm 12mm 14mm;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11px;
+      color: #1a1a1a;
+      background: #ffffff;
+      line-height: 1.4;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: table;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    .header-left, .header-right {
+      display: table-cell;
+      vertical-align: middle;
+    }
+    .header-right { text-align: right; }
+
+    .company-logo img {
+      max-height: 52px;
+      max-width: 140px;
+    }
+    .company-name {
+      font-size: 15px;
+      font-weight: bold;
+      color: #1a1a1a;
+    }
+    .company-meta {
+      font-size: 10px;
+      color: #555;
+      margin-top: 2px;
+    }
+    .doc-title {
+      font-size: 18px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      color: #1a3a5c;
+    }
+    .doc-period {
+      font-size: 11px;
+      color: #444;
+      margin-top: 3px;
+    }
+
+    hr.divider {
+      border: none;
+      border-top: 1.5px solid #1a3a5c;
+      margin: 8px 0;
+    }
+    hr.thin {
+      border: none;
+      border-top: 1px solid #ddd;
+      margin: 6px 0;
+    }
+
+    /* ── Employee block ── */
+    .emp-grid {
+      display: table;
+      width: 100%;
+      margin-bottom: 8px;
+    }
+    .emp-col {
+      display: table-cell;
+      width: 50%;
+      vertical-align: top;
+    }
+    .emp-row {
+      display: table;
+      width: 100%;
+      margin-bottom: 3px;
+    }
+    .emp-label {
+      display: table-cell;
+      width: 42%;
+      font-weight: bold;
+      color: #555;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .emp-value {
+      display: table-cell;
+      color: #1a1a1a;
+      font-size: 11px;
+    }
+
+    /* ── Body: two columns ── */
+    .body-table {
+      display: table;
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 8px;
+    }
+    .col-earnings, .col-deductions {
+      display: table-cell;
+      width: 50%;
+      vertical-align: top;
+      padding: 0 4px;
+    }
+    .col-earnings { padding-left: 0; border-right: 1px solid #ddd; padding-right: 10px; }
+    .col-deductions { padding-left: 10px; }
+
+    .section-title {
+      font-size: 10px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #1a3a5c;
+      background: #eef3f9;
+      padding: 3px 5px;
+      margin-bottom: 4px;
+    }
+
+    table.lines {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    table.lines td {
+      padding: 2px 2px;
+      vertical-align: top;
+      font-size: 11px;
+    }
+    table.lines td.amt {
+      text-align: right;
+      white-space: nowrap;
+    }
+    table.lines tr.subtotal td {
+      border-top: 1px solid #ccc;
+      padding-top: 3px;
+      font-weight: bold;
+    }
+    table.lines tr.zero td {
+      color: #aaa;
+    }
+
+    /* ── Employer contributions ── */
+    .employer-section {
+      margin-top: 8px;
+    }
+
+    /* ── Net pay footer ── */
+    .net-pay-bar {
+      background: #1a3a5c;
+      color: #ffffff;
+      display: table;
+      width: 100%;
+      padding: 7px 10px;
+      margin-top: 10px;
+    }
+    .net-pay-label {
+      display: table-cell;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+    .net-pay-amount {
+      display: table-cell;
+      text-align: right;
+      font-size: 15px;
+      font-weight: bold;
+    }
+
+    /* ── Bank / account details ── */
+    .bank-block {
+      margin-top: 8px;
+      font-size: 10px;
+      color: #555;
+    }
+    .bank-block span { margin-right: 14px; }
+
+    /* ── Footer note ── */
+    .footer-note {
+      margin-top: 10px;
+      font-size: 9px;
+      color: #999;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ════════════════════ HEADER ════════════════════ -->
+  <div class="header">
+    <div class="header-left">
+      <div class="company-logo">
+        <!-- COMPANY_LOGO is a base64 data-URI or URL -->
+        <img src="{{COMPANY_LOGO}}" alt="{{COMPANY_NAME}}" onerror="this.style.display='none'"/>
+      </div>
+      <div class="company-name">{{COMPANY_NAME}}</div>
+      <div class="company-meta">{{COMPANY_ADDRESS}}</div>
+      <div class="company-meta">{{lblCompanyName}} EPF: {{COMPANY_EPF_NO}} &nbsp;|&nbsp; ETF: {{COMPANY_ETF_NO}}</div>
+      <div class="company-meta">Tel: {{COMPANY_PHONE}} &nbsp;|&nbsp; {{COMPANY_EMAIL}}</div>
+    </div>
+    <div class="header-right">
+      <div class="doc-title">PAY SLIP</div>
+      <div class="doc-period">{{lblPayrollMonth}}: {{PAYROLL_MONTH}}</div>
+      <div class="doc-period">{{lblWorkingDays}}: {{WORKING_DAYS}} days</div>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ════════════════════ EMPLOYEE INFO ════════════════════ -->
+  <div class="emp-grid">
+    <div class="emp-col">
+      <div class="emp-row">
+        <span class="emp-label">{{lblEmployeeName}}</span>
+        <span class="emp-value">{{EMPLOYEE_NAME}}</span>
+      </div>
+      <div class="emp-row">
+        <span class="emp-label">{{lblEmployeeNo}}</span>
+        <span class="emp-value">{{EMPLOYEE_NO}}</span>
+      </div>
+      <div class="emp-row">
+        <span class="emp-label">{{lblDesignation}}</span>
+        <span class="emp-value">{{DESIGNATION}}</span>
+      </div>
+      <div class="emp-row">
+        <span class="emp-label">{{lblDepartment}}</span>
+        <span class="emp-value">{{DEPARTMENT}}</span>
+      </div>
+    </div>
+    <div class="emp-col">
+      <div class="emp-row">
+        <span class="emp-label">{{lblEpfNo}}</span>
+        <span class="emp-value">{{EMPLOYEE_EPF_NO}}</span>
+      </div>
+      <div class="emp-row">
+        <span class="emp-label">{{lblBankName}}</span>
+        <span class="emp-value">{{BANK_NAME}}</span>
+      </div>
+      <div class="emp-row">
+        <span class="emp-label">{{lblBankBranch}}</span>
+        <span class="emp-value">{{BANK_BRANCH}}</span>
+      </div>
+      <div class="emp-row">
+        <span class="emp-label">{{lblAccountNo}}</span>
+        <span class="emp-value">{{ACCOUNT_NO}}</span>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ════════════════════ EARNINGS / DEDUCTIONS ════════════════════ -->
+  <div class="body-table">
+
+    <!-- ── Earnings column ── -->
+    <div class="col-earnings">
+      <div class="section-title">Earnings</div>
+      <table class="lines">
+        <tbody>
+          <tr>
+            <td>{{lblBasicSalary}}</td>
+            <td class="amt">{{BASIC_SALARY}}</td>
+          </tr>
+          <tr>
+            <td>{{lblFixedAllowance}}</td>
+            <td class="amt">{{FIXED_ALLOWANCE}}</td>
+          </tr>
+          <tr>
+            <td>{{lblOvertime}}</td>
+            <td class="amt">{{OVERTIME}}</td>
+          </tr>
+          <tr>
+            <td>{{lblVariableAllowance}}</td>
+            <td class="amt">{{VARIABLE_ALLOWANCE}}</td>
+          </tr>
+          <tr>
+            <td>{{lblBonus}}</td>
+            <td class="amt">{{BONUS}}</td>
+          </tr>
+          <tr>
+            <td>{{lblIncrement}}</td>
+            <td class="amt">{{INCREMENT}}</td>
+          </tr>
+          <tr>
+            <td>{{lblGratuity}}</td>
+            <td class="amt">{{GRATUITY}}</td>
+          </tr>
+          <!-- Dynamic rows (all earning components auto-inserted) -->
+          <!-- {{EARNINGS_ROWS}} -->
+          <tr class="subtotal">
+            <td>{{lblGrossPay}}</td>
+            <td class="amt">{{GROSS_PAY}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── Deductions column ── -->
+    <div class="col-deductions">
+      <div class="section-title">Deductions</div>
+      <table class="lines">
+        <tbody>
+          <tr>
+            <td>{{lblNopay}}</td>
+            <td class="amt">{{NOPAY}}</td>
+          </tr>
+          <tr>
+            <td>{{lblLateDeduction}}</td>
+            <td class="amt">{{LATE_DEDUCTION}}</td>
+          </tr>
+          <tr>
+            <td>{{lblFixedDeduction}}</td>
+            <td class="amt">{{FIXED_DEDUCTION}}</td>
+          </tr>
+          <tr>
+            <td>{{lblVariableDeduction}}</td>
+            <td class="amt">{{VARIABLE_DEDUCTION}}</td>
+          </tr>
+          <tr>
+            <td>{{lblEpfEmployee}}</td>
+            <td class="amt">{{EPF_EMPLOYEE}}</td>
+          </tr>
+          <tr>
+            <td>{{lblPayeTax}}</td>
+            <td class="amt">{{PAYE_TAX}}</td>
+          </tr>
+          <!-- Dynamic rows (all deduction components auto-inserted) -->
+          <!-- {{DEDUCTIONS_ROWS}} -->
+          <tr class="subtotal">
+            <td>{{lblTotalDeductions}}</td>
+            <td class="amt">{{TOTAL_DEDUCTIONS}}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Employer contributions (for info only) -->
+      <div class="employer-section">
+        <div class="section-title">Employer Contributions</div>
+        <table class="lines">
+          <tbody>
+            <tr>
+              <td>{{lblEpfEmployer}}</td>
+              <td class="amt">{{EPF_EMPLOYER}}</td>
+            </tr>
+            <tr>
+              <td>{{lblEtf}}</td>
+              <td class="amt">{{ETF}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ════════════════════ NET PAY ════════════════════ -->
+  <div class="net-pay-bar">
+    <span class="net-pay-label">{{lblNetPay}}</span>
+    <span class="net-pay-amount">{{NET_PAY}}</span>
+  </div>
+
+  <!-- ════════════════════ FOOTER ════════════════════ -->
+  <div class="footer-note">
+    This is a computer-generated payslip and does not require a signature. &nbsp;|&nbsp; {{COMPANY_NAME}}
+  </div>
+
+</body>
+</html>

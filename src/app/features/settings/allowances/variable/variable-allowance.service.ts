@@ -97,7 +97,6 @@ export class VariableAllowanceService {
       item.code,
       item.name,
       item.description,
-      undefined,
       item.isActive,
       item.isTaxable,
       item.liableForEpf,

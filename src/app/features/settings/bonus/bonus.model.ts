@@ -3,7 +3,6 @@ export class BonusModel {
   code: string;
   name: string;
   description: string | null;
-  amount: number | null;
   isActive: boolean;
   isTaxable: boolean;
   liableForEpf: boolean;
@@ -18,7 +17,6 @@ export class BonusModel {
     code: string,
     name: string,
     description: string | null,
-    amount: number | null,
     isActive: boolean,
     isTaxable: boolean,
     liableForEpf: boolean,
@@ -32,7 +30,6 @@ export class BonusModel {
     this.code = code;
     this.name = name;
     this.description = description;
-    this.amount = amount;
     this.isActive = isActive;
     this.isTaxable = isTaxable;
     this.liableForEpf = liableForEpf;

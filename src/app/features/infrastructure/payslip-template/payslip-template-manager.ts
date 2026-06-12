@@ -10,9 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { forkJoin } from 'rxjs';
 import {
   PayslipTemplateResponse,
   PayslipTemplateService,
@@ -21,17 +19,6 @@ import {
   PayslipTemplateDialog,
   PayslipTemplateDialogData,
 } from './template-dialog/payslip-template-dialog';
-import { BankService } from '../../infrastructure/banks/bank.service';
-import { Bank } from '../../../shared/models/master-data.models';
-import {
-  BankTransferTemplate,
-} from '../../payroll/bank-transfer/bank-transfer.model';
-import { BankTransferService } from '../../payroll/bank-transfer/bank-transfer.service';
-import {
-  BankTemplateDialog,
-  BankTemplateDialogData,
-  BankTemplateDialogResult,
-} from '../../payroll/bank-transfer/bank-template-dialog/bank-template-dialog';
 
 // Hardcoded to user 1 — consistent with the rest of the codebase (no JWT user ID yet)
 const CURRENT_USER_ID = 1;
@@ -45,7 +32,6 @@ const CURRENT_USER_ID = 1;
     MatIconModule,
     MatProgressSpinnerModule,
     MatTableModule,
-    MatTabsModule,
     MatTooltipModule,
   ],
   templateUrl: './payslip-template-manager.html',
@@ -53,44 +39,24 @@ const CURRENT_USER_ID = 1;
 })
 export class PayslipTemplateManager {
   private readonly svc        = inject(PayslipTemplateService);
-  private readonly bankSvc    = inject(BankService);
-  private readonly bankTmplSvc = inject(BankTransferService);
   private readonly dialog     = inject(MatDialog);
   private readonly snackBar   = inject(MatSnackBar);
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly templates      = signal<PayslipTemplateResponse[]>([]);
-  readonly loading        = signal(false);
-  readonly banks          = signal<Bank[]>([]);
-  readonly bankTemplates  = signal<BankTransferTemplate[]>([]);
-  readonly bankRefLoading = signal(false);
+  readonly templates = signal<PayslipTemplateResponse[]>([]);
+  readonly loading   = signal(false);
 
-  readonly columns     = ['name', 'status', 'modifiedBy', 'modifiedDate', 'actions'];
-  readonly bankColumns = ['bankName', 'bankCode', 'headerLines', 'footerLines'];
+  readonly columns = ['name', 'status', 'modifiedBy', 'modifiedDate', 'actions'];
 
   constructor() { this.load(); }
 
   private load(): void {
-    // Payslip templates
     this.loading.set(true);
     this.svc.getAll()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: list => { this.templates.set(list); this.loading.set(false); },
         error: ()  => this.loading.set(false),
-      });
-
-    // Bank file templates
-    this.bankRefLoading.set(true);
-    forkJoin({ banks: this.bankSvc.getAll(), templates: this.bankTmplSvc.getTemplates() })
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: ({ banks, templates }) => {
-          this.banks.set(banks);
-          this.bankTemplates.set(templates);
-          this.bankRefLoading.set(false);
-        },
-        error: () => this.bankRefLoading.set(false),
       });
   }
 
@@ -121,13 +87,12 @@ export class PayslipTemplateManager {
 
         call$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: saved => {
-            const next = saved;
             const list = [...this.templates()];
             if (template) {
-              const idx = list.findIndex(t => t.id === next.id);
-              if (idx !== -1) list[idx] = next;
+              const idx = list.findIndex(t => t.id === saved.id);
+              if (idx !== -1) list[idx] = saved;
             } else {
-              list.unshift(next);
+              list.unshift(saved);
             }
             this.templates.set(list);
             this.snackBar.open(
@@ -146,15 +111,5 @@ export class PayslipTemplateManager {
       win.document.write(template.htmlContent);
       win.document.close();
     }
-  }
-
-  openBankTemplateManager(): void {
-    this.dialog
-      .open<BankTemplateDialog, BankTemplateDialogData, BankTemplateDialogResult>(BankTemplateDialog, {
-        width: '860px', maxHeight: '90vh',
-        data: { banks: this.banks(), templates: this.bankTemplates() },
-      })
-      .afterClosed()
-      .subscribe(result => { if (result) this.bankTemplates.set(result.templates); });
   }
 }

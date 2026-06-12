@@ -42,7 +42,6 @@ export class Allowances implements OnInit {
       { key: 'name',          label: 'Name' },
       ...(this.allowanceType() === AllowanceType.FIXED
         ? [
-            { key: 'amount' as const, label: 'Amount', type: 'currency' as const },
             { key: 'formulaEnabled' as const, label: 'Formula', type: 'icon' as const, icon: 'functions', iconTooltip: 'Formula enabled', sortable: false },
           ]
         : []),
@@ -115,7 +114,7 @@ export class Allowances implements OnInit {
         service.update(result.data.id, result.data).subscribe(() => {
           const updated = new AllowanceModel(
             result.data.id, result.data.code, result.data.name, result.data.description,
-            result.data.amount, result.data.isActive, result.data.isTaxable,
+            result.data.isActive, result.data.isTaxable,
             result.data.liableForEpf, result.data.liableForEtf, result.data.liableForPaye,
             result.data.liableNoPay, type,
             result.data.formula, result.data.formulaEnabled,

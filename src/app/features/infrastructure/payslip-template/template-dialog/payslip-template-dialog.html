@@ -51,7 +51,7 @@
         <p class="section-hint">Click a token to insert it at the cursor.</p>
 
         <div class="token-scroll">
-          @for (group of tokenGroups; track group.group) {
+          @for (group of tokenGroups(); track group.group) {
             <div class="token-group">
               <span class="token-group-name">{{ group.group }}</span>
               <div class="token-chips">

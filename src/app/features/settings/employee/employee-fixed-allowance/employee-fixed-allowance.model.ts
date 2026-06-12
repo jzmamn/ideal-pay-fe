@@ -24,6 +24,7 @@ export interface EmployeeFixedAllowanceResponse {
   faId: number;
   faCode: string;
   faName: string;
+  formulaEnabled: boolean;
 
   createdById: number;
   createdByCode: string;

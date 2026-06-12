@@ -258,6 +258,13 @@ export const routes: Routes = [
                         .then(m => m.PayslipTemplateManager)
             },
 
+            {
+                path: 'bank-file-template',
+                loadComponent: () =>
+                    import('./features/infrastructure/bank-file-template/bank-file-template')
+                        .then(m => m.BankFileTemplate)
+            },
+
             { path: 'email-settings', redirectTo: 'email-setup', pathMatch: 'full' },
 
             {
@@ -319,6 +326,13 @@ export const routes: Routes = [
             {
                 path: 'license',
                 loadComponent: () => import('./features/admin/license/license').then(m => m.LicenseComponent)
+            },
+
+            {
+                path: 'backup-restore',
+                loadComponent: () =>
+                    import('./features/admin/backup-restore/backup-restore')
+                        .then(m => m.BackupRestore)
             },
 
             {
@@ -394,6 +408,5 @@ export const routes: Routes = [
     },
 
     { path: '**', redirectTo: 'login' },
-
 ];
 

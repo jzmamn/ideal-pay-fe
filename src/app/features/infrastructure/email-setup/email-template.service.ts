@@ -39,8 +39,8 @@ export const TEMPLATE_TYPE_LABELS: Record<TemplateType, string> = {
 
 // ── Available template variables per type ────────────────────────────────────
 export const TEMPLATE_VARIABLES: Record<TemplateType | 'COMMON', string[]> = {
-  COMMON           : ['{{employee_name}}', '{{employee_no}}', '{{department}}', '{{company_name}}', '{{month}}', '{{year}}'],
-  PAYSLIP          : ['{{net_pay}}', '{{gross_pay}}', '{{total_deductions}}'],
+  COMMON           : ['{{employee_name}}', '{{employee_no}}', '{{department}}', '{{month}}', '{{year}}'],
+  PAYSLIP          : [],
   SALARY_ADVANCE   : ['{{advance_amount}}', '{{repayment_month}}'],
   SALARY_INCREMENT : ['{{previous_salary}}', '{{new_salary}}', '{{effective_date}}', '{{increment_percentage}}'],
   GENERAL          : [],

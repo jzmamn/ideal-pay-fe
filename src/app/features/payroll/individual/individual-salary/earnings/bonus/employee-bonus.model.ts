@@ -25,6 +25,7 @@ export interface EmployeeBonusResponse {
   bonusCode: string;
   bonusName: string;
   bonusAmount: number;
+  formulaEnabled: boolean;
 
   createdById: number;
   createdByCode: string;

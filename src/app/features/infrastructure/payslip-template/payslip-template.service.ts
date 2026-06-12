@@ -29,6 +29,8 @@ export interface PayslipTemplateRequest {
 // All {{TOKEN}} placeholders supported by PayslipTokenMapper.
 // Dynamic code-based tokens (FA_*, FD_*, OT_*, VA_*, VD_*) resolve at runtime
 // by matching the suffix against the employee's allowance/deduction/overtime codes.
+// Label tokens (lbl*) output a static display name and can be used independently
+// of their value counterparts — e.g. {{lblBasicSalary}}: {{BASIC_SALARY}}.
 export const PAYSLIP_TOKENS: { group: string; tokens: string[]; dynamicPrefixes?: string[] }[] = [
   {
     group: 'Company',
@@ -55,11 +57,39 @@ export const PAYSLIP_TOKENS: { group: string; tokens: string[]; dynamicPrefixes?
     tokens: [
       '{{BASIC_SALARY}}', '{{GROSS_PAY}}', '{{TOTAL_DEDUCTIONS}}', '{{NET_PAY}}',
       '{{EPF_EMPLOYEE}}', '{{EPF_EMPLOYER}}', '{{ETF}}', '{{PAYE_TAX}}',
-      '{{NOPAY}}', '{{LATE_DEDUCTION}}',
+      '{{NOPAY}}', '{{NOPAY_DAYS}}', '{{NOPAY_AMOUNT}}', '{{LATE_DEDUCTION}}',
       '{{FIXED_ALLOWANCE}}', '{{FIXED_DEDUCTION}}',
-      '{{OVERTIME}}',
+      '{{OVERTIME}}', '{{OT_HOURS}}', '{{OT_AMOUNT}}',
       '{{VARIABLE_ALLOWANCE}}', '{{BONUS}}', '{{INCREMENT}}', '{{GRATUITY}}',
       '{{VARIABLE_DEDUCTION}}',
+    ],
+  },
+  {
+    group: 'Dynamic Component Tokens',
+    dynamicPrefixes: ['FA_', 'FD_', 'OT_', 'VA_', 'VD_', 'lbl_FA_', 'lbl_FD_', 'lbl_OT_', 'lbl_VA_', 'lbl_VD_'],
+    tokens: [
+      // These are examples — the actual token is FA_<YOUR_CODE>, e.g. {{FA_HRA}}
+      // The lbl_ prefix gives the component name: {{lbl_FA_HRA}} → "House Rent Allowance"
+      '{{FA_CODE}}', '{{lbl_FA_CODE}}',
+      '{{FD_CODE}}', '{{lbl_FD_CODE}}',
+      '{{OT_CODE}}', '{{lbl_OT_CODE}}',
+      '{{VA_CODE}}', '{{lbl_VA_CODE}}',
+      '{{VD_CODE}}', '{{lbl_VD_CODE}}',
+    ],
+  },
+  {
+    group: 'Labels',
+    tokens: [
+      '{{lblBasicSalary}}',      '{{lblGrossPay}}',         '{{lblNetPay}}',
+      '{{lblTotalDeductions}}',  '{{lblEpfEmployee}}',       '{{lblEpfEmployer}}',
+      '{{lblEtf}}',              '{{lblPayeTax}}',           '{{lblNopay}}',
+      '{{lblLateDeduction}}',    '{{lblFixedAllowance}}',    '{{lblFixedDeduction}}',
+      '{{lblOvertime}}',         '{{lblVariableAllowance}}', '{{lblBonus}}',
+      '{{lblIncrement}}',        '{{lblGratuity}}',          '{{lblVariableDeduction}}',
+      '{{lblWorkingDays}}',      '{{lblPayrollMonth}}',
+      '{{lblCompanyName}}',      '{{lblEmployeeNo}}',        '{{lblEmployeeName}}',
+      '{{lblDesignation}}',      '{{lblDepartment}}',        '{{lblEpfNo}}',
+      '{{lblBankName}}',         '{{lblBankBranch}}',        '{{lblAccountNo}}',
     ],
   },
   {

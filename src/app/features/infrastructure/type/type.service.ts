@@ -35,7 +35,7 @@ export class EmployeeTypeService {
       name:        data.name,
       description: data.description ?? '',
       isActive:    data.isActive,
-      isDateRange: data.dateRange,
+      endDate: data.dateRange,
       createdBy:   1,
       modifiedBy:  1,
     };
@@ -49,7 +49,7 @@ export class EmployeeTypeService {
       name:        data.name,
       description: data.description ?? '',
       isActive:    data.isActive,
-      isDateRange: data.dateRange,
+      endDate: data.dateRange,
       createdBy:   1,
       modifiedBy:  1,
     };
@@ -67,7 +67,7 @@ export class EmployeeTypeService {
       name:        item.name,
       description: item.description || undefined,
       isActive:    item.isActive,
-      dateRange:   item.isDateRange,
+      dateRange:   item.endDate,
     };
   }
 }

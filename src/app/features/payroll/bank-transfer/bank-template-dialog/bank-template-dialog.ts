@@ -8,13 +8,9 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatListModule } from '@angular/material/list';
 import { Bank } from '../../../../shared/models/master-data.models';
 import {
   BankTransferTemplate,
@@ -23,15 +19,14 @@ import {
 import { BankTransferService } from '../bank-transfer.service';
 
 export interface BankTemplateDialogData {
-  banks:     Bank[];
-  templates: BankTransferTemplate[];
+  banks:          Bank[];
+  templates:      BankTransferTemplate[];
+  initialBankId?: number;
 }
 
 export interface BankTemplateDialogResult {
   templates: BankTransferTemplate[];
 }
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function insertToken(current: string, token: string, cursorPos: number): string {
   return current.slice(0, cursorPos) + token + current.slice(cursorPos);
@@ -46,13 +41,9 @@ function insertToken(current: string, token: string, cursorPos: number): string 
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSelectModule,
     MatIconModule,
     MatTooltipModule,
-    MatDividerModule,
     MatProgressSpinnerModule,
-    MatChipsModule,
-    MatListModule,
   ],
   templateUrl: './bank-template-dialog.html',
   styleUrl:    './bank-template-dialog.scss',
@@ -69,11 +60,11 @@ export class BankTemplateDialog {
   readonly banks     = this.data.banks;
   readonly templates = signal<BankTransferTemplate[]>([...this.data.templates]);
 
-  readonly saving  = signal(false);
+  readonly saving   = signal(false);
   readonly deleting = signal(false);
-  readonly error   = signal<string | null>(null);
+  readonly error    = signal<string | null>(null);
 
-  readonly selectedBankId = signal<number | null>(null);
+  readonly selectedBankId = signal<number | null>(this.data.initialBankId ?? null);
 
   readonly selectedBank = computed(() =>
     this.banks.find(b => b.id === this.selectedBankId()) ?? null
@@ -90,12 +81,17 @@ export class BankTemplateDialog {
     fileExtension:  this.fb.nonNullable.control('txt', Validators.required),
   });
 
-  /** Track textarea cursor positions for token insertion. */
-  private _cursors: Record<string, number> = {
+  private readonly _cursors: Record<string, number> = {
     headerTemplate: 0,
     detailTemplate: 0,
     footerTemplate: 0,
   };
+
+  constructor() {
+    if (this.data.initialBankId != null) {
+      this.selectBank(this.data.initialBankId);
+    }
+  }
 
   selectBank(bankId: number): void {
     this.selectedBankId.set(bankId);
@@ -121,10 +117,6 @@ export class BankTemplateDialog {
     this._cursors[field] = pos + token.length;
   }
 
-  hasBankTemplate(bankId: number): boolean {
-    return this.templates().some(t => t.bankId === bankId);
-  }
-
   save(): void {
     const bank = this.selectedBank();
     if (!bank || this.form.invalid || this.saving()) return;
@@ -134,9 +126,9 @@ export class BankTemplateDialog {
     const existing = this.existingTemplate();
     const payload: BankTransferTemplate = {
       ...(existing ? { id: existing.id } : {}),
-      bankId:         bank.id,
-      bankCode:       bank.code,
-      bankName:       bank.name,
+      bankId:   bank.id,
+      bankCode: bank.code,
+      bankName: bank.name,
       ...this.form.getRawValue(),
     };
 

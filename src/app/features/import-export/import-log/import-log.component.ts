@@ -10,7 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ImportLogEntry, ImportService } from '../import.service';
+import { IMPORT_ENTITIES, ImportEntity, ImportLogEntry, ImportService } from '../import.service';
 
 /** Past imports with status badge and per-import rollback. */
 @Component({
@@ -74,6 +74,19 @@ export class ImportLogComponent {
         this.reload(); // a 409 flips the status to LOCKED
       },
     });
+  }
+
+  entityLabel(entity: ImportEntity): string {
+    return IMPORT_ENTITIES.find(e => e.value === entity)?.label ?? entity;
+  }
+
+  formatStatus(status: ImportLogEntry['status']): string {
+    const labels: Record<ImportLogEntry['status'], string> = {
+      COMMITTED: 'Committed',
+      ROLLED_BACK: 'Rolled back',
+      LOCKED: 'Locked',
+    };
+    return labels[status] ?? status;
   }
 
   badgeClass(status: ImportLogEntry['status']): string {

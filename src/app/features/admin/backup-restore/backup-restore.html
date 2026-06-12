@@ -1,0 +1,158 @@
+<div class="page">
+
+  <h1 class="page-title">Backup &amp; Restore</h1>
+
+  <!-- Path + actions -->
+  <mat-card class="section-card">
+    <mat-card-header>
+      <mat-card-title>Full Database Backup</mat-card-title>
+      <mat-card-subtitle>
+        Creates a complete .sql backup of the database (schema, data and views)
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form class="path-row" (submit)="$event.preventDefault(); loadFiles()">
+        <mat-form-field appearance="outline" class="path-field">
+          <mat-label>Backup directory</mat-label>
+          <input
+            matInput
+            [formControl]="pathControl"
+            placeholder="e.g. D:\backups\ideal-pay"
+            aria-label="Backup directory path" />
+          <mat-icon matSuffix>folder</mat-icon>
+          <mat-hint>Directory on the server where backup files are stored</mat-hint>
+        </mat-form-field>
+
+        <button
+          mat-stroked-button
+          type="submit"
+          [disabled]="loadingFiles()"
+          aria-label="Refresh backup file list">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+
+        <button
+          mat-flat-button
+          type="button"
+          (click)="startBackup()"
+          [disabled]="jobRunning()"
+          aria-label="Create full database backup">
+          <mat-icon>backup</mat-icon>
+          Create Full Backup
+        </button>
+      </form>
+
+      <!-- Progress -->
+      @if (job(); as j) {
+        @if (j.state === 'RUNNING') {
+          <div class="progress-panel" role="status" aria-live="polite">
+            <div class="progress-head">
+              <span class="progress-label">{{ jobLabel() }}&hellip;</span>
+              <span class="progress-value">{{ j.progress }}%</span>
+            </div>
+            <mat-progress-bar
+              mode="determinate"
+              [value]="j.progress"
+              [attr.aria-label]="jobLabel()" />
+            <div class="progress-detail">
+              <span>{{ j.currentStep }}</span>
+              @if (j.type === 'BACKUP' && j.totalTables > 0) {
+                <span>{{ j.tablesDone }} / {{ j.totalTables }} objects</span>
+              }
+            </div>
+          </div>
+        } @else if (j.state === 'FAILED') {
+          <div class="job-result error" role="alert">
+            <mat-icon>error</mat-icon>
+            <span>{{ j.type === 'BACKUP' ? 'Backup' : 'Restore' }} failed: {{ j.error }}</span>
+          </div>
+        } @else {
+          <div class="job-result success" role="status">
+            <mat-icon>check_circle</mat-icon>
+            <span>
+              {{ j.type === 'BACKUP' ? 'Backup completed' : 'Restore completed' }}
+              ({{ j.filePath }})
+            </span>
+          </div>
+        }
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Restore confirmation -->
+  @if (pendingRestore(); as file) {
+    <mat-card class="section-card confirm-card" role="alertdialog" aria-label="Confirm database restore">
+      <mat-card-content>
+        <div class="confirm-row">
+          <mat-icon class="warn-icon">warning</mat-icon>
+          <div class="confirm-text">
+            <strong>Restore database from “{{ file.fileName }}”?</strong>
+            <span>
+              This will overwrite ALL current data with the contents of this backup.
+              This action cannot be undone.
+            </span>
+          </div>
+          <div class="confirm-actions">
+            <button mat-stroked-button type="button" (click)="cancelRestore()">Cancel</button>
+            <button mat-flat-button class="danger-btn" type="button" (click)="confirmRestore()">
+              Restore Now
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- Backup files -->
+  <mat-card class="section-card">
+    <mat-card-header>
+      <mat-card-title>Available Backups</mat-card-title>
+      <mat-card-subtitle>Backup files in the selected directory</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      @if (files().length === 0) {
+        <p class="empty-state">No backup files found in this directory.</p>
+      } @else {
+        <table mat-table [dataSource]="files()" class="files-table" aria-label="Backup files">
+
+          <ng-container matColumnDef="fileName">
+            <th mat-header-cell *matHeaderCellDef>File name</th>
+            <td mat-cell *matCellDef="let f">{{ f.fileName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="sizeBytes">
+            <th mat-header-cell *matHeaderCellDef>Size</th>
+            <td mat-cell *matCellDef="let f">{{ formatSize(f.sizeBytes) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="createdAt">
+            <th mat-header-cell *matHeaderCellDef>Created</th>
+            <td mat-cell *matCellDef="let f">{{ f.createdAt | date: 'medium' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="actions-col">Actions</th>
+            <td mat-cell *matCellDef="let f" class="actions-col">
+              <button
+                mat-stroked-button
+                type="button"
+                (click)="askRestore(f)"
+                [disabled]="jobRunning()"
+                [attr.aria-label]="'Restore database from ' + f.fileName">
+                <mat-icon>settings_backup_restore</mat-icon>
+                Restore
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      }
+    </mat-card-content>
+  </mat-card>
+
+</div>
