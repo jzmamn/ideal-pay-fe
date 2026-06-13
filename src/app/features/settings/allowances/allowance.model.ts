@@ -12,6 +12,8 @@ export class AllowanceModel {
   liableForPaye: boolean;
   liableNoPay: boolean;
   type: AllowanceType;
+  /** Static fixed amount used when formulaEnabled = false. Null = not configured at company level. */
+  amount: number | null;
   formula: string | undefined;
   formulaEnabled: boolean;
 
@@ -27,6 +29,7 @@ export class AllowanceModel {
     liableForPaye: boolean,
     liableNoPay: boolean,
     type = AllowanceType.FIXED,
+    amount: number | null = null,
     formula: string | undefined = undefined,
     formulaEnabled = false,
   ) {
@@ -41,6 +44,7 @@ export class AllowanceModel {
     this.liableForPaye = liableForPaye;
     this.liableNoPay = liableNoPay;
     this.type = type;
+    this.amount = amount;
     this.formula = formula;
     this.formulaEnabled = formulaEnabled;
   }

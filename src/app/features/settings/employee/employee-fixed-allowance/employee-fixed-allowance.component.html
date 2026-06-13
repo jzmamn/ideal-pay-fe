@@ -25,7 +25,17 @@
               <td class="code-cell">{{ allowance.faCode }}</td>
               <td>{{ allowance.faName }}</td>
               <td class="amount-cell">
-                @if (!allowance.formulaEnabled) {
+                @if (allowance.formulaCalculated) {
+                  <!-- Formula-calculated amounts are read-only -->
+                  <span class="amount-value formula-amount">
+                    {{ allowance.amount | number:'1.2-2' }}
+                    <mat-icon
+                      class="formula-icon"
+                      aria-label="Amount calculated by formula — read-only"
+                      matTooltip="Amount calculated by formula at load time. Reload allowances to recalculate."
+                    >functions</mat-icon>
+                  </span>
+                } @else if (!allowance.formulaEnabled) {
                   @if (editingIndex() === i) {
                     <mat-form-field appearance="outline" class="amount-field">
                       <input
@@ -48,7 +58,7 @@
                 }
               </td>
               <td class="action-col">
-                @if (!allowance.formulaEnabled) {
+                @if (!allowance.formulaCalculated && !allowance.formulaEnabled) {
                   @if (editingIndex() === i) {
                     <button
                       mat-icon-button
@@ -84,6 +94,14 @@
                       <mat-icon>edit</mat-icon>
                     </button>
                   }
+                }
+                @if (allowance.formulaCalculated) {
+                  <!-- Lock icon signals read-only for formula-calculated rows -->
+                  <mat-icon
+                    class="lock-icon"
+                    aria-hidden="true"
+                    matTooltip="Read-only: calculated by formula"
+                  >lock</mat-icon>
                 }
               </td>
             </tr>

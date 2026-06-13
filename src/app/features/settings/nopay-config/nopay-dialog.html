@@ -1,0 +1,76 @@
+<div mat-dialog-title class="dialog-title">
+  <div class="dialog-title-icon">
+    <mat-icon>event_busy</mat-icon>
+  </div>
+  <span class="dialog-title-main">Nopay information</span>
+  <button mat-icon-button mat-dialog-close class="dialog-close-btn" aria-label="Close dialog">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="form-grid">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Code</mat-label>
+      <input matInput formControlName="code">
+      @if (form.get('code')?.hasError('required')) {
+        <mat-error>Code is required</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Name</mat-label>
+      <input matInput formControlName="name">
+      @if (form.get('name')?.hasError('required')) {
+        <mat-error>Name is required</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Description</mat-label>
+      <textarea matInput formControlName="description" rows="3" cdkTextareaAutosize></textarea>
+    </mat-form-field>
+
+    <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
+
+    <mat-divider />
+
+    <div class="checkbox-group">
+      <mat-checkbox formControlName="liableForEpf">Liable for EPF</mat-checkbox>
+      <mat-checkbox formControlName="liableForEtf">Liable for ETF</mat-checkbox>
+      <mat-checkbox formControlName="liableForPaye">Liable for PAYE</mat-checkbox>
+    </div>
+
+  </form>
+
+  <app-formula-definition-form
+    #formulaForm
+    [initialExpression]="formulaExpression()"
+    [initialIsActive]="formulaIsActive()"
+    [saving]="formulaSaving()"
+    [saveError]="formulaSaveError()"
+    (valueChanged)="onFormulaValueChanged($event)"
+    (saveRequested)="onFormulaSaveRequested($event)"
+  />
+  <div class="formula-save-row">
+    <button mat-stroked-button type="button" (click)="formulaForm.save()" aria-label="Save formula">
+      <mat-icon>save</mat-icon> Save Formula
+    </button>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  @if (isEdit) {
+    <button mat-flat-button class="btn-error" (click)="onDelete()">
+      <mat-icon>delete</mat-icon> Delete
+    </button>
+  }
+  <span class="action-spacer"></span>
+  <button mat-flat-button [disabled]="form.invalid" class="btn-warn" (click)="onSave()">
+    <mat-icon>save</mat-icon> {{ isEdit ? 'Update' : 'Save' }}
+  </button>
+  <button mat-flat-button mat-dialog-close class="btn-secondary">
+    <mat-icon>close</mat-icon> Cancel
+  </button>
+</mat-dialog-actions>

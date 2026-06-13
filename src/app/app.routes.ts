@@ -275,6 +275,13 @@ export const routes: Routes = [
             },
 
             {
+                path: 'nopay-config',
+                loadComponent: () =>
+                    import('./features/settings/nopay-config/nopay')
+                        .then(m => m.Nopay)
+            },
+
+            {
                 path: 'employee-types',
                 loadComponent: () =>
                     import('./features/infrastructure/type/type')
@@ -333,6 +340,13 @@ export const routes: Routes = [
                 loadComponent: () =>
                     import('./features/admin/backup-restore/backup-restore')
                         .then(m => m.BackupRestore)
+            },
+
+            {
+                path: 'system-setup',
+                loadComponent: () =>
+                    import('./features/admin/system-setup/system-setup')
+                        .then(m => m.SystemSetupComponent)
             },
 
             {

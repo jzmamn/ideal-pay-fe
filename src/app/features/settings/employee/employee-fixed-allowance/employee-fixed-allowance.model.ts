@@ -25,6 +25,8 @@ export interface EmployeeFixedAllowanceResponse {
   faCode: string;
   faName: string;
   formulaEnabled: boolean;
+  /** True when the amount was produced by MVEL formula evaluation at load time. Amount is read-only when true. */
+  formulaCalculated: boolean;
 
   createdById: number;
   createdByCode: string;
@@ -34,4 +36,7 @@ export interface EmployeeFixedAllowanceResponse {
   modifiedByCode: string;
   modifiedByUserName: string;
   modifiedDate: string;
+
+  /** Set when the row was created via file import; null for manually entered rows. */
+  importLogId: number | null;
 }

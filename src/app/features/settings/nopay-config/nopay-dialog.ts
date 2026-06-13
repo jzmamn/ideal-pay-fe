@@ -9,23 +9,21 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { AllowanceModel } from './allowance.model';
-import { AllowanceType } from './allowance.types';
+import { NopayModel } from './nopay.model';
 import { FormulaDefinitionForm } from '../../../shared/components/formula-definition/formula-definition-form/formula-definition-form';
 import { FormulaDefinitionFormValue } from '../../../shared/components/formula-definition/formula-definition.models';
 
-export interface AllowanceDialogData {
-  row: AllowanceModel | null;
-  allowanceType: AllowanceType;
+export interface NopayDialogData {
+  row: NopayModel | null;
 }
 
-export type AllowanceDialogResult =
-  | { action: 'create'; data: Omit<AllowanceModel, 'id' | 'type'> }
-  | { action: 'update'; data: Omit<AllowanceModel, 'type'> }
+export type NopayDialogResult =
+  | { action: 'create'; data: Omit<NopayModel, 'id'> }
+  | { action: 'update'; data: NopayModel }
   | { action: 'delete'; id: number };
 
 @Component({
-  selector: 'app-allowance-dialog',
+  selector: 'app-nopay-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     MatDialogModule,
@@ -41,33 +39,26 @@ export type AllowanceDialogResult =
     CdkTextareaAutosize,
   ],
   host: { class: 'mat-dialog-host' },
-  templateUrl: './allowance-dialog.html',
-  styleUrl: './allowances.scss',
+  templateUrl: './nopay-dialog.html',
+  styleUrl: './nopay.scss',
 })
-export class AllowanceDialog {
-  private readonly data      = inject<AllowanceDialogData>(MAT_DIALOG_DATA);
-  private readonly dialogRef = inject<MatDialogRef<AllowanceDialog, AllowanceDialogResult>>(MatDialogRef);
+export class NopayDialog {
+  private readonly data      = inject<NopayDialogData>(MAT_DIALOG_DATA);
+  private readonly dialogRef = inject<MatDialogRef<NopayDialog, NopayDialogResult>>(MatDialogRef);
+  private readonly fb        = inject(FormBuilder);
 
-  readonly row         = this.data.row;
-  readonly isEdit      = this.row != null;
-  readonly isFixed     = this.data.allowanceType === AllowanceType.FIXED;
-  readonly dialogTitle = this.isFixed ? 'Fixed Allowance' : 'Variable Allowance';
+  readonly row    = this.data.row;
+  readonly isEdit = this.row != null;
 
-  private readonly fb = inject(FormBuilder);
-
-  readonly allowanceForm = this.fb.group({
+  readonly form = this.fb.group({
     id:            [{ value: this.row?.id   ?? null, disabled: true }],
-    code:          [{ value: this.row?.code ?? '', disabled: true }, Validators.required],
-    name:          [this.row?.name          ?? '', Validators.required],
-    description:   [this.row?.description   ?? null as string | null],
-    isActive:      [this.row?.isActive      ?? true],
-    isTaxable:     [this.row?.isTaxable     ?? false],
-    liableForEpf:  [this.row?.liableForEpf  ?? false],
-    liableForEtf:  [this.row?.liableForEtf  ?? false],
-    liableForPaye: [this.row?.liableForPaye ?? false],
-    liableNoPay:   [this.row?.liableNoPay   ?? false],
-    /** Static amount used when formula is disabled. Null = no company-level default. */
-    amount:        [this.row?.amount        ?? null as number | null, Validators.min(0)],
+    code:          [{ value: this.row?.code ?? '',   disabled: true }, Validators.required],
+    name:          [this.row?.name           ?? '',  Validators.required],
+    description:   [this.row?.description    ?? null as string | null],
+    isActive:      [this.row?.isActive       ?? true],
+    liableForEpf:  [this.row?.liableForEpf   ?? false],
+    liableForEtf:  [this.row?.liableForEtf   ?? false],
+    liableForPaye: [this.row?.liableForPaye  ?? false],
   });
 
   // ── Formula state ─────────────────────────────────────────────────────────
@@ -93,26 +84,22 @@ export class AllowanceDialog {
   }
 
   onSave(): void {
-    if (this.allowanceForm.invalid) return;
-    const raw = this.allowanceForm.getRawValue();
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    const raw = this.form.getRawValue();
     const fv  = this.latestFormula();
 
-    // When formula is active, clear the static amount (and vice-versa).
-    const formulaActive = this.isFixed && fv.isActive;
     const base = {
       code:           raw.code!,
       name:           raw.name!,
       description:    raw.description,
-      amount:         formulaActive ? null : (raw.amount ?? null),
       isActive:       raw.isActive!,
-      isTaxable:      raw.isTaxable!,
       liableForEpf:   raw.liableForEpf!,
       liableForEtf:   raw.liableForEtf!,
       liableForPaye:  raw.liableForPaye!,
-      liableNoPay:    raw.liableNoPay!,
-      formula:        this.isFixed ? (fv.expression || undefined) : undefined,
-      formulaEnabled: this.isFixed ? fv.isActive : false,
+      formula:        fv.expression || undefined,
+      formulaEnabled: fv.isActive,
     };
+
     if (this.isEdit) {
       this.dialogRef.close({ action: 'update', data: { id: this.row!.id, ...base } });
     } else {
@@ -121,6 +108,8 @@ export class AllowanceDialog {
   }
 
   onDelete(): void {
-    this.dialogRef.close({ action: 'delete', id: this.row!.id });
+    if (this.row?.id != null) {
+      this.dialogRef.close({ action: 'delete', id: this.row.id });
+    }
   }
 }

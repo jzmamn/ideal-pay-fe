@@ -1,0 +1,103 @@
+<section class="system-setup-page">
+  <header class="page-header">
+    <div>
+      <h2>System Setup</h2>
+      <p>Manage payroll-wide setup values. Only the value and active status can be changed.</p>
+    </div>
+    <button mat-stroked-button type="button" (click)="load()" [disabled]="loading()">
+      <mat-icon>refresh</mat-icon>
+      Refresh
+    </button>
+  </header>
+
+  @if (loading()) {
+    <div class="loading" aria-label="Loading system setup values">
+      <mat-spinner diameter="36" />
+    </div>
+  } @else {
+    <div class="table-container">
+      <table mat-table [dataSource]="setups()">
+        <ng-container matColumnDef="code">
+          <th mat-header-cell *matHeaderCellDef>Code</th>
+          <td mat-cell *matCellDef="let setup"><code>{{ setup.code }}</code></td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let setup">
+            <strong>{{ setup.name }}</strong>
+            @if (setup.description) {
+              <span class="description">{{ setup.description }}</span>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="value">
+          <th mat-header-cell *matHeaderCellDef>Value</th>
+          <td mat-cell *matCellDef="let setup">
+            @if (editingId() === setup.id) {
+              <input
+                matInput
+                aria-label="System setup value"
+                maxlength="255"
+                [ngModel]="draftValue()"
+                (ngModelChange)="draftValue.set($event)" />
+            } @else {
+              {{ setup.value }}
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="isActive">
+          <th mat-header-cell *matHeaderCellDef>Active</th>
+          <td mat-cell *matCellDef="let setup">
+            <mat-checkbox
+              [disabled]="editingId() !== setup.id"
+              [ngModel]="editingId() === setup.id ? draftIsActive() : setup.isActive"
+              (ngModelChange)="draftIsActive.set($event)"
+              [attr.aria-label]="'Active status for ' + setup.name" />
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="effective">
+          <th mat-header-cell *matHeaderCellDef>Effective Period</th>
+          <td mat-cell *matCellDef="let setup">
+            {{ setup.effectiveFrom }} to {{ setup.effectiveTo ?? 'ongoing' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let setup">
+            @if (editingId() === setup.id) {
+              <div class="row-actions">
+                <button mat-flat-button type="button" (click)="save(setup)" [disabled]="savingId() === setup.id">
+                  @if (savingId() === setup.id) {
+                    <mat-spinner diameter="18" />
+                  } @else {
+                    <mat-icon>save</mat-icon>
+                  }
+                  Save
+                </button>
+                <button mat-button type="button" (click)="cancel()" [disabled]="savingId() === setup.id">
+                  Cancel
+                </button>
+              </div>
+            } @else {
+              <button mat-icon-button type="button" (click)="edit(setup)" aria-label="Edit system setup value">
+                <mat-icon>edit</mat-icon>
+              </button>
+            }
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+
+      @if (setups().length === 0) {
+        <p class="empty-state">No system setup values are available.</p>
+      }
+    </div>
+  }
+</section>

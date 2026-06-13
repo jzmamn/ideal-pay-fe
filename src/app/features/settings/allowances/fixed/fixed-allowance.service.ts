@@ -24,6 +24,8 @@ interface ApiFixedAllowance {
   liableForEtf: boolean;
   liableForPaye: boolean;
   liableNoPay: boolean;
+  /** Static fixed amount; null when formula is used or no default configured. */
+  amount: number | null;
   formula: string | null;
   formulaEnabled: boolean;
   createdBy: number;
@@ -37,7 +39,7 @@ interface ApiFixedAllowance {
 type ApiFixedAllowancePayload = Pick<ApiFixedAllowance,
   'name' | 'description' | 'isActive' | 'isTaxable' |
   'liableForEpf' | 'liableForEtf' | 'liableForPaye' | 'liableNoPay' |
-  'formula' | 'formulaEnabled' | 'createdBy' | 'modifiedBy'
+  'amount' | 'formula' | 'formulaEnabled' | 'createdBy' | 'modifiedBy'
 >;
 
 @Injectable({ providedIn: 'root' })
@@ -61,14 +63,14 @@ export class FixedAllowanceService {
     const payload: ApiFixedAllowancePayload = {
       name:           data.name,
       description:    data.description,
-
       isActive:       data.isActive,
       isTaxable:      data.isTaxable,
       liableForEpf:   data.liableForEpf,
       liableForEtf:   data.liableForEtf,
       liableForPaye:  data.liableForPaye,
       liableNoPay:    data.liableNoPay,
-      formula:        data.formula ?? null,
+      amount:         data.formulaEnabled ? null : (data.amount ?? null),
+      formula:        data.formulaEnabled ? (data.formula ?? null) : null,
       formulaEnabled: data.formulaEnabled,
       createdBy:      1,
       modifiedBy:     1,
@@ -82,14 +84,14 @@ export class FixedAllowanceService {
     const payload: ApiFixedAllowancePayload = {
       name:           data.name,
       description:    data.description,
-
       isActive:       data.isActive,
       isTaxable:      data.isTaxable,
       liableForEpf:   data.liableForEpf,
       liableForEtf:   data.liableForEtf,
       liableForPaye:  data.liableForPaye,
       liableNoPay:    data.liableNoPay,
-      formula:        data.formula ?? null,
+      amount:         data.formulaEnabled ? null : (data.amount ?? null),
+      formula:        data.formulaEnabled ? (data.formula ?? null) : null,
       formulaEnabled: data.formulaEnabled,
       createdBy:      1,
       modifiedBy:     1,
@@ -114,6 +116,7 @@ export class FixedAllowanceService {
       item.liableForPaye,
       item.liableNoPay,
       AllowanceType.FIXED,
+      item.amount ?? null,
       item.formula ?? undefined,
       item.formulaEnabled,
     );
