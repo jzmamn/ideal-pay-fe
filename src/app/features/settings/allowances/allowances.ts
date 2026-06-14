@@ -46,7 +46,6 @@ export class Allowances implements OnInit {
           ]
         : []),
       { key: 'isActive',      label: 'Active',          type: 'boolean' as const },
-      { key: 'isTaxable',     label: 'Taxable',         type: 'boolean' as const },
       { key: 'liableForEpf',  label: 'Liable for EPF',  type: 'boolean' as const },
       { key: 'liableForEtf',  label: 'Liable for ETF',  type: 'boolean' as const },
       { key: 'liableForPaye', label: 'Liable for PAYE', type: 'boolean' as const },
@@ -114,10 +113,9 @@ export class Allowances implements OnInit {
         service.update(result.data.id, result.data).subscribe(() => {
           const updated = new AllowanceModel(
             result.data.id, result.data.code, result.data.name, result.data.description,
-            result.data.isActive, result.data.isTaxable,
+            result.data.isActive,
             result.data.liableForEpf, result.data.liableForEtf, result.data.liableForPaye,
             result.data.liableNoPay, type,
-            result.data.amount ?? null,
             result.data.formula, result.data.formulaEnabled,
           );
           this.allAllowances.update(list => list.map(a => a.id === updated.id ? updated : a));

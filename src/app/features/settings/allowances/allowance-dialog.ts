@@ -61,13 +61,10 @@ export class AllowanceDialog {
     name:          [this.row?.name          ?? '', Validators.required],
     description:   [this.row?.description   ?? null as string | null],
     isActive:      [this.row?.isActive      ?? true],
-    isTaxable:     [this.row?.isTaxable     ?? false],
     liableForEpf:  [this.row?.liableForEpf  ?? false],
     liableForEtf:  [this.row?.liableForEtf  ?? false],
     liableForPaye: [this.row?.liableForPaye ?? false],
     liableNoPay:   [this.row?.liableNoPay   ?? false],
-    /** Static amount used when formula is disabled. Null = no company-level default. */
-    amount:        [this.row?.amount        ?? null as number | null, Validators.min(0)],
   });
 
   // ── Formula state ─────────────────────────────────────────────────────────
@@ -97,15 +94,11 @@ export class AllowanceDialog {
     const raw = this.allowanceForm.getRawValue();
     const fv  = this.latestFormula();
 
-    // When formula is active, clear the static amount (and vice-versa).
-    const formulaActive = this.isFixed && fv.isActive;
     const base = {
       code:           raw.code!,
       name:           raw.name!,
       description:    raw.description,
-      amount:         formulaActive ? null : (raw.amount ?? null),
       isActive:       raw.isActive!,
-      isTaxable:      raw.isTaxable!,
       liableForEpf:   raw.liableForEpf!,
       liableForEtf:   raw.liableForEtf!,
       liableForPaye:  raw.liableForPaye!,

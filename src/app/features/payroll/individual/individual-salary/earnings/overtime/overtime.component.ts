@@ -1,6 +1,6 @@
 import {
   ChangeDetectionStrategy, Component,
-  computed, inject, signal,
+  DestroyRef, computed, effect, inject, input, signal,
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -8,25 +8,15 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { OvertimeService } from '../../../../../settings/overtime/overtime.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { IndividualSalaryService } from '../../shared/individual-salary.service';
 import { ExportButtonComponent } from '../../../../../import-export/export-button/export-button.component';
-
-interface OvertimeItem {
-  id: number;
-  code: string;
-  name: string;
-  amount: number;
-}
-
-const MOCK_OVERTIME_TYPES: OvertimeItem[] = [
-  { id: 1, code: 'OT-REG', name: 'Regular Overtime',  amount: 0 },
-  { id: 2, code: 'OT-HOL', name: 'Holiday Overtime',  amount: 0 },
-  { id: 3, code: 'OT-WKD', name: 'Weekend Overtime',  amount: 0 },
-  { id: 4, code: 'OT-NGT', name: 'Night Shift Extra', amount: 0 },
-];
+import { EmployeeOvertimeService } from './employee-overtime.service';
+import { EmployeeOvertimeRequest, EmployeeOvertimeResponse } from './employee-overtime.model';
 
 @Component({
   selector: 'app-overtime',
@@ -41,50 +31,92 @@ const MOCK_OVERTIME_TYPES: OvertimeItem[] = [
   styleUrl: './overtime.component.scss',
 })
 export class OvertimeComponent {
-  private readonly overtimeSvc = inject(OvertimeService);
-  private readonly salarySvc   = inject(IndividualSalaryService);
+  private readonly empOtSvc   = inject(EmployeeOvertimeService);
+  private readonly salarySvc  = inject(IndividualSalaryService);
+  private readonly snackBar   = inject(MatSnackBar);
+  private readonly destroyRef = inject(DestroyRef);
 
-  readonly items        = signal<OvertimeItem[]>([]);
-  readonly editingIndex = signal<number | null>(null);
-
-  readonly total = computed(() => this.items().reduce((s, i) => s + i.amount, 0));
+  /** Parent passes the selected employee's ID. When null, no data is loaded. */
+  readonly empId = input<number | null>(null);
 
   readonly payrollMonth = computed(() =>
     `${this.salarySvc.periodYear()}-${String(this.salarySvc.periodMonth()).padStart(2, '0')}`);
 
-  readonly editAmountCtrl = new FormControl<number | null>(null, {
+  readonly records      = signal<EmployeeOvertimeResponse[]>([]);
+  readonly editingIndex = signal<number | null>(null);
+  readonly saving       = signal(false);
+
+  /** Total OT amount across all types. */
+  readonly total = computed(() =>
+    this.records().reduce((sum, r) => sum + r.amount, 0));
+
+  /** Hours input for the currently-edited row. */
+  readonly editHoursCtrl = new FormControl<number | null>(null, {
     validators: [Validators.required, Validators.min(0)],
   });
 
+  /** Emits when empId changes to cancel the previous in-flight load. */
+  private readonly cancelLoad$ = new Subject<void>();
+
   constructor() {
-    this.overtimeSvc.getAll()
-      .pipe(takeUntilDestroyed())
-      .subscribe({
-        next: types => {
-          const active = types.filter(t => t.isActive);
-          this.items.set(
-            active.length
-              ? active.map(t => ({ id: t.id, code: t.code, name: t.name, amount: 0 }))
-              : MOCK_OVERTIME_TYPES,
-          );
-        },
-        error: () => this.items.set(MOCK_OVERTIME_TYPES),
-      });
+    effect(() => {
+      const id    = this.empId();
+      const month = this.payrollMonth();
+      this.cancelLoad$.next();
+      if (id != null) {
+        this.empOtSvc.getByEmployee(id, month)
+          .pipe(takeUntil(this.cancelLoad$), takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next:  data  => this.records.set(data),
+            error: err   => console.error('Failed to load employee overtime', err),
+          });
+      } else {
+        this.records.set([]);
+      }
+    });
   }
 
   startEdit(index: number): void {
-    this.editAmountCtrl.setValue(this.items()[index].amount);
-    this.editAmountCtrl.markAsUntouched();
+    this.editHoursCtrl.setValue(this.records()[index].hours);
+    this.editHoursCtrl.markAsUntouched();
     this.editingIndex.set(index);
   }
 
   saveEdit(index: number): void {
-    if (this.editAmountCtrl.invalid) { this.editAmountCtrl.markAsTouched(); return; }
-    this.items.update(list =>
-      list.map((item, i) => i === index ? { ...item, amount: Number(this.editAmountCtrl.value) } : item)
-    );
-    this.editingIndex.set(null);
+    if (this.editHoursCtrl.invalid) { this.editHoursCtrl.markAsTouched(); return; }
+
+    const record = this.records()[index];
+    const newHours = Number(this.editHoursCtrl.value);
+
+    const payload: EmployeeOvertimeRequest = {
+      empId:        record.empId,
+      overtimeId:   record.overtimeId,
+      hours:        newHours,
+      payrollMonth: record.payrollMonth,
+      isProcessed:  record.isProcessed,
+      createdBy:    1,   // TODO: replace with AuthService user id
+      modifiedBy:   1,   // TODO: replace with AuthService user id
+    };
+
+    this.saving.set(true);
+    this.empOtSvc.update(record.id, payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: updated => {
+          this.records.update(list =>
+            list.map((r, i) => i === index ? updated : r)
+          );
+          this.editingIndex.set(null);
+          this.saving.set(false);
+        },
+        error: () => {
+          this.snackBar.open('Failed to update overtime hours.', 'Close', { duration: 3000 });
+          this.saving.set(false);
+        },
+      });
   }
 
-  cancelEdit(): void { this.editingIndex.set(null); }
+  cancelEdit(): void {
+    this.editingIndex.set(null);
+  }
 }

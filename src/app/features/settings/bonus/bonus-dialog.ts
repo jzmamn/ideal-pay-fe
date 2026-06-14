@@ -8,8 +8,9 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { BonusModel } from './bonus.model';
+import { BonusCalculationMethod, BonusModel } from './bonus.model';
 import { FormulaDefinitionForm } from '../../../shared/components/formula-definition/formula-definition-form/formula-definition-form';
 import { FormulaDefinitionFormValue } from '../../../shared/components/formula-definition/formula-definition.models';
 
@@ -33,6 +34,7 @@ export type BonusDialogResult =
     MatInputModule,
     ReactiveFormsModule,
     MatSlideToggleModule,
+    MatSelectModule,
     MatDividerModule,
     MatCheckboxModule,
     FormulaDefinitionForm,
@@ -55,8 +57,11 @@ export class BonusDialog {
     code:          [{ value: this.row?.code ?? '', disabled: true }],
     name:          [this.row?.name          ?? '', Validators.required],
     description:   [this.row?.description   ?? null as string | null],
+    calculationMethod: this.fb.nonNullable.control<BonusCalculationMethod>(
+      this.row?.calculationMethod ?? 'FIXED_AMOUNT',
+      Validators.required,
+    ),
     isActive:      [this.row?.isActive      ?? true],
-    isTaxable:     [this.row?.isTaxable     ?? false],
     liableForEpf:  [this.row?.liableForEpf  ?? false],
     liableForEtf:  [this.row?.liableForEtf  ?? false],
     liableForPaye: [this.row?.liableForPaye ?? false],
@@ -97,22 +102,22 @@ export class BonusDialog {
     const base = {
       name:           raw.name!,
       description:    raw.description ?? null,
+      calculationMethod: raw.calculationMethod!,
       isActive:       raw.isActive!,
-      isTaxable:      raw.isTaxable!,
       liableForEpf:   raw.liableForEpf!,
       liableForEtf:   raw.liableForEtf!,
       liableForPaye:  raw.liableForPaye!,
       liableNoPay:    raw.liableNoPay!,
-      formula:        fv.expression || undefined,
-      formulaEnabled: fv.isActive,
+      formula:        raw.calculationMethod === 'FORMULA_BASED' ? fv.expression || undefined : undefined,
+      formulaEnabled: raw.calculationMethod === 'FORMULA_BASED',
     };
 
     if (this.isEdit) {
       this.dialogRef.close({
         action: 'update',
         data: new BonusModel(
-          this.row!.id, this.row!.code, base.name, base.description,
-          base.isActive, base.isTaxable, base.liableForEpf, base.liableForEtf,
+          this.row!.id, this.row!.code, base.name, base.description, base.calculationMethod,
+          base.isActive, base.liableForEpf, base.liableForEtf,
           base.liableForPaye, base.liableNoPay, base.formula ?? undefined, base.formulaEnabled,
         ),
       });

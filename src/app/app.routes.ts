@@ -84,6 +84,12 @@ export const routes: Routes = [
                                 .then(m => m.BonusBatch),
                     },
                     {
+                        path: 'bonus-management',
+                        loadComponent: () =>
+                            import('./features/payroll/bonus-management/bonus-management')
+                                .then(m => m.BonusManagement),
+                    },
+                    {
                         path: 'loan-application',
                         loadComponent: () =>
                             import('./features/payroll/loan-application/loan-application')

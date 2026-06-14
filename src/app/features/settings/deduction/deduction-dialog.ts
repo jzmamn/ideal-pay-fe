@@ -56,54 +56,51 @@ export class DeductionDialog {
   private readonly fb = inject(FormBuilder);
 
   readonly deductionForm = this.fb.group({
-    id:             [{ value: this.row?.id ?? null, disabled: true }],
-    code:           [{ value: this.row?.code ?? '', disabled: true }, Validators.required],
-    name:           [this.row?.name           ?? '', Validators.required],
-    description:    [this.row?.description    ?? null as string | null],
-    isActive:       [this.row?.isActive       ?? true],
-    liableForEpf:  [this.row?.liableForEpf  ?? false],
-    liableForEtf:  [this.row?.liableForEtf  ?? false],
-    liableForPaye: [this.row?.liableForPaye ?? false],
-    liableNoPay:   [this.row?.liableNoPay   ?? false],
+    id:                     [{ value: this.row?.id ?? null, disabled: true }],
+    code:                   [{ value: this.row?.code ?? '', disabled: true }, Validators.required],
+    name:                   [this.row?.name                   ?? '',   Validators.required],
+    description:            [this.row?.description            ?? null as string | null],
+    isActive:               [this.row?.isActive               ?? true],
+    liableForEpf:           [this.row?.liableForEpf           ?? false],
+    liableForEtf:           [this.row?.liableForEtf           ?? false],
+    liableForPaye:          [this.row?.liableForPaye          ?? false],
+    liableNoPay:            [this.row?.liableNoPay            ?? false],
   });
 
   // ── Formula state ─────────────────────────────────────────────────────────
   readonly formulaExpression = signal(this.row?.formula        ?? '');
-  readonly formulaIsActive   = signal(this.row?.formulaEnabled ?? false);
   readonly formulaSaving     = signal(false);
   readonly formulaSaveError  = signal<string | null>(null);
 
   private readonly latestFormula = signal<FormulaDefinitionFormValue>({
     expression: this.row?.formula        ?? '',
-    isActive:   this.row?.formulaEnabled ?? false,
+    isActive:   true,
   });
 
   onFormulaValueChanged(value: FormulaDefinitionFormValue): void {
     this.latestFormula.set(value);
-    this.formulaIsActive.set(value.isActive);
   }
 
   onFormulaSaveRequested(value: FormulaDefinitionFormValue): void {
     this.latestFormula.set(value);
     this.formulaExpression.set(value.expression);
-    this.formulaIsActive.set(value.isActive);
   }
 
   onSave(): void {
     if (this.deductionForm.invalid) return;
     const raw  = this.deductionForm.getRawValue();
     const fv   = this.latestFormula();
+
     const base = {
-      code:           raw.code!,
-      name:           raw.name!,
-      description:    raw.description,
-      isActive:       raw.isActive!,
-      liableForEpf:  raw.liableForEpf!,
-      liableForEtf:  raw.liableForEtf!,
-      liableForPaye: raw.liableForPaye!,
-      liableNoPay:   raw.liableNoPay!,
-      formula:        this.isFixed ? (fv.expression || undefined) : undefined,
-      formulaEnabled: this.isFixed ? fv.isActive : false,
+      code:                   raw.code!,
+      name:                   raw.name!,
+      description:            raw.description,
+      isActive:               raw.isActive!,
+      liableForEpf:           raw.liableForEpf!,
+      liableForEtf:           raw.liableForEtf!,
+      liableForPaye:          raw.liableForPaye!,
+      liableNoPay:            raw.liableNoPay!,
+      formula:                this.isFixed ? (fv.expression || undefined) : undefined,
     };
     if (this.isEdit) {
       this.dialogRef.close({ action: 'update', data: { id: this.row!.id, ...base } });

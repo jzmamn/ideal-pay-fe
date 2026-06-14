@@ -123,6 +123,7 @@ export class EmployeeForm {
 
     jobCategoryId: [null as number | null, Validators.required],
     designationId: [null as number | null, Validators.required],
+    departmentId:  [null as number | null],
     branchId:      [null as number | null, Validators.required],
     gradeId:       [null as number | null, Validators.required],
     bankId:        [null as number | null],
@@ -228,6 +229,7 @@ export class EmployeeForm {
         nopayDaysId:   emp.nopayDaysId,
         jobCategoryId: emp.jobCategoryId,
         designationId: emp.designationId,
+        departmentId:  emp.departmentId ?? null,
         branchId:      emp.branchId,
         gradeId:       emp.gradeId,
         bankId:        emp.bankId ?? null,
@@ -313,6 +315,7 @@ export class EmployeeForm {
       nopayDaysId:   v.nopayDaysId!,
       jobCategoryId: v.jobCategoryId!,
       designationId: v.designationId!,
+      departmentId:  v.departmentId ?? undefined,
       branchId:      v.branchId!,
       gradeId:       v.gradeId!,
       bankId:        v.bankId ?? undefined,

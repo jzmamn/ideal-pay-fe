@@ -1,0 +1,691 @@
+<div class="bonus-management-page">
+
+  <!-- ── Page header ─────────────────────────────────────────────────────── -->
+  <div class="page-header">
+    <mat-icon>card_giftcard</mat-icon>
+    <div>
+      <h1>Bonus Management</h1>
+      <p>Calculate, review, approve, and process bonus payments independently from payroll.</p>
+    </div>
+  </div>
+
+  <!-- ── Main tabs: Processing | Existing Batches | Reports ─────────────── -->
+  <mat-tab-group animationDuration="200ms">
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         TAB 1 — Processing workflow
+    ══════════════════════════════════════════════════════════════════════ -->
+    <mat-tab label="Bonus Processing">
+      <div class="tab-content">
+
+        <!-- Progress indicator -->
+        <div class="step-progress">
+          <div class="step-node" [class.active]="step() === 'setup'"     [class.done]="step() !== 'setup'">
+            <mat-icon>settings</mat-icon><span>Setup</span>
+          </div>
+          <div class="step-line" [class.done]="step() !== 'setup'"></div>
+          <div class="step-node" [class.active]="step() === 'review'"    [class.done]="step() === 'approved' || step() === 'processed'">
+            <mat-icon>rate_review</mat-icon><span>Review</span>
+          </div>
+          <div class="step-line" [class.done]="step() === 'approved' || step() === 'processed'"></div>
+          <div class="step-node" [class.active]="step() === 'approved'"  [class.done]="step() === 'processed'">
+            <mat-icon>thumb_up</mat-icon><span>Approved</span>
+          </div>
+          <div class="step-line" [class.done]="step() === 'processed'"></div>
+          <div class="step-node" [class.active]="step() === 'processed'">
+            <mat-icon>payments</mat-icon><span>Processed</span>
+          </div>
+        </div>
+
+        <!-- Error banner -->
+        @if (error()) {
+          <div class="error-banner">
+            <mat-icon>error_outline</mat-icon>
+            <span>{{ error() }}</span>
+          </div>
+        }
+
+        <!-- ── STEP 1: Setup ──────────────────────────────────────────── -->
+        @if (step() === 'setup') {
+          <mat-card class="setup-card">
+            <mat-card-header>
+              <mat-card-title>Configure Bonus Run</mat-card-title>
+              <mat-card-subtitle>Select the bonus type, period, and eligible employees</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <form [formGroup]="setupForm" class="setup-form">
+
+                <!-- Bonus type + period -->
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="wide">
+                    <mat-label>Bonus Type</mat-label>
+                    <mat-select formControlName="bonusId" required>
+                      @for (b of bonusTypes(); track b.id) {
+                        <mat-option [value]="b.id">
+                          {{ b.code }} — {{ b.name }}
+                          <small> ({{ b.calculationMethod === 'FORMULA_BASED' ? 'formula' : 'fixed' }})</small>
+                        </mat-option>
+                      }
+                    </mat-select>
+                    <mat-icon matSuffix>card_giftcard</mat-icon>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Month</mat-label>
+                    <mat-select formControlName="month" required>
+                      @for (m of months; track m.value) {
+                        <mat-option [value]="m.value">{{ m.label }}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Year</mat-label>
+                    <mat-select formControlName="year" required>
+                      @for (y of years; track y) {
+                        <mat-option [value]="y">{{ y }}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+
+                <!-- Formula context variables (shown for formula-based bonus) -->
+                @if (isFormulaBonus()) {
+                  <mat-divider></mat-divider>
+                  <p class="section-label">Formula Context Variables <small>(override defaults)</small></p>
+                  <div class="form-row form-row-3">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Gross Salary</mat-label>
+                      <input matInput type="number" formControlName="grossSalary" min="0">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>Attendance %</mat-label>
+                      <input matInput type="number" formControlName="attendancePercentage" min="0" max="100">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>Performance Rating</mat-label>
+                      <input matInput type="number" formControlName="performanceRating" min="0">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>Worked Days</mat-label>
+                      <input matInput type="number" formControlName="workedDays" min="0">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>Sales Achievement</mat-label>
+                      <input matInput type="number" formControlName="salesAchievement" min="0">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>Productivity %</mat-label>
+                      <input matInput type="number" formControlName="productivityPercentage" min="0" max="100">
+                    </mat-form-field>
+                  </div>
+                }
+
+                <mat-divider></mat-divider>
+
+                <!-- Employee selection -->
+                <p class="section-label">Employee Selection</p>
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Include Employees</mat-label>
+                    <mat-select formControlName="selectionMode">
+                      <mat-option value="all">All Active Employees</mat-option>
+                      <mat-option value="filter">Filter by Criteria</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+
+                @if (setupForm.getRawValue().selectionMode === 'filter') {
+                  <div class="form-row form-row-3">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Department</mat-label>
+                      <mat-select formControlName="departmentId"><mat-option [value]="null">All</mat-option>
+                        @for (item of masterSvc.activeDepartments(); track item.id) { <mat-option [value]="item.id">{{ item.name }}</mat-option> }
+                      </mat-select>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>Branch</mat-label>
+                      <mat-select formControlName="branchId"><mat-option [value]="null">All</mat-option>
+                        @for (item of masterSvc.activeBranches(); track item.id) { <mat-option [value]="item.id">{{ item.name }}</mat-option> }
+                      </mat-select>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>Designation</mat-label>
+                      <mat-select formControlName="designationId"><mat-option [value]="null">All</mat-option>
+                        @for (item of masterSvc.activeDesignations(); track item.id) { <mat-option [value]="item.id">{{ item.name }}</mat-option> }
+                      </mat-select>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>Grade</mat-label>
+                      <mat-select formControlName="gradeId"><mat-option [value]="null">All</mat-option>
+                        @for (item of masterSvc.activeGrades(); track item.id) { <mat-option [value]="item.id">{{ item.name }}</mat-option> }
+                      </mat-select>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>Employee Type</mat-label>
+                      <mat-select formControlName="employeeTypeId"><mat-option [value]="null">All</mat-option>
+                        @for (item of masterSvc.activeEmployeeTypes(); track item.id) { <mat-option [value]="item.id">{{ item.name }}</mat-option> }
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                }
+
+                <mat-divider></mat-divider>
+
+                <mat-form-field appearance="outline" class="wide">
+                  <mat-label>Notes (optional)</mat-label>
+                  <textarea matInput formControlName="notes" rows="2"></textarea>
+                </mat-form-field>
+
+              </form>
+            </mat-card-content>
+            <mat-card-actions>
+              <button mat-flat-button color="primary"
+                      [disabled]="setupForm.invalid || loading()"
+                      (click)="calculate()">
+                @if (loading()) {
+                  <mat-spinner diameter="18"></mat-spinner>
+                } @else {
+                  <mat-icon>calculate</mat-icon>
+                }
+                Calculate Bonuses
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        }
+
+        <!-- ── STEP 2: Review ─────────────────────────────────────────── -->
+        @if (step() === 'review') {
+          <div class="batch-header">
+            <div class="batch-info">
+              <h2>{{ batch()?.bonusName }} — {{ batch()?.payrollMonth }}</h2>
+              <mat-chip [color]="statusColor(batch()?.status ?? '')" highlighted>
+                {{ batch()?.status }}
+              </mat-chip>
+            </div>
+            <div class="batch-stats">
+              <div class="stat"><span>Employees</span><strong>{{ batch()?.employeeCount }}</strong></div>
+              <div class="stat"><span>Total Bonus</span><strong>{{ totalEffective() | number:'1.2-2' }}</strong></div>
+            </div>
+          </div>
+
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Review & Adjust</mat-card-title>
+              <mat-card-subtitle>
+                Formula: <code>{{ batch()?.formula ?? 'Fixed amount' }}</code>
+              </mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="table-wrapper">
+                <table mat-table [dataSource]="entries()" class="bonus-table">
+
+                  <ng-container matColumnDef="empCode">
+                    <th mat-header-cell *matHeaderCellDef>Emp #</th>
+                    <td mat-cell *matCellDef="let row">{{ row.empCode }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="empName">
+                    <th mat-header-cell *matHeaderCellDef>Employee</th>
+                    <td mat-cell *matCellDef="let row">{{ row.empName }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="designation">
+                    <th mat-header-cell *matHeaderCellDef>Designation</th>
+                    <td mat-cell *matCellDef="let row">{{ row.designationName ?? '—' }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="department">
+                    <th mat-header-cell *matHeaderCellDef>Department</th>
+                    <td mat-cell *matCellDef="let row">{{ row.departmentName ?? '—' }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="branch">
+                    <th mat-header-cell *matHeaderCellDef>Branch</th>
+                    <td mat-cell *matCellDef="let row">{{ row.branchName ?? '—' }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="formula">
+                    <th mat-header-cell *matHeaderCellDef>Formula Result</th>
+                    <td mat-cell *matCellDef="let row">{{ row.formulaResult | number:'1.2-2' }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="calculated">
+                    <th mat-header-cell *matHeaderCellDef>Calculated</th>
+                    <td mat-cell *matCellDef="let row">{{ row.calculatedAmount | number:'1.2-2' }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="adjusted">
+                    <th mat-header-cell *matHeaderCellDef>Adjusted</th>
+                    <td mat-cell *matCellDef="let row">
+                      @if (row._editAmount != null) {
+                        <input class="inline-input" type="number" [value]="row._editAmount"
+                               (input)="updateRowEditAmount(row, $any($event.target).value)"
+                               min="0" step="0.01">
+                      } @else {
+                        {{ row.adjustedAmount != null ? (row.adjustedAmount | number:'1.2-2') : '—' }}
+                      }
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="effective">
+                    <th mat-header-cell *matHeaderCellDef>Effective Amount</th>
+                    <td mat-cell *matCellDef="let row" class="amount-cell">
+                      <strong>{{ row.effectiveAmount | number:'1.2-2' }}</strong>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="note">
+                    <th mat-header-cell *matHeaderCellDef>Note</th>
+                    <td mat-cell *matCellDef="let row">
+                      @if (row._editAmount != null) {
+                        <input class="inline-input" type="text" [value]="row._editNote ?? ''"
+                               (input)="updateRowEditNote(row, $any($event.target).value)"
+                               placeholder="Reason for adjustment">
+                      } @else {
+                        {{ row.note ?? '' }}
+                      }
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef></th>
+                    <td mat-cell *matCellDef="let row">
+                      @if (row._editAmount != null) {
+                        <button mat-icon-button color="primary" aria-label="Save adjustment"
+                                (click)="saveEdit(row)">
+                          <mat-icon>check</mat-icon>
+                        </button>
+                        <button mat-icon-button aria-label="Cancel" (click)="cancelEdit(row)">
+                          <mat-icon>close</mat-icon>
+                        </button>
+                      } @else {
+                        <button mat-icon-button matTooltip="Adjust amount"
+                                (click)="startEdit(row)">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                      }
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="reviewColumns; sticky: true"></tr>
+                  <tr mat-row *matRowDef="let row; columns: reviewColumns;"></tr>
+                </table>
+              </div>
+            </mat-card-content>
+            <mat-card-actions>
+              <button mat-stroked-button color="warn"
+                      [disabled]="actionBusy()"
+                      (click)="cancelBatch()">
+                <mat-icon>cancel</mat-icon> Cancel Batch
+              </button>
+              <span class="spacer"></span>
+              <button mat-flat-button color="primary"
+                      [disabled]="actionBusy()"
+                      (click)="approve()">
+                @if (actionBusy()) { <mat-spinner diameter="18"></mat-spinner> }
+                @else { <mat-icon>thumb_up</mat-icon> }
+                Approve Bonus
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        }
+
+        <!-- ── STEP 3: Approved ───────────────────────────────────────── -->
+        @if (step() === 'approved') {
+          <div class="batch-header">
+            <div class="batch-info">
+              <h2>{{ batch()?.bonusName }} — {{ batch()?.payrollMonth }}</h2>
+              <mat-chip color="primary" highlighted>APPROVED</mat-chip>
+            </div>
+            <div class="batch-stats">
+              <div class="stat"><span>Employees</span><strong>{{ batch()?.employeeCount }}</strong></div>
+              <div class="stat"><span>Total</span><strong>{{ totalEffective() | number:'1.2-2' }}</strong></div>
+              <div class="stat"><span>Approved by</span><strong>{{ batch()?.approvedByUserName ?? '—' }}</strong></div>
+            </div>
+          </div>
+
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Payment List</mat-card-title>
+              <mat-card-subtitle>All amounts verified. Ready for payment processing.</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="table-wrapper">
+                <table mat-table [dataSource]="entries()" class="bonus-table">
+                  <ng-container matColumnDef="empCode">
+                    <th mat-header-cell *matHeaderCellDef>Emp #</th>
+                    <td mat-cell *matCellDef="let row">{{ row.empCode }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="empName">
+                    <th mat-header-cell *matHeaderCellDef>Employee</th>
+                    <td mat-cell *matCellDef="let row">{{ row.empName }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="effective">
+                    <th mat-header-cell *matHeaderCellDef>Bonus Amount</th>
+                    <td mat-cell *matCellDef="let row" class="amount-cell">
+                      <strong>{{ row.effectiveAmount | number:'1.2-2' }}</strong>
+                    </td>
+                  </ng-container>
+                  <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef>Status</th>
+                    <td mat-cell *matCellDef="let row">
+                      <mat-chip [color]="statusColor(row.status)" highlighted>{{ row.status }}</mat-chip>
+                    </td>
+                  </ng-container>
+                  <tr mat-header-row *matHeaderRowDef="paymentColumns; sticky: true"></tr>
+                  <tr mat-row *matRowDef="let row; columns: paymentColumns;"></tr>
+                </table>
+              </div>
+            </mat-card-content>
+            <mat-card-actions>
+              <button mat-stroked-button (click)="reset()">
+                <mat-icon>arrow_back</mat-icon> New Bonus Run
+              </button>
+              <span class="spacer"></span>
+              <button mat-flat-button color="primary"
+                      [disabled]="actionBusy()"
+                      (click)="process()">
+                @if (actionBusy()) { <mat-spinner diameter="18"></mat-spinner> }
+                @else { <mat-icon>payments</mat-icon> }
+                Process Payments
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        }
+
+        <!-- ── STEP 4: Processed ──────────────────────────────────────── -->
+        @if (step() === 'processed') {
+          <div class="success-panel">
+            <mat-icon class="success-icon">check_circle</mat-icon>
+            <h2>Bonus Payments Processed</h2>
+            <p>
+              <strong>{{ batch()?.bonusName }}</strong> for
+              <strong>{{ batch()?.payrollMonth }}</strong> has been processed.
+              <strong>{{ batch()?.employeeCount }}</strong> employees received a total of
+              <strong>{{ totalEffective() | number:'1.2-2' }}</strong>.
+            </p>
+            <button mat-flat-button color="primary" (click)="reset()">
+              <mat-icon>add</mat-icon> Start New Bonus Run
+            </button>
+          </div>
+
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Processed Payment List</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="table-wrapper">
+                <table mat-table [dataSource]="entries()" class="bonus-table">
+                  <ng-container matColumnDef="empCode">
+                    <th mat-header-cell *matHeaderCellDef>Emp #</th>
+                    <td mat-cell *matCellDef="let row">{{ row.empCode }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="empName">
+                    <th mat-header-cell *matHeaderCellDef>Employee</th>
+                    <td mat-cell *matCellDef="let row">{{ row.empName }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="effective">
+                    <th mat-header-cell *matHeaderCellDef>Bonus Amount</th>
+                    <td mat-cell *matCellDef="let row" class="amount-cell">
+                      <strong>{{ row.effectiveAmount | number:'1.2-2' }}</strong>
+                    </td>
+                  </ng-container>
+                  <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef>Status</th>
+                    <td mat-cell *matCellDef="let row">
+                      <mat-chip highlighted>PROCESSED</mat-chip>
+                    </td>
+                  </ng-container>
+                  <tr mat-header-row *matHeaderRowDef="paymentColumns; sticky: true"></tr>
+                  <tr mat-row *matRowDef="let row; columns: paymentColumns;"></tr>
+                </table>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+
+      </div>
+    </mat-tab>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         TAB 2 — Existing batches
+    ══════════════════════════════════════════════════════════════════════ -->
+    <mat-tab label="Batch History">
+      <div class="tab-content">
+        @if (batchesLoading()) {
+          <div class="loading-center"><mat-spinner diameter="36"></mat-spinner></div>
+        } @else if (existingBatches().length === 0) {
+          <div class="empty-state">
+            <mat-icon>inbox</mat-icon>
+            <p>No bonus processing batches found.</p>
+          </div>
+        } @else {
+          <div class="table-wrapper">
+            <table mat-table [dataSource]="existingBatches()" class="bonus-table">
+
+              <ng-container matColumnDef="bonusName">
+                <th mat-header-cell *matHeaderCellDef>Bonus Type</th>
+                <td mat-cell *matCellDef="let b">{{ b.bonusName }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="payrollMonth">
+                <th mat-header-cell *matHeaderCellDef>Period</th>
+                <td mat-cell *matCellDef="let b">{{ b.payrollMonth }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let b">
+                  <mat-chip [color]="statusColor(b.status)" highlighted>{{ b.status }}</mat-chip>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="employees">
+                <th mat-header-cell *matHeaderCellDef>Employees</th>
+                <td mat-cell *matCellDef="let b">{{ b.employeeCount }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="total">
+                <th mat-header-cell *matHeaderCellDef>Total Amount</th>
+                <td mat-cell *matCellDef="let b" class="amount-cell">
+                  {{ b.totalAmount | number:'1.2-2' }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="createdDate">
+                <th mat-header-cell *matHeaderCellDef>Created</th>
+                <td mat-cell *matCellDef="let b">{{ b.createdDate | date:'dd MMM yyyy' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="action">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let b">
+                  <button mat-stroked-button (click)="loadBatch(b.id)">
+                    <mat-icon>open_in_new</mat-icon> Open
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="['bonusName','payrollMonth','status','employees','total','createdDate','action']; sticky: true"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['bonusName','payrollMonth','status','employees','total','createdDate','action'];"></tr>
+            </table>
+          </div>
+        }
+      </div>
+    </mat-tab>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         TAB 3 — Reports
+    ══════════════════════════════════════════════════════════════════════ -->
+    <mat-tab label="Reports">
+      <div class="tab-content">
+
+        <div class="report-filter">
+          <mat-form-field appearance="outline">
+            <mat-label>Filter by Period (YYYY-MM)</mat-label>
+            <input matInput [value]="reportMonth()" (input)="reportMonth.set($any($event.target).value)"
+                   placeholder="e.g. 2026-06">
+            <mat-icon matSuffix>calendar_month</mat-icon>
+          </mat-form-field>
+          <button mat-flat-button color="primary" (click)="loadReports()">
+            @if (reportsLoading()) { <mat-spinner diameter="18"></mat-spinner> }
+            @else { <mat-icon>refresh</mat-icon> }
+            Load Reports
+          </button>
+          <button mat-stroked-button (click)="printReport()" [disabled]="employeeReport().length === 0">
+            <mat-icon>print</mat-icon> Print
+          </button>
+          <button mat-stroked-button (click)="exportEmployeeReport()" [disabled]="employeeReport().length === 0">
+            <mat-icon>download</mat-icon> Export CSV
+          </button>
+        </div>
+
+        <mat-tab-group>
+
+          <!-- Summary -->
+          <mat-tab label="Summary Report">
+            <div class="table-wrapper report-table">
+              <table mat-table [dataSource]="summaryReport()" class="bonus-table">
+                <ng-container matColumnDef="bonusName">
+                  <th mat-header-cell *matHeaderCellDef>Bonus Type</th>
+                  <td mat-cell *matCellDef="let r">{{ r.bonusName }}</td>
+                </ng-container>
+                <ng-container matColumnDef="payrollMonth">
+                  <th mat-header-cell *matHeaderCellDef>Period</th>
+                  <td mat-cell *matCellDef="let r">{{ r.payrollMonth }}</td>
+                </ng-container>
+                <ng-container matColumnDef="status">
+                  <th mat-header-cell *matHeaderCellDef>Status</th>
+                  <td mat-cell *matCellDef="let r">
+                    <mat-chip [color]="statusColor(r.status)" highlighted>{{ r.status }}</mat-chip>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="employees">
+                  <th mat-header-cell *matHeaderCellDef>Employees</th>
+                  <td mat-cell *matCellDef="let r">{{ r.employeeCount }}</td>
+                </ng-container>
+                <ng-container matColumnDef="total">
+                  <th mat-header-cell *matHeaderCellDef>Total Amount</th>
+                  <td mat-cell *matCellDef="let r" class="amount-cell">{{ r.totalAmount | number:'1.2-2' }}</td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="summaryColumns"></tr>
+                <tr mat-row *matRowDef="let r; columns: summaryColumns;"></tr>
+              </table>
+            </div>
+          </mat-tab>
+
+          <!-- Employee Report -->
+          <mat-tab label="Employee Report">
+            <div class="table-wrapper report-table">
+              <table mat-table [dataSource]="employeeReport()" class="bonus-table">
+                <ng-container matColumnDef="empCode">
+                  <th mat-header-cell *matHeaderCellDef>Emp #</th>
+                  <td mat-cell *matCellDef="let r">{{ r.empCode }}</td>
+                </ng-container>
+                <ng-container matColumnDef="empName">
+                  <th mat-header-cell *matHeaderCellDef>Employee</th>
+                  <td mat-cell *matCellDef="let r">{{ r.empName }}</td>
+                </ng-container>
+                <ng-container matColumnDef="department">
+                  <th mat-header-cell *matHeaderCellDef>Department</th>
+                  <td mat-cell *matCellDef="let r">{{ r.departmentName ?? '—' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="effective">
+                  <th mat-header-cell *matHeaderCellDef>Bonus Amount</th>
+                  <td mat-cell *matCellDef="let r" class="amount-cell">{{ r.effectiveAmount | number:'1.2-2' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="status">
+                  <th mat-header-cell *matHeaderCellDef>Status</th>
+                  <td mat-cell *matCellDef="let r">
+                    <mat-chip [color]="statusColor(r.status)" highlighted>{{ r.status }}</mat-chip>
+                  </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="empReportColumns"></tr>
+                <tr mat-row *matRowDef="let r; columns: empReportColumns;"></tr>
+              </table>
+            </div>
+          </mat-tab>
+
+          <!-- Department Report -->
+          <mat-tab label="Department Report">
+            <div class="table-wrapper report-table">
+              <table mat-table [dataSource]="departmentReport()" class="bonus-table">
+                <ng-container matColumnDef="dept">
+                  <th mat-header-cell *matHeaderCellDef>Department</th>
+                  <td mat-cell *matCellDef="let r">{{ r.departmentName }}</td>
+                </ng-container>
+                <ng-container matColumnDef="bonus">
+                  <th mat-header-cell *matHeaderCellDef>Bonus Type</th>
+                  <td mat-cell *matCellDef="let r">{{ r.bonusName }}</td>
+                </ng-container>
+                <ng-container matColumnDef="month">
+                  <th mat-header-cell *matHeaderCellDef>Period</th>
+                  <td mat-cell *matCellDef="let r">{{ r.payrollMonth }}</td>
+                </ng-container>
+                <ng-container matColumnDef="count">
+                  <th mat-header-cell *matHeaderCellDef>Employees</th>
+                  <td mat-cell *matCellDef="let r">{{ r.employeeCount }}</td>
+                </ng-container>
+                <ng-container matColumnDef="total">
+                  <th mat-header-cell *matHeaderCellDef>Total Bonus Cost</th>
+                  <td mat-cell *matCellDef="let r" class="amount-cell">{{ r.totalAmount | number:'1.2-2' }}</td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="deptReportColumns"></tr>
+                <tr mat-row *matRowDef="let r; columns: deptReportColumns;"></tr>
+              </table>
+            </div>
+          </mat-tab>
+
+          <!-- Approval Report -->
+          <mat-tab label="Approval Report">
+            <div class="table-wrapper report-table">
+              <table mat-table [dataSource]="approvalReport()" class="bonus-table">
+                <ng-container matColumnDef="batchId">
+                  <th mat-header-cell *matHeaderCellDef>Batch #</th>
+                  <td mat-cell *matCellDef="let r">{{ r.batchId }}</td>
+                </ng-container>
+                <ng-container matColumnDef="bonusName">
+                  <th mat-header-cell *matHeaderCellDef>Bonus Type</th>
+                  <td mat-cell *matCellDef="let r">{{ r.bonusName }}</td>
+                </ng-container>
+                <ng-container matColumnDef="payrollMonth">
+                  <th mat-header-cell *matHeaderCellDef>Period</th>
+                  <td mat-cell *matCellDef="let r">{{ r.payrollMonth }}</td>
+                </ng-container>
+                <ng-container matColumnDef="status">
+                  <th mat-header-cell *matHeaderCellDef>Status</th>
+                  <td mat-cell *matCellDef="let r">
+                    <mat-chip [color]="statusColor(r.status)" highlighted>{{ r.status }}</mat-chip>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="employees">
+                  <th mat-header-cell *matHeaderCellDef>Employees</th>
+                  <td mat-cell *matCellDef="let r">{{ r.employeeCount }}</td>
+                </ng-container>
+                <ng-container matColumnDef="total">
+                  <th mat-header-cell *matHeaderCellDef>Total Amount</th>
+                  <td mat-cell *matCellDef="let r" class="amount-cell">{{ r.totalAmount | number:'1.2-2' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="approvedBy">
+                  <th mat-header-cell *matHeaderCellDef>Approved By</th>
+                  <td mat-cell *matCellDef="let r">{{ r.approvedByUserName ?? '—' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="approvedDate">
+                  <th mat-header-cell *matHeaderCellDef>Approved Date</th>
+                  <td mat-cell *matCellDef="let r">{{ r.approvedDate ?? '—' }}</td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="approvalColumns"></tr>
+                <tr mat-row *matRowDef="let r; columns: approvalColumns;"></tr>
+              </table>
+            </div>
+          </mat-tab>
+
+        </mat-tab-group>
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+</div>

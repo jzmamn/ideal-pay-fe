@@ -6,6 +6,14 @@
       <mat-icon aria-hidden="true">remove_circle_outline</mat-icon>
       <span id="deductions-heading" class="panel-title">Fixed Deductions</span>
     </div>
+    <span
+      class="readonly-notice"
+      matTooltip="Loaded deduction amounts are read-only. To change an amount, update the deduction definition and re-run the payroll load."
+      aria-label="Loaded deduction amounts are read-only"
+    >
+      <mat-icon class="lock-icon" aria-hidden="true">lock</mat-icon>
+      Read-only
+    </span>
   </div>
 
   @if (deductions().length > 0) {
@@ -16,74 +24,34 @@
             <th scope="col">Code</th>
             <th scope="col">Name</th>
             <th scope="col" class="amount-col">Amount</th>
-            <th scope="col" class="action-col"></th>
+            <th scope="col" class="source-col">Source</th>
           </tr>
         </thead>
         <tbody>
-          @for (deduction of deductions(); track deduction.id; let i = $index) {
-            <tr [class.editing-row]="editingIndex() === i">
+          @for (deduction of deductions(); track deduction.id) {
+            <tr>
               <td class="code-cell">{{ deduction.fdCode }}</td>
               <td>{{ deduction.fdName }}</td>
               <td class="amount-cell">
-                @if (!deduction.formulaEnabled) {
-                  @if (editingIndex() === i) {
-                    <mat-form-field appearance="outline" class="amount-field">
-                      <input
-                        matInput
-                        type="number"
-                        min="0"
-                        [formControl]="editAmountCtrl"
-                        [attr.aria-label]="'Edit amount for ' + deduction.fdName"
-                      >
-                      @if (editAmountCtrl.hasError('required') && editAmountCtrl.touched) {
-                        <mat-error>Amount is required</mat-error>
-                      }
-                      @if (editAmountCtrl.hasError('min') && editAmountCtrl.touched) {
-                        <mat-error>Cannot be negative</mat-error>
-                      }
-                    </mat-form-field>
-                  } @else {
-                    <span class="amount-value">{{ deduction.amount | number:'1.2-2' }}</span>
-                  }
-                }
+                <span class="amount-value">{{ deduction.amount | number:'1.2-2' }}</span>
               </td>
-              <td class="action-col">
-                @if (!deduction.formulaEnabled) {
-                  @if (editingIndex() === i) {
-                    <button
-                      mat-icon-button
-                      type="button"
-                      color="primary"
-                      (click)="saveEdit(i)"
-                      [disabled]="saving()"
-                      [attr.aria-label]="'Save changes for ' + deduction.fdName"
-                      matTooltip="Save"
-                    >
-                      <mat-icon>check</mat-icon>
-                    </button>
-                    <button
-                      mat-icon-button
-                      type="button"
-                      (click)="cancelEdit()"
-                      [disabled]="saving()"
-                      [attr.aria-label]="'Cancel editing ' + deduction.fdName"
-                      matTooltip="Cancel"
-                    >
-                      <mat-icon>close</mat-icon>
-                    </button>
-                  } @else {
-                    <button
-                      mat-icon-button
-                      type="button"
-                      class="btn-edit"
-                      [disabled]="editingIndex() !== null"
-                      (click)="startEdit(i)"
-                      [attr.aria-label]="'Edit amount for ' + deduction.fdName"
-                      matTooltip="Edit amount"
-                    >
-                      <mat-icon>edit</mat-icon>
-                    </button>
-                  }
+              <td class="source-col">
+                @if (deduction.formulaCalculated) {
+                  <span
+                    class="source-badge source-formula"
+                    matTooltip="Amount was calculated by formula at load time"
+                  >
+                    <mat-icon aria-hidden="true">functions</mat-icon>
+                    Formula
+                  </span>
+                } @else {
+                  <span
+                    class="source-badge source-fixed"
+                    matTooltip="Fixed monetary amount from deduction definition"
+                  >
+                    <mat-icon aria-hidden="true">attach_money</mat-icon>
+                    Fixed
+                  </span>
                 }
               </td>
             </tr>
@@ -99,7 +67,7 @@
       </table>
     </div>
   } @else {
-    <p class="empty-note">No fixed deductions found for this employee.</p>
+    <p class="empty-note">No fixed deductions loaded for this employee.</p>
   }
 
 </section>

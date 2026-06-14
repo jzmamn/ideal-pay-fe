@@ -16,6 +16,10 @@ interface ApiLateDeductionConfig {
   isActive:           boolean;
   formula:            string | null;
   formulaEnabled:     boolean;
+  liableForEpf:       boolean;
+  liableForEtf:       boolean;
+  liableForPaye:      boolean;
+  liableForNopay:     boolean;
 }
 
 type ApiPayload = Omit<ApiLateDeductionConfig, 'id' | 'code'> & {
@@ -65,6 +69,10 @@ export class LateDeductionConfigService {
       isActive:           item.isActive,
       formula:            item.formula ?? undefined,
       formulaEnabled:     item.formulaEnabled ?? false,
+      liableForEpf:       item.liableForEpf  ?? true,
+      liableForEtf:       item.liableForEtf  ?? true,
+      liableForPaye:      item.liableForPaye ?? true,
+      liableForNopay:     item.liableForNopay ?? false,
     };
   }
 
@@ -77,6 +85,10 @@ export class LateDeductionConfigService {
       isActive:           data.isActive,
       formula:            data.formula ?? null,
       formulaEnabled:     data.formulaEnabled ?? false,
+      liableForEpf:       data.liableForEpf  ?? true,
+      liableForEtf:       data.liableForEtf  ?? true,
+      liableForPaye:      data.liableForPaye ?? true,
+      liableForNopay:     data.liableForNopay ?? false,
       createdBy:          1, // TODO: replace with auth user id
       modifiedBy:         1,
     };

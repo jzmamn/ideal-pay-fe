@@ -7,38 +7,45 @@
     </div>
     <app-export-button entity="EMP_LATE" [payrollMonth]="payrollMonth()" />
     <p class="formula-note">
-      Hourly Rate = Monthly Salary ÷ (Working Days × 8) &nbsp;|&nbsp;
-      Deduction = Hourly Rate × Late Hours
+      Rate is calculated automatically from the configured formula.
+      Only Late Hours can be entered.
     </p>
   </div>
 
-  @if (items().length > 0) {
+  @if (loading()) {
+    <p class="empty-note">Loading…</p>
+  } @else if (items().length > 0) {
     <div class="table-wrapper">
       <table aria-label="Late deductions">
         <thead>
           <tr>
             <th scope="col">Code</th>
             <th scope="col">Employee</th>
-            <th scope="col" class="amount-col">Hourly Rate</th>
+            <th scope="col">Deduction Type</th>
+            <th scope="col" class="amount-col">Rate / Hr</th>
             <th scope="col" class="amount-col">Late Hours</th>
             <th scope="col" class="amount-col">Deduction</th>
             <th scope="col" class="action-col"></th>
           </tr>
         </thead>
         <tbody>
-          @for (item of items(); track item.id; let i = $index) {
+          @for (item of items(); track item.recordId + '-' + (item.lateConfigId ?? 0); let i = $index) {
             <tr [class.editing-row]="editingIndex() === i">
-              <td class="code-cell">{{ item.code }}</td>
-              <td>{{ item.name }}</td>
+              <td class="code-cell">{{ item.empCode }}</td>
+              <td>{{ item.empName }}</td>
+              <td class="config-cell">{{ item.lateConfigName ?? '—' }}</td>
               <td class="amount-cell">
-                <span class="rate-value">{{ hourlyRate(item) | number:'1.2-2' }}</span>
+                <span class="rate-value read-only-badge"
+                      [attr.aria-label]="'Calculated rate for ' + item.empName + ': ' + item.rate">
+                  {{ item.rate | number:'1.2-6' }}
+                </span>
               </td>
               <td class="amount-cell">
                 @if (editingIndex() === i) {
                   <mat-form-field appearance="outline" class="amount-field">
                     <input matInput type="number" min="0" step="0.5"
                            [formControl]="editHoursCtrl"
-                           [attr.aria-label]="'Late hours for ' + item.name">
+                           [attr.aria-label]="'Late hours for ' + item.empName">
                     @if (editHoursCtrl.hasError('required') && editHoursCtrl.touched) {
                       <mat-error>Hours required</mat-error>
                     }
@@ -57,7 +64,7 @@
                 @if (editingIndex() === i) {
                   <button mat-icon-button type="button" color="primary"
                           (click)="saveEdit(i)"
-                          [attr.aria-label]="'Save late hours for ' + item.name"
+                          [attr.aria-label]="'Save late hours for ' + item.empName"
                           matTooltip="Save">
                     <mat-icon>check</mat-icon>
                   </button>
@@ -70,7 +77,7 @@
                   <button mat-icon-button type="button" class="btn-edit"
                           [disabled]="editingIndex() !== null"
                           (click)="startEdit(i)"
-                          [attr.aria-label]="'Edit late hours for ' + item.name"
+                          [attr.aria-label]="'Edit late hours for ' + item.empName"
                           matTooltip="Edit hours">
                     <mat-icon>edit</mat-icon>
                   </button>
@@ -81,7 +88,7 @@
         </tbody>
         <tfoot aria-live="polite" aria-atomic="true">
           <tr class="total-row">
-            <td colspan="4" class="total-label">Total Late Deduction</td>
+            <td colspan="5" class="total-label">Total Late Deduction</td>
             <td class="total-amount">{{ total() | number:'1.2-2' }}</td>
             <td></td>
           </tr>
@@ -89,7 +96,7 @@
       </table>
     </div>
   } @else {
-    <p class="empty-note">No employees found.</p>
+    <p class="empty-note">No late deduction records found. Run the payroll load phase first.</p>
   }
 
 </section>

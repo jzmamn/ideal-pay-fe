@@ -1,10 +1,12 @@
+export type BonusCalculationMethod = 'FIXED_AMOUNT' | 'FORMULA_BASED';
+
 export class BonusModel {
   id: number;
   code: string;
   name: string;
   description: string | null;
+  calculationMethod: BonusCalculationMethod;
   isActive: boolean;
-  isTaxable: boolean;
   liableForEpf: boolean;
   liableForEtf: boolean;
   liableForPaye: boolean;
@@ -17,8 +19,8 @@ export class BonusModel {
     code: string,
     name: string,
     description: string | null,
+    calculationMethod: BonusCalculationMethod,
     isActive: boolean,
-    isTaxable: boolean,
     liableForEpf: boolean,
     liableForEtf: boolean,
     liableForPaye: boolean,
@@ -30,8 +32,8 @@ export class BonusModel {
     this.code = code;
     this.name = name;
     this.description = description;
+    this.calculationMethod = calculationMethod;
     this.isActive = isActive;
-    this.isTaxable = isTaxable;
     this.liableForEpf = liableForEpf;
     this.liableForEtf = liableForEtf;
     this.liableForPaye = liableForPaye;

@@ -8,12 +8,14 @@
 .panel-header {
   display: flex;
   align-items: center;
+  gap: 12px;
 }
 
 .panel-heading {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
 
   mat-icon {
     font-size: 18px;
@@ -29,6 +31,24 @@
   color: #475569;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+// ── Read-only notice ──────────────────────────────────────────
+.readonly-notice {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #94a3b8;
+  cursor: default;
+  white-space: nowrap;
+}
+
+.lock-icon {
+  font-size: 14px !important;
+  width: 14px !important;
+  height: 14px !important;
 }
 
 .empty-note {
@@ -70,7 +90,6 @@ table {
 
     &:last-child { border-bottom: none; }
     &:hover { background: #f8fafc; }
-    &.editing-row { background: #fff7ed; }
   }
 
   td {
@@ -102,27 +121,37 @@ table {
   color: #ef4444;
 }
 
-.action-col {
-  text-align: right;
+.source-col {
   white-space: nowrap;
-  width: 88px;
-  padding-left: 4px;
-  padding-right: 4px;
+  width: 110px;
 }
 
-// ── Edit input ────────────────────────────────────────────────
-.amount-field {
-  width: 150px;
+// ── Source badges ─────────────────────────────────────────────
+.source-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: default;
 
-  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
-    margin-top: 2px;
+  mat-icon {
+    font-size: 13px !important;
+    width: 13px !important;
+    height: 13px !important;
   }
 }
 
-// ── Buttons ───────────────────────────────────────────────────
-.btn-edit {
-  color: #f59e0b !important;
-  &:disabled { opacity: 0.35 !important; }
+.source-formula {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.source-fixed {
+  background: #f0fdf4;
+  color: #16a34a;
 }
 
 // ── Table footer total ────────────────────────────────────────
@@ -153,5 +182,5 @@ tfoot .total-row {
   table td { padding: 7px 8px; }
 
   .code-cell { display: none; }
-  .amount-field { width: 110px; }
+  .source-col { display: none; }
 }

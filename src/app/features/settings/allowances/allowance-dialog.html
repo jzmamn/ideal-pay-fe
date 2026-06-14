@@ -37,7 +37,6 @@
     <mat-divider />
 
     <div class="checkbox-group">
-      <mat-checkbox formControlName="isTaxable">Taxable</mat-checkbox>
       <mat-checkbox formControlName="liableForEpf">Liable for EPF</mat-checkbox>
       <mat-checkbox formControlName="liableForEtf">Liable for ETF</mat-checkbox>
       <mat-checkbox formControlName="liableForPaye">Liable for PAYE</mat-checkbox>
@@ -47,21 +46,6 @@
   </form>
 
   @if (isFixed) {
-    <!-- Amount field — only relevant when formula is not active -->
-    @if (!formulaIsActive()) {
-      <form [formGroup]="allowanceForm" class="form-grid">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Fixed Amount</mat-label>
-          <input matInput type="number" min="0" step="0.01" formControlName="amount"
-                 placeholder="Leave blank to require per-employee manual entry">
-          <mat-hint>Company-wide default amount applied to all employees at load time. Leave blank to enter per-employee amounts manually in the batch screen.</mat-hint>
-          @if (allowanceForm.get('amount')?.hasError('min')) {
-            <mat-error>Amount must be zero or greater</mat-error>
-          }
-        </mat-form-field>
-      </form>
-    }
-
     <app-formula-definition-form
       #formulaForm
       [initialExpression]="formulaExpression()"

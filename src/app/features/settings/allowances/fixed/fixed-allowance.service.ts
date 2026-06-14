@@ -19,13 +19,10 @@ interface ApiFixedAllowance {
   name: string;
   description: string | null;
   isActive: boolean;
-  isTaxable: boolean;
   liableForEpf: boolean;
   liableForEtf: boolean;
   liableForPaye: boolean;
   liableNoPay: boolean;
-  /** Static fixed amount; null when formula is used or no default configured. */
-  amount: number | null;
   formula: string | null;
   formulaEnabled: boolean;
   createdBy: number;
@@ -37,9 +34,9 @@ interface ApiFixedAllowance {
 }
 
 type ApiFixedAllowancePayload = Pick<ApiFixedAllowance,
-  'name' | 'description' | 'isActive' | 'isTaxable' |
+  'name' | 'description' | 'isActive' |
   'liableForEpf' | 'liableForEtf' | 'liableForPaye' | 'liableNoPay' |
-  'amount' | 'formula' | 'formulaEnabled' | 'createdBy' | 'modifiedBy'
+  'formula' | 'formulaEnabled' | 'createdBy' | 'modifiedBy'
 >;
 
 @Injectable({ providedIn: 'root' })
@@ -64,12 +61,10 @@ export class FixedAllowanceService {
       name:           data.name,
       description:    data.description,
       isActive:       data.isActive,
-      isTaxable:      data.isTaxable,
       liableForEpf:   data.liableForEpf,
       liableForEtf:   data.liableForEtf,
       liableForPaye:  data.liableForPaye,
       liableNoPay:    data.liableNoPay,
-      amount:         data.formulaEnabled ? null : (data.amount ?? null),
       formula:        data.formulaEnabled ? (data.formula ?? null) : null,
       formulaEnabled: data.formulaEnabled,
       createdBy:      1,
@@ -85,12 +80,10 @@ export class FixedAllowanceService {
       name:           data.name,
       description:    data.description,
       isActive:       data.isActive,
-      isTaxable:      data.isTaxable,
       liableForEpf:   data.liableForEpf,
       liableForEtf:   data.liableForEtf,
       liableForPaye:  data.liableForPaye,
       liableNoPay:    data.liableNoPay,
-      amount:         data.formulaEnabled ? null : (data.amount ?? null),
       formula:        data.formulaEnabled ? (data.formula ?? null) : null,
       formulaEnabled: data.formulaEnabled,
       createdBy:      1,
@@ -110,13 +103,11 @@ export class FixedAllowanceService {
       item.name,
       item.description,
       item.isActive,
-      item.isTaxable,
       item.liableForEpf,
       item.liableForEtf,
       item.liableForPaye,
       item.liableNoPay,
       AllowanceType.FIXED,
-      item.amount ?? null,
       item.formula ?? undefined,
       item.formulaEnabled,
     );

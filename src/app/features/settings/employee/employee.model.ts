@@ -16,6 +16,7 @@ export interface EmployeeRequest {
   nopayDaysId: number;
   jobCategoryId: number;
   designationId: number;
+  departmentId?: number;
   branchId: number;
   gradeId: number;
   bankId?: number;
@@ -71,6 +72,10 @@ export interface EmployeeResponse {
   designationId: number;
   designationCode: string;
   designationName: string;
+
+  departmentId?: number;
+  departmentCode?: string;
+  departmentName?: string;
 
   branchId: number;
   branchCode: string;

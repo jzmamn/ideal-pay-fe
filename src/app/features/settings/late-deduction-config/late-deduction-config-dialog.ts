@@ -48,7 +48,11 @@ export class LateDeductionConfigDialog {
                           [Validators.required, Validators.min(1), Validators.max(31)]],
     workingHoursPerDay: [this.row?.workingHoursPerDay  ?? 8,
                           [Validators.required, Validators.min(1), Validators.max(24)]],
-    isActive:           [this.row?.isActive ?? true],
+    isActive:           [this.row?.isActive    ?? true],
+    liableForEpf:       [this.row?.liableForEpf   ?? true],
+    liableForEtf:       [this.row?.liableForEtf   ?? true],
+    liableForPaye:      [this.row?.liableForPaye  ?? true],
+    liableForNopay:     [this.row?.liableForNopay ?? false],
   });
 
   // ── Formula panel ─────────────────────────────────────────────────────────
@@ -86,6 +90,10 @@ export class LateDeductionConfigDialog {
       isActive:           v.isActive!,
       formula:            fv.expression || undefined,
       formulaEnabled:     fv.isActive,
+      liableForEpf:       v.liableForEpf  ?? true,
+      liableForEtf:       v.liableForEtf  ?? true,
+      liableForPaye:      v.liableForPaye ?? true,
+      liableForNopay:     v.liableForNopay ?? false,
     };
     const req$: Observable<unknown> = this.isEdit
       ? this.configSvc.update(this.row!.id, dto)

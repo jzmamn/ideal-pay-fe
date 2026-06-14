@@ -24,7 +24,12 @@ export interface EmployeeFixedDeductionResponse {
   fdId: number;
   fdCode: string;
   fdName: string;
-  formulaEnabled: boolean;
+  /**
+   * True when the stored amount was produced by evaluating the deduction formula at load time.
+   * Formula-calculated records cannot be edited manually. Changes require updating the
+   * deduction definition and re-running the load.
+   */
+  formulaCalculated: boolean;
 
   createdById: number;
   createdByCode: string;

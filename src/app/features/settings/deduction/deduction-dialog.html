@@ -36,6 +36,7 @@
 
     <mat-divider />
 
+    <!-- Liability flags -->
     <div class="checkbox-group">
       <mat-checkbox formControlName="liableForEpf">Liable for EPF</mat-checkbox>
       <mat-checkbox formControlName="liableForEtf">Liable for ETF</mat-checkbox>
@@ -49,7 +50,7 @@
     <app-formula-definition-form
       #formulaForm
       [initialExpression]="formulaExpression()"
-      [initialIsActive]="formulaIsActive()"
+      [showActiveToggle]="false"
       [saving]="formulaSaving()"
       [saveError]="formulaSaveError()"
       (valueChanged)="onFormulaValueChanged($event)"

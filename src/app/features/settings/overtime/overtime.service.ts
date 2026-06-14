@@ -14,15 +14,29 @@ interface ApiOvertime {
   isActive: boolean;
   formula: string | null;
   formulaEnabled: boolean;
+  liableForEpf: boolean;
+  liableForEtf: boolean;
+  liableForPaye: boolean;
+  liableForNopay: boolean;
   createdBy: number;
   modifiedBy: number;
   createdAt: string | null;
   updatedAt: string | null;
 }
 
-type ApiOvertimePayload = Pick<ApiOvertime,
-  'name' | 'description' | 'isActive' | 'formula' | 'formulaEnabled' | 'createdBy' | 'modifiedBy'
->;
+interface ApiOvertimePayload {
+  name: string;
+  description: string | null;
+  isActive: boolean;
+  formula: string | null;
+  formulaEnabled: boolean;
+  liableForEpf: boolean;
+  liableForEtf: boolean;
+  liableForPaye: boolean;
+  liableForNopay: boolean;
+  createdBy: number;
+  modifiedBy: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class OvertimeService {
@@ -42,35 +56,34 @@ export class OvertimeService {
   }
 
   create(data: Omit<OvertimeModel, 'id' | 'code'>): Observable<OvertimeModel> {
-    const payload: ApiOvertimePayload = {
-      name:           data.name,
-      description:    data.description ?? null,
-      isActive:       data.isActive,
-      formula:        data.formula ?? null,
-      formulaEnabled: data.formulaEnabled ?? false,
-      createdBy:      1,
-      modifiedBy:     1,
-    };
+    const payload: ApiOvertimePayload = this.toPayload(data);
     return this.http.post<ApiResponse<ApiOvertime>>(this.baseUrl, payload).pipe(
       map(res => this.toModel(res.data)),
     );
   }
 
   update(id: number, data: Omit<OvertimeModel, 'id' | 'code'>): Observable<void> {
-    const payload: ApiOvertimePayload = {
+    return this.http.put<void>(`${this.baseUrl}/${id}`, this.toPayload(data));
+  }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
+  private toPayload(data: Omit<OvertimeModel, 'id' | 'code'>): ApiOvertimePayload {
+    return {
       name:           data.name,
       description:    data.description ?? null,
       isActive:       data.isActive,
       formula:        data.formula ?? null,
       formulaEnabled: data.formulaEnabled ?? false,
+      liableForEpf:   data.liableForEpf  ?? true,
+      liableForEtf:   data.liableForEtf  ?? true,
+      liableForPaye:  data.liableForPaye  ?? true,
+      liableForNopay: data.liableForNopay ?? false,
       createdBy:      1,
       modifiedBy:     1,
     };
-    return this.http.put<void>(`${this.baseUrl}/${id}`, payload);
-  }
-
-  delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
   private toModel(item: ApiOvertime): OvertimeModel {
@@ -82,6 +95,10 @@ export class OvertimeService {
       item.isActive,
       item.formula ?? undefined,
       item.formulaEnabled ?? false,
+      item.liableForEpf  ?? true,
+      item.liableForEtf  ?? true,
+      item.liableForPaye  ?? true,
+      item.liableForNopay ?? false,
     );
   }
 }

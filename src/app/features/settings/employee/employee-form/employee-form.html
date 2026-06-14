@@ -182,6 +182,11 @@
               [options]="masterSvc.activeDesignations()" />
 
             <app-searchable-dropdown
+              formControlName="departmentId"
+              label="Department"
+              [options]="masterSvc.activeDepartments()" />
+
+            <app-searchable-dropdown
               formControlName="bankId"
               label="Bank"
               [options]="masterSvc.activeBanks()" />

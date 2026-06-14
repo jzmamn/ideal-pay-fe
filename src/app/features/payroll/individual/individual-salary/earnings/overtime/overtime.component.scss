@@ -63,16 +63,17 @@ table {
   white-space: nowrap;
 }
 
-.amount-col { text-align: right; }
-.amount-cell { text-align: right; white-space: nowrap; }
+/* Numeric columns: rate, hours, amount */
+.num-col  { text-align: right; }
+.num-cell { text-align: right; white-space: nowrap; }
 
-.amount-value { font-weight: 600; color: #3b82f6; }
-.outstanding-value { font-weight: 500; color: #64748b; }
+.amount-value   { font-weight: 600; color: #3b82f6; }
+.readonly-value { color: #64748b; cursor: help; }
 
 .action-col { text-align: right; white-space: nowrap; width: 88px; padding-left: 4px; padding-right: 4px; }
 
-.amount-field {
-  width: 150px;
+.hours-field {
+  width: 110px;
   ::ng-deep .mat-mdc-form-field-subscript-wrapper { margin-top: 2px; }
 }
 
@@ -90,5 +91,5 @@ tfoot .total-row {
 @media (max-width: 600px) {
   table th, table td { padding: 7px 8px; }
   .code-cell { display: none; }
-  .amount-field { width: 110px; }
+  .hours-field { width: 90px; }
 }

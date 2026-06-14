@@ -162,9 +162,9 @@ export interface EmployeeOvertimeResponse {
 
 export interface EmployeeLateResponse {
   id: number;
+  /** Rate per hour — set by load phase from formula; null until load phase runs. */
+  rate: number | null;
   hours: number;
-  /** Server-stored rate (basicSalary / (workingDays * hoursPerDay)). Read-only; set by load. */
-  rate?: number;
   amount: number;
   payrollMonth: string;
   isProcessed: boolean;
@@ -172,13 +172,19 @@ export interface EmployeeLateResponse {
   empId: number;
   empCode: string;
   empName: string;
+  /** The LateDeductionConfig that produced this rate. */
+  lateConfigId:   number | null;
+  lateConfigCode: string | null;
+  lateConfigName: string | null;
 }
 
 export interface EmployeeLateRequest {
   id?: number;
   empId: number;
+  lateConfigId?: number;
   hours: number;
-  amount: number;
+  /** Amount is recalculated server-side as rate × hours — this field is ignored by the server. */
+  amount?: number;
   payrollMonth?: string;
   isProcessed?: boolean;
   createdBy: number;

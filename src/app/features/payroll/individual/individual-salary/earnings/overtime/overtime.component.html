@@ -2,64 +2,86 @@
 
   <div class="panel-header">
     <div class="panel-heading">
-      <mat-icon aria-hidden="true">schedule</mat-icon>
+      <mat-icon aria-hidden="true">more_time</mat-icon>
       <span id="overtime-heading" class="panel-title">Overtime</span>
     </div>
     <app-export-button entity="EMP_OT" [payrollMonth]="payrollMonth()" />
   </div>
 
-  @if (items().length > 0) {
+  @if (records().length > 0) {
     <div class="table-wrapper">
-      <table aria-label="Overtime">
+      <table aria-label="Overtime earnings">
         <thead>
           <tr>
             <th scope="col">Code</th>
-            <th scope="col">Employee</th>
-            <th scope="col" class="amount-col">OT Amount</th>
+            <th scope="col">OT Type</th>
+            <th scope="col" class="num-col">Rate / Hr</th>
+            <th scope="col" class="num-col">Hours</th>
+            <th scope="col" class="num-col">OT Amount</th>
             <th scope="col" class="action-col"></th>
           </tr>
         </thead>
         <tbody>
-          @for (item of items(); track item.id; let i = $index) {
+          @for (rec of records(); track rec.id; let i = $index) {
             <tr [class.editing-row]="editingIndex() === i">
-              <td class="code-cell">{{ item.code }}</td>
-              <td>{{ item.name }}</td>
-              <td class="amount-cell">
+              <td class="code-cell">{{ rec.overtimeCode }}</td>
+              <td>{{ rec.overtimeName }}</td>
+
+              <!-- Rate — always read-only; formula-derived at load phase -->
+              <td class="num-cell">
+                <span class="readonly-value"
+                      matTooltip="Calculated from formula — cannot be edited"
+                      matTooltipPosition="above">
+                  {{ rec.rate | number:'1.2-6' }}
+                </span>
+              </td>
+
+              <!-- Hours — editable -->
+              <td class="num-cell">
                 @if (editingIndex() === i) {
-                  <mat-form-field appearance="outline" class="amount-field">
-                    <input matInput type="number" min="0"
-                           [formControl]="editAmountCtrl"
-                           [attr.aria-label]="'Edit OT amount for ' + item.name">
-                    @if (editAmountCtrl.hasError('required') && editAmountCtrl.touched) {
-                      <mat-error>Amount is required</mat-error>
+                  <mat-form-field appearance="outline" class="hours-field">
+                    <input matInput type="number" min="0" step="0.5"
+                           [formControl]="editHoursCtrl"
+                           [attr.aria-label]="'OT hours for ' + rec.overtimeName">
+                    @if (editHoursCtrl.hasError('required') && editHoursCtrl.touched) {
+                      <mat-error>Required</mat-error>
                     }
-                    @if (editAmountCtrl.hasError('min') && editAmountCtrl.touched) {
+                    @if (editHoursCtrl.hasError('min') && editHoursCtrl.touched) {
                       <mat-error>Cannot be negative</mat-error>
                     }
                   </mat-form-field>
                 } @else {
-                  <span class="amount-value">{{ item.amount | number:'1.2-2' }}</span>
+                  <span class="amount-value">{{ rec.hours | number:'1.2-2' }}</span>
                 }
               </td>
+
+              <!-- Amount — always read-only; rate × hours -->
+              <td class="num-cell">
+                <span class="amount-value">{{ rec.amount | number:'1.2-2' }}</span>
+              </td>
+
               <td class="action-col">
                 @if (editingIndex() === i) {
                   <button mat-icon-button type="button" color="primary"
                           (click)="saveEdit(i)"
-                          [attr.aria-label]="'Save OT amount for ' + item.name"
+                          [disabled]="saving()"
+                          [attr.aria-label]="'Save hours for ' + rec.overtimeName"
                           matTooltip="Save">
                     <mat-icon>check</mat-icon>
                   </button>
                   <button mat-icon-button type="button"
                           (click)="cancelEdit()"
+                          [disabled]="saving()"
+                          [attr.aria-label]="'Cancel editing ' + rec.overtimeName"
                           matTooltip="Cancel">
                     <mat-icon>close</mat-icon>
                   </button>
                 } @else {
                   <button mat-icon-button type="button" class="btn-edit"
-                          [disabled]="editingIndex() !== null"
+                          [disabled]="editingIndex() !== null || rec.isProcessed"
                           (click)="startEdit(i)"
-                          [attr.aria-label]="'Edit OT amount for ' + item.name"
-                          matTooltip="Edit amount">
+                          [attr.aria-label]="'Edit hours for ' + rec.overtimeName"
+                          [matTooltip]="rec.isProcessed ? 'Payroll locked' : 'Edit hours'">
                     <mat-icon>edit</mat-icon>
                   </button>
                 }
@@ -69,7 +91,7 @@
         </tbody>
         <tfoot aria-live="polite" aria-atomic="true">
           <tr class="total-row">
-            <td colspan="2" class="total-label">Total Overtime</td>
+            <td colspan="4" class="total-label">Total Overtime</td>
             <td class="total-amount">{{ total() | number:'1.2-2' }}</td>
             <td></td>
           </tr>
@@ -77,7 +99,10 @@
       </table>
     </div>
   } @else {
-    <p class="empty-note">No employees found.</p>
+    <p class="empty-note">
+      No overtime records found for this employee and period.<br>
+      Run the payroll load to generate overtime entries.
+    </p>
   }
 
 </section>

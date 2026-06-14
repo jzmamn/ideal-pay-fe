@@ -41,7 +41,7 @@ export class Deduction implements OnInit {
       { key: 'name',           label: 'Name' },
       ...(this.deductionType() === DeductionType.FIXED
         ? [
-            { key: 'formulaEnabled' as const, label: 'Formula', type: 'icon' as const, icon: 'functions', iconTooltip: 'Formula enabled', sortable: false },
+            { key: 'formula' as const, label: 'Formula', type: 'icon' as const, icon: 'functions', iconTooltip: 'Formula configured', sortable: false },
           ]
         : []),
       { key: 'isActive',       label: 'Active',         type: 'boolean' as const },
@@ -110,13 +110,13 @@ export class Deduction implements OnInit {
         break;
       case 'update':
         service.update(result.data.id, result.data).subscribe(() => {
+          const d = result.data;
           const updated = new DeductionModel(
-            result.data.id, result.data.code, result.data.name,
-            result.data.description, result.data.isActive, type,
-            result.data.liableForEpf, result.data.liableForEtf, result.data.liableForPaye,
-            result.data.liableNoPay, result.data.formula, result.data.formulaEnabled,
+            d.id, d.code, d.name, d.description, d.isActive, type,
+            d.liableForEpf, d.liableForEtf, d.liableForPaye, d.liableNoPay,
+            d.formula,
           );
-          this.allDeductions.update(list => list.map(d => d.id === updated.id ? updated : d));
+          this.allDeductions.update(list => list.map(x => x.id === updated.id ? updated : x));
         });
         break;
       case 'delete':

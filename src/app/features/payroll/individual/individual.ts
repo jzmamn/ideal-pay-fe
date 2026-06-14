@@ -289,8 +289,9 @@ export class IndividualComponent implements OnInit {
           } else {
             // Seed a blank row so the UI always has one editable row
             this.lates.set([{
-              id: 0, hours: 0, amount: 0, payrollMonth,
+              id: 0, rate: null, hours: 0, amount: 0, payrollMonth,
               isProcessed: false, empId, empCode: '', empName: '',
+              lateConfigId: null, lateConfigCode: null, lateConfigName: null,
             }]);
           }
         },

@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { API_BASE_URL } from '../../../api-url.token';
 import { ApiResponse } from '../../../shared/models/api-response.model';
-import { BonusModel } from './bonus.model';
+import { BonusCalculationMethod, BonusModel } from './bonus.model';
 
 // ── API shapes ────────────────────────────────────────────────────────────────
 
@@ -13,8 +13,8 @@ interface ApiBonusResponse {
   code: string;
   name: string;
   description: string | null;
+  calculationMethod: BonusCalculationMethod;
   isActive: boolean;
-  isTaxable: boolean;
   liableForEpf: boolean;
   liableForEtf: boolean;
   liableForPaye: boolean;
@@ -32,7 +32,7 @@ interface ApiBonusResponse {
 }
 
 type ApiBonusPayload = Pick<ApiBonusResponse,
-  'name' | 'description' | 'isActive' | 'isTaxable' |
+  'name' | 'description' | 'calculationMethod' | 'isActive' |
   'liableForEpf' | 'liableForEtf' | 'liableForPaye' | 'liableNoPay' |
   'formula' | 'formulaEnabled'
 > & { createdBy: number; modifiedBy: number };
@@ -97,8 +97,8 @@ export class BonusService {
       item.code,
       item.name,
       item.description,
+      item.calculationMethod,
       item.isActive,
-      item.isTaxable,
       item.liableForEpf,
       item.liableForEtf,
       item.liableForPaye,
@@ -112,8 +112,8 @@ export class BonusService {
     return {
       name:           data.name!,
       description:    data.description ?? null,
+      calculationMethod: data.calculationMethod!,
       isActive:       data.isActive!,
-      isTaxable:      data.isTaxable!,
       liableForEpf:   data.liableForEpf!,
       liableForEtf:   data.liableForEtf!,
       liableForPaye:  data.liableForPaye!,

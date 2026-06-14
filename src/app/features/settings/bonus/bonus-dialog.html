@@ -31,12 +31,19 @@
       <textarea matInput formControlName="description" rows="3" cdkTextareaAutosize aria-label="Bonus description"></textarea>
     </mat-form-field>
 
+    <mat-form-field appearance="outline">
+      <mat-label>Calculation Method</mat-label>
+      <mat-select formControlName="calculationMethod">
+        <mat-option value="FIXED_AMOUNT">Fixed Amount</mat-option>
+        <mat-option value="FORMULA_BASED">Formula Based</mat-option>
+      </mat-select>
+    </mat-form-field>
+
     <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
 
     <mat-divider />
 
     <div class="checkbox-group">
-      <mat-checkbox formControlName="isTaxable">Taxable</mat-checkbox>
       <mat-checkbox formControlName="liableForEpf">Liable for EPF</mat-checkbox>
       <mat-checkbox formControlName="liableForEtf">Liable for ETF</mat-checkbox>
       <mat-checkbox formControlName="liableForPaye">Liable for PAYE</mat-checkbox>
@@ -45,6 +52,7 @@
 
   </form>
 
+  @if (bonusForm.controls.calculationMethod.value === 'FORMULA_BASED') {
   <app-formula-definition-form
     #formulaForm
     [initialExpression]="formulaExpression()"
@@ -59,6 +67,7 @@
       <mat-icon>save</mat-icon> Save Formula
     </button>
   </div>
+  }
 </mat-dialog-content>
 
 <mat-dialog-actions>

@@ -40,11 +40,16 @@ export class OvertimeDialog {
   private readonly overtimeSvc = inject(OvertimeService);
 
   readonly overtimeForm = this.fb.group({
-    id:          [{ value: this.row?.id ?? null, disabled: true }],
-    code:        [{ value: this.row?.code ?? '', disabled: true }],
-    name:        [this.row?.name        ?? '', Validators.required],
-    description: [this.row?.description ?? null as string | null],
-    isActive:    [this.row?.isActive    ?? true],
+    id:            [{ value: this.row?.id ?? null, disabled: true }],
+    code:          [{ value: this.row?.code ?? '', disabled: true }],
+    name:          [this.row?.name        ?? '', Validators.required],
+    description:   [this.row?.description ?? null as string | null],
+    isActive:      [this.row?.isActive    ?? true],
+    // Statutory liability toggles
+    liableForEpf:   [this.row?.liableForEpf   ?? true],
+    liableForEtf:   [this.row?.liableForEtf   ?? true],
+    liableForPaye:  [this.row?.liableForPaye  ?? true],
+    liableForNopay: [this.row?.liableForNopay ?? false],
   });
 
   // ── Formula panel state ───────────────────────────────────────────────────
@@ -78,6 +83,10 @@ export class OvertimeDialog {
       isActive:       v.isActive!,
       formula:        fv.expression || undefined,
       formulaEnabled: fv.isActive,
+      liableForEpf:   v.liableForEpf   ?? true,
+      liableForEtf:   v.liableForEtf   ?? true,
+      liableForPaye:  v.liableForPaye  ?? true,
+      liableForNopay: v.liableForNopay ?? false,
     };
     const req$: Observable<unknown> = this.isEdit
       ? this.overtimeSvc.update(this.row!.id, dto)

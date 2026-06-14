@@ -35,6 +35,31 @@
 
   <mat-divider />
 
+  <!-- Statutory liability settings -->
+  <form [formGroup]="overtimeForm" class="liability-section">
+    <p class="liability-label">Statutory Liabilities</p>
+    <div class="liability-toggles">
+      <mat-slide-toggle formControlName="liableForEpf"
+                        aria-label="Liable for EPF">
+        EPF
+      </mat-slide-toggle>
+      <mat-slide-toggle formControlName="liableForEtf"
+                        aria-label="Liable for ETF">
+        ETF
+      </mat-slide-toggle>
+      <mat-slide-toggle formControlName="liableForPaye"
+                        aria-label="Liable for PAYE">
+        PAYE
+      </mat-slide-toggle>
+      <mat-slide-toggle formControlName="liableForNopay"
+                        aria-label="Reduce for No Pay">
+        No Pay Reduction
+      </mat-slide-toggle>
+    </div>
+  </form>
+
+  <mat-divider />
+
   <app-formula-definition-form
     #formulaForm
     [initialExpression]="formulaExpression()"

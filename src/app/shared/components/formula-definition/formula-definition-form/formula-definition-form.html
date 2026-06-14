@@ -2,9 +2,11 @@
   <!-- ── Form ──────────────────────────────────────────────────────────────── -->
   <form [formGroup]="form" class="form-body">
 
-    <div class="toggle-row">
-      <mat-slide-toggle formControlName="isActive">Active formula</mat-slide-toggle>
-    </div>
+    @if (showActiveToggle()) {
+      <div class="toggle-row">
+        <mat-slide-toggle formControlName="isActive">Active formula</mat-slide-toggle>
+      </div>
+    }
 
     <!-- Expression -->
     <div class="section-header">

@@ -8,4 +8,8 @@ export interface LateDeductionConfigModel {
   isActive:           boolean;
   formula:            string | undefined;
   formulaEnabled:     boolean;
+  liableForEpf:       boolean;
+  liableForEtf:       boolean;
+  liableForPaye:      boolean;
+  liableForNopay:     boolean;
 }

@@ -240,6 +240,13 @@ export class EmployeeProfileService {
       .pipe(map(r => r.data));
   }
 
+  /** Returns all EmployeeLate records for every employee in a payroll month. */
+  getLatesByPeriod(payrollMonth: string): Observable<EmployeeLateResponse[]> {
+    return this.http.get<ApiResponse<EmployeeLateResponse[]>>(
+      `${this.base}/emp-late/period/${payrollMonth}`)
+      .pipe(map(r => r.data));
+  }
+
   saveLate(payload: EmployeeLateRequest): Observable<EmployeeLateResponse> {
     if (payload.id && payload.id > 0) {
       return this.http.put<ApiResponse<EmployeeLateResponse>>(`${this.base}/emp-late/${payload.id}`, payload)

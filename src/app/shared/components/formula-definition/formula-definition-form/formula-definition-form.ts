@@ -47,6 +47,7 @@ export class FormulaDefinitionForm {
   // ── Inputs ────────────────────────────────────────────────────────────────
   readonly initialExpression = input('');
   readonly initialIsActive   = input(true);
+  readonly showActiveToggle  = input(true);
   readonly saving            = input(false);
   readonly saveError         = input<string | null>(null);
 

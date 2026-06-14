@@ -12,7 +12,6 @@ export class DeductionModel {
   liableForPaye: boolean;
   liableNoPay: boolean;
   formula: string | undefined;
-  formulaEnabled: boolean;
 
   constructor(
     id: number,
@@ -26,7 +25,6 @@ export class DeductionModel {
     liableForPaye = false,
     liableNoPay = false,
     formula: string | undefined = undefined,
-    formulaEnabled = false,
   ) {
     this.id = id;
     this.code = code;
@@ -39,6 +37,5 @@ export class DeductionModel {
     this.liableForPaye = liableForPaye;
     this.liableNoPay = liableNoPay;
     this.formula = formula;
-    this.formulaEnabled = formulaEnabled;
   }
 }
