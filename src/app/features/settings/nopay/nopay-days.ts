@@ -45,7 +45,8 @@ export class NopayDays {
   openDialog(item?: NoPayDays): void {
     this.dialog.open(NopayDaysDialog, {
       panelClass: 'square-dialog',
-      width: '700px',
+      width: '900px',
+      maxWidth: '96vw',
       data: item ?? null,
     });
   }

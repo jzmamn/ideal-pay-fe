@@ -19,6 +19,7 @@ export interface EmployeeRequest {
   departmentId?: number;
   branchId: number;
   gradeId: number;
+  gradeIsActive?: boolean;
   bankId?: number;
   bankBranchId?: number;
   accountNo?: string;
@@ -84,6 +85,7 @@ export interface EmployeeResponse {
   gradeId: number;
   gradeCode: string;
   gradeName: string;
+  gradeIsActive?: boolean;
 
   bankId?: number;
   bankCode?: string;

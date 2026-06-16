@@ -17,7 +17,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime } from 'rxjs/operators';
@@ -36,7 +35,6 @@ type LocalEvalResult = { result?: number; userFriendlyError?: string; technicalE
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
     MatSlideToggleModule,
     MatTooltipModule,
   ],
@@ -62,7 +60,6 @@ export class FormulaDefinitionForm {
   readonly expressionTextareaRef = viewChild<ElementRef<HTMLTextAreaElement>>('expressionTextarea');
 
   // ── State ─────────────────────────────────────────────────────────────────
-  readonly insertFieldValue    = signal<string | null>(null);
   readonly localEvalResult     = signal<LocalEvalResult | null>(null);
   readonly showLocalTechDetail = signal(false);
 
@@ -109,7 +106,7 @@ export class FormulaDefinitionForm {
     this.saveRequested.emit({ expression: v.expression, isActive: v.isActive });
   }
 
-  onInsertSelect(value: string): void {
+  insertField(value: string): void {
     const el      = this.expressionTextareaRef()?.nativeElement;
     const ctrl    = this.form.controls.expression;
     const current = ctrl.value ?? '';
@@ -137,8 +134,6 @@ export class FormulaDefinitionForm {
     } else {
       ctrl.setValue(current + value);
     }
-
-    setTimeout(() => this.insertFieldValue.set(null));
   }
 
   copyToTestExpression(): void {

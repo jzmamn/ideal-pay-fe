@@ -105,7 +105,7 @@ export class BonusManagement implements OnInit {
     return this.bonusTypes().find(b => b.id === id) ?? null;
   });
 
-  readonly isFormulaBonus = computed(() => this.selectedBonus()?.formulaEnabled ?? false);
+  readonly isFormulaBonus = computed(() => !!this.selectedBonus()?.formula);
 
   // ── Processing state ───────────────────────────────────────────────────────
   readonly step         = signal<Step>('setup');

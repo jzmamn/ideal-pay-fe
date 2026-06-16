@@ -53,14 +53,13 @@ export class OvertimeDialog {
   });
 
   // ── Formula panel state ───────────────────────────────────────────────────
-  readonly formulaExpression = signal(this.row?.formula        ?? '');
-  readonly formulaIsActive   = signal(this.row?.formulaEnabled ?? false);
+  readonly formulaExpression = signal(this.row?.formula ?? '');
   readonly formulaSaving     = signal(false);
   readonly formulaSaveError  = signal<string | null>(null);
 
   private readonly latestFormula = signal<FormulaDefinitionFormValue>({
-    expression: this.row?.formula        ?? '',
-    isActive:   this.row?.formulaEnabled ?? false,
+    expression: this.row?.formula ?? '',
+    isActive:   true,
   });
 
   onFormulaValueChanged(value: FormulaDefinitionFormValue): void {
@@ -70,7 +69,6 @@ export class OvertimeDialog {
   onFormulaSaveRequested(value: FormulaDefinitionFormValue): void {
     this.latestFormula.set(value);
     this.formulaExpression.set(value.expression);
-    this.formulaIsActive.set(value.isActive);
   }
 
   save(): void {
@@ -82,7 +80,6 @@ export class OvertimeDialog {
       description:    v.description ?? undefined,
       isActive:       v.isActive!,
       formula:        fv.expression || undefined,
-      formulaEnabled: fv.isActive,
       liableForEpf:   v.liableForEpf   ?? true,
       liableForEtf:   v.liableForEtf   ?? true,
       liableForPaye:  v.liableForPaye  ?? true,

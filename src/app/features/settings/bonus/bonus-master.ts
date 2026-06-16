@@ -30,7 +30,7 @@ export class BonusMaster implements OnInit {
       { key: 'code',           label: 'Code' },
       { key: 'name',           label: 'Name' },
       { key: 'calculationMethod', label: 'Calculation Method' },
-      { key: 'formulaEnabled', label: 'Formula',         type: 'icon', icon: 'functions', iconTooltip: 'Formula enabled', sortable: false },
+      { key: 'formula',        label: 'Formula',         type: 'icon', icon: 'functions', iconTooltip: 'Formula configured', sortable: false },
       { key: 'isActive',       label: 'Active',          type: 'boolean' },
       { key: 'liableForEpf',   label: 'Liable for EPF',  type: 'boolean' },
       { key: 'liableForEtf',   label: 'Liable for ETF',  type: 'boolean' },
@@ -63,7 +63,8 @@ export class BonusMaster implements OnInit {
   private openDialog(row: BonusModel | null): void {
     const dialogRef = this.dialog.open(BonusDialog, {
       panelClass: 'square-dialog',
-      width: '600px',
+      width: '900px',
+      maxWidth: '96vw',
       data: { row },
     });
 

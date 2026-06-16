@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { API_BASE_URL } from '../../../api-url.token';
 import { ApiResponse } from '../../../shared/models/api-response.model';
 import { Company } from '../../../shared/models/master-data.models';
+import { AuthService } from '../../../services/auth.service';
 
 interface ApiCompany {
   id: number;
@@ -30,12 +31,14 @@ interface ApiCompany {
 
 type ApiCompanyPayload = Pick<ApiCompany,
   'code' | 'name' | 'contactPerson' | 'addressLine1' | 'addressLine2' | 'city' |
-  'addressEmail' | 'telephone' | 'fax' | 'email' | 'logo' | 'isActive'>;
+  'addressEmail' | 'telephone' | 'fax' | 'email' | 'logo' | 'isActive' |
+  'createdBy' | 'modifiedBy'>;
 
 @Injectable({ providedIn: 'root' })
 export class CompanyService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${inject(API_BASE_URL)}/company`;
+  private readonly authSvc = inject(AuthService);
 
   getAll(): Observable<Company[]> {
     return this.http.get<ApiResponse<ApiCompany[]>>(this.baseUrl).pipe(
@@ -64,6 +67,7 @@ export class CompanyService {
   }
 
   private toPayload(data: Omit<Company, 'id'>): ApiCompanyPayload {
+    const userId = this.authSvc.getCurrentUser()?.userId ?? 0;
     return {
       code:          data.code,
       name:          data.name,
@@ -77,6 +81,8 @@ export class CompanyService {
       email:         data.email ?? null,
       logo:          data.logo ?? null,
       isActive:      data.isActive,
+      createdBy:     userId,
+      modifiedBy:    userId,
     };
   }
 

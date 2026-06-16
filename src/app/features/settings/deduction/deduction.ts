@@ -84,10 +84,12 @@ export class Deduction implements OnInit {
   }
 
   private openDialog(row: DeductionModel | null): void {
+    const deductionType = this.deductionType() ?? DeductionType.FIXED;
     const dialogRef = this.dialog.open(DeductionDialog, {
       panelClass: 'square-dialog',
-      width: '600px',
-      data: { row, deductionType: this.deductionType() ?? DeductionType.FIXED },
+      width: deductionType === DeductionType.FIXED ? '900px' : '600px',
+      maxWidth: '96vw',
+      data: { row, deductionType },
     });
 
     dialogRef.afterClosed().subscribe((result: DeductionDialogResult | undefined) => {

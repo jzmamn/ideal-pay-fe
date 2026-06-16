@@ -15,7 +15,6 @@ interface ApiLateDeductionConfig {
   workingHoursPerDay: number;
   isActive:           boolean;
   formula:            string | null;
-  formulaEnabled:     boolean;
   liableForEpf:       boolean;
   liableForEtf:       boolean;
   liableForPaye:      boolean;
@@ -68,7 +67,6 @@ export class LateDeductionConfigService {
       workingHoursPerDay: item.workingHoursPerDay,
       isActive:           item.isActive,
       formula:            item.formula ?? undefined,
-      formulaEnabled:     item.formulaEnabled ?? false,
       liableForEpf:       item.liableForEpf  ?? true,
       liableForEtf:       item.liableForEtf  ?? true,
       liableForPaye:      item.liableForPaye ?? true,
@@ -84,7 +82,6 @@ export class LateDeductionConfigService {
       workingHoursPerDay: data.workingHoursPerDay,
       isActive:           data.isActive,
       formula:            data.formula ?? null,
-      formulaEnabled:     data.formulaEnabled ?? false,
       liableForEpf:       data.liableForEpf  ?? true,
       liableForEtf:       data.liableForEtf  ?? true,
       liableForPaye:      data.liableForPaye ?? true,

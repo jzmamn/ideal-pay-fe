@@ -12,7 +12,6 @@ export class AllowanceModel {
   liableNoPay: boolean;
   type: AllowanceType;
   formula: string | undefined;
-  formulaEnabled: boolean;
 
   constructor(
     id: number,
@@ -26,7 +25,6 @@ export class AllowanceModel {
     liableNoPay: boolean,
     type = AllowanceType.FIXED,
     formula: string | undefined = undefined,
-    formulaEnabled = false,
   ) {
     this.id = id;
     this.code = code;
@@ -39,6 +37,5 @@ export class AllowanceModel {
     this.liableNoPay = liableNoPay;
     this.type = type;
     this.formula = formula;
-    this.formulaEnabled = formulaEnabled;
   }
 }

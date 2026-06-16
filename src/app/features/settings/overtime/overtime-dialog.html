@@ -11,18 +11,20 @@
 <mat-dialog-content>
   <form [formGroup]="overtimeForm" class="form-grid">
 
-    <mat-form-field appearance="outline">
-      <mat-label>Code</mat-label>
-      <input matInput formControlName="code">
-    </mat-form-field>
+    <div class="form-row-2">
+      <mat-form-field appearance="outline">
+        <mat-label>Code</mat-label>
+        <input matInput formControlName="code" placeholder="Auto-generated">
+      </mat-form-field>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Name</mat-label>
-      <input matInput formControlName="name">
-      @if (overtimeForm.get('name')?.hasError('required')) {
-        <mat-error>Name is required</mat-error>
-      }
-    </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name">
+        @if (overtimeForm.get('name')?.hasError('required')) {
+          <mat-error>Name is required</mat-error>
+        }
+      </mat-form-field>
+    </div>
 
     <mat-form-field appearance="outline">
       <mat-label>Description</mat-label>
@@ -31,31 +33,16 @@
 
     <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
 
-  </form>
+    <mat-divider />
 
-  <mat-divider />
-
-  <!-- Statutory liability settings -->
-  <form [formGroup]="overtimeForm" class="liability-section">
-    <p class="liability-label">Statutory Liabilities</p>
-    <div class="liability-toggles">
-      <mat-slide-toggle formControlName="liableForEpf"
-                        aria-label="Liable for EPF">
-        EPF
-      </mat-slide-toggle>
-      <mat-slide-toggle formControlName="liableForEtf"
-                        aria-label="Liable for ETF">
-        ETF
-      </mat-slide-toggle>
-      <mat-slide-toggle formControlName="liableForPaye"
-                        aria-label="Liable for PAYE">
-        PAYE
-      </mat-slide-toggle>
-      <mat-slide-toggle formControlName="liableForNopay"
-                        aria-label="Reduce for No Pay">
-        No Pay Reduction
-      </mat-slide-toggle>
+    <p class="section-label">Statutory Liabilities</p>
+    <div class="toggles-grid">
+      <mat-slide-toggle formControlName="liableForEpf">Liable for EPF</mat-slide-toggle>
+      <mat-slide-toggle formControlName="liableForEtf">Liable for ETF</mat-slide-toggle>
+      <mat-slide-toggle formControlName="liableForPaye">Liable for PAYE</mat-slide-toggle>
+      <mat-slide-toggle formControlName="liableForNopay">Liable for No Pay</mat-slide-toggle>
     </div>
+
   </form>
 
   <mat-divider />
@@ -63,7 +50,7 @@
   <app-formula-definition-form
     #formulaForm
     [initialExpression]="formulaExpression()"
-    [initialIsActive]="formulaIsActive()"
+    [showActiveToggle]="false"
     [saving]="formulaSaving()"
     [saveError]="formulaSaveError()"
     (valueChanged)="onFormulaValueChanged($event)"

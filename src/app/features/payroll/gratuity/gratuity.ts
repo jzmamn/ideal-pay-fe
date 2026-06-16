@@ -198,7 +198,7 @@ export class GratuityComponent implements OnInit {
     const basic = this.formBasicSalary();
     const years = this.formYears();
 
-    if (cfg?.id && cfg.formulaEnabled && cfg.formula) {
+    if (cfg?.id && cfg.formula) {
       // Use server-side formula evaluation
       this.calculating.set(true);
       this.configSvc.calculate(cfg.id, basic, years)
@@ -284,7 +284,7 @@ export class GratuityComponent implements OnInit {
 
   formulaHint(): string {
     const cfg = this.activeConfig();
-    if (cfg?.formulaEnabled && cfg.formula) return cfg.formula;
+    if (cfg?.formula) return cfg.formula;
     return 'basicSalary / 2 × yearsOfService  (default)';
   }
 

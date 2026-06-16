@@ -41,6 +41,7 @@ export class LookupComponent<T = any> {
   config = input<LookupConfig<T>>();
   appearance = input<'fill' | 'outline'>('outline');
   label = input<string>('Search');
+  disabled = input<boolean>(false);
   selected = output<T>();
 
   row = inject(LookupDataService);
@@ -64,6 +65,7 @@ export class LookupComponent<T = any> {
   readonly dialog = inject(MatDialog);
 
   openDialog(): void {
+    if (this.disabled()) return;
     const cfg = this.config();
     if (!cfg) return;
 

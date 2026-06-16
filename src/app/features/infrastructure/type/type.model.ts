@@ -3,8 +3,6 @@ export interface TypeRequest {
   description: string;
   isActive: boolean;
   endDate: boolean;
-  createdBy: number;
-  modifiedBy: number;
 }
 
 export interface TypeResponse {

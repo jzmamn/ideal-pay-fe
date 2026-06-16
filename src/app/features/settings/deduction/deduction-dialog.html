@@ -11,42 +11,46 @@
 <mat-dialog-content>
   <form [formGroup]="deductionForm" class="form-grid">
 
-    <mat-form-field appearance="outline">
-      <mat-label>Code</mat-label>
-      <input matInput formControlName="code">
-      @if (deductionForm.get('code')?.hasError('required')) {
-        <mat-error>Code is required</mat-error>
-      }
-    </mat-form-field>
+    <div class="form-row-2">
+      <mat-form-field appearance="outline">
+        <mat-label>Code</mat-label>
+        <input matInput formControlName="code" placeholder="Auto-generated">
+        @if (deductionForm.get('code')?.hasError('required')) {
+          <mat-error>Code is required</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name">
+        @if (deductionForm.get('name')?.hasError('required')) {
+          <mat-error>Name is required</mat-error>
+        }
+      </mat-form-field>
+    </div>
 
     <mat-form-field appearance="outline">
-      <mat-label>Name</mat-label>
-      <input matInput formControlName="name">
-      @if (deductionForm.get('name')?.hasError('required')) {
-        <mat-error>Name is required</mat-error>
-      }
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="full-width">
       <mat-label>Description</mat-label>
-      <textarea matInput formControlName="description" rows="3" cdkTextareaAutosize></textarea>
+      <textarea matInput formControlName="description" rows="2" cdkTextareaAutosize></textarea>
     </mat-form-field>
 
     <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
 
     <mat-divider />
 
-    <!-- Liability flags -->
-    <div class="checkbox-group">
-      <mat-checkbox formControlName="liableForEpf">Liable for EPF</mat-checkbox>
-      <mat-checkbox formControlName="liableForEtf">Liable for ETF</mat-checkbox>
-      <mat-checkbox formControlName="liableForPaye">Liable for PAYE</mat-checkbox>
-      <mat-checkbox formControlName="liableNoPay">Liable for No Pay</mat-checkbox>
+    <p class="section-label">Statutory Liabilities</p>
+    <div class="toggles-grid">
+      <mat-slide-toggle formControlName="liableForEpf">Liable for EPF</mat-slide-toggle>
+      <mat-slide-toggle formControlName="liableForEtf">Liable for ETF</mat-slide-toggle>
+      <mat-slide-toggle formControlName="liableForPaye">Liable for PAYE</mat-slide-toggle>
+      <mat-slide-toggle formControlName="liableNoPay">Liable for No Pay</mat-slide-toggle>
     </div>
 
   </form>
 
   @if (isFixed) {
+    <mat-divider />
+
     <app-formula-definition-form
       #formulaForm
       [initialExpression]="formulaExpression()"
@@ -57,8 +61,8 @@
       (saveRequested)="onFormulaSaveRequested($event)"
     />
     <div class="formula-save-row">
-      <button mat-stroked-button type="button" (click)="formulaForm.save()" aria-label="Save formula">
-        <mat-icon>save</mat-icon> Save Formula
+      <button mat-stroked-button type="button" (click)="formulaForm.save()" aria-label="Apply formula">
+        <mat-icon>calculate</mat-icon> Apply Formula
       </button>
     </div>
   }

@@ -10,17 +10,21 @@ interface ApiBranch {
   id: number;
   code: string;
   name: string;
+  description: string | null;
   location: string | null;
   isActive: boolean;
-  createdBy: number;
+  createdById: number;
   createdDate: string | null;
-  modifiedBy: number;
+  modifiedById: number;
   modifiedDate: string | null;
-  createdAt: string | null;
-  updatedAt: string | null;
 }
 
-type ApiBranchPayload = Pick<ApiBranch, 'code' | 'name' | 'location' | 'isActive'>;
+interface BranchPayload {
+  name: string;
+  description: string | null;
+  location: string;
+  isActive: boolean;
+}
 
 @Injectable({ providedIn: 'root' })
 export class BranchService {
@@ -46,11 +50,11 @@ export class BranchService {
   }
 
   create(data: Omit<Branch, 'id'>): Observable<Branch> {
-    const payload: ApiBranchPayload = {
-      code:     data.code,
-      name:     data.name,
-      location: data.location ?? null,
-      isActive: data.isActive,
+    const payload: BranchPayload = {
+      name:        data.name,
+      description: data.description ?? null,
+      location:    data.location ?? '',
+      isActive:    data.isActive,
     };
     return this.http.post<ApiResponse<ApiBranch>>(this.baseUrl, payload).pipe(
       map(res => this.toModel(res.data)),
@@ -58,11 +62,11 @@ export class BranchService {
   }
 
   update(id: number, data: Branch): Observable<void> {
-    const payload: ApiBranchPayload = {
-      code:     data.code,
-      name:     data.name,
-      location: data.location ?? null,
-      isActive: data.isActive,
+    const payload: BranchPayload = {
+      name:        data.name,
+      description: data.description ?? null,
+      location:    data.location ?? '',
+      isActive:    data.isActive,
     };
     return this.http.put<void>(`${this.baseUrl}/${id}`, payload);
   }
@@ -73,11 +77,12 @@ export class BranchService {
 
   private toModel(item: ApiBranch): Branch {
     return {
-      id:       item.id,
-      code:     item.code,
-      name:     item.name,
-      location: item.location ?? undefined,
-      isActive: item.isActive,
+      id:          item.id,
+      code:        item.code,
+      name:        item.name,
+      description: item.description ?? undefined,
+      location:    item.location ?? undefined,
+      isActive:    item.isActive,
     };
   }
 }

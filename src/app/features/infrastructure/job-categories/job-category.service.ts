@@ -12,15 +12,17 @@ interface ApiJobCategory {
   name: string;
   description: string | null;
   isActive: boolean;
-  createdBy: number;
+  createdById: number;
   createdDate: string | null;
-  modifiedBy: number;
+  modifiedById: number;
   modifiedDate: string | null;
-  createdAt: string | null;
-  updatedAt: string | null;
 }
 
-type ApiJobCategoryPayload = Pick<ApiJobCategory, 'code' | 'name' | 'description' | 'isActive'>;
+interface JobCategoryPayload {
+  name: string;
+  description: string | null;
+  isActive: boolean;
+}
 
 @Injectable({ providedIn: 'root' })
 export class JobCategoryService {
@@ -46,8 +48,7 @@ export class JobCategoryService {
   }
 
   create(data: Omit<JobCategory, 'id'>): Observable<JobCategory> {
-    const payload: ApiJobCategoryPayload = {
-      code:        data.code,
+    const payload: JobCategoryPayload = {
       name:        data.name,
       description: data.description ?? null,
       isActive:    data.isActive,
@@ -58,8 +59,7 @@ export class JobCategoryService {
   }
 
   update(id: number, data: JobCategory): Observable<void> {
-    const payload: ApiJobCategoryPayload = {
-      code:        data.code,
+    const payload: JobCategoryPayload = {
       name:        data.name,
       description: data.description ?? null,
       isActive:    data.isActive,

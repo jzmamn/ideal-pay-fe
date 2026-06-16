@@ -13,15 +13,18 @@ interface ApiGrade {
   amount: number | null;
   description: string | null;
   isActive: boolean;
-  createdBy: number;
+  createdById: number;
   createdDate: string | null;
-  modifiedBy: number;
+  modifiedById: number;
   modifiedDate: string | null;
-  createdAt: string | null;
-  updatedAt: string | null;
 }
 
-type ApiGradePayload = Pick<ApiGrade, 'code' | 'name' | 'amount' | 'description' | 'isActive'>;
+interface GradePayload {
+  name: string;
+  amount: number;
+  description: string | null;
+  isActive: boolean;
+}
 
 @Injectable({ providedIn: 'root' })
 export class GradeService {
@@ -47,10 +50,9 @@ export class GradeService {
   }
 
   create(data: Omit<Grade, 'id'>): Observable<Grade> {
-    const payload: ApiGradePayload = {
-      code:        data.code,
+    const payload: GradePayload = {
       name:        data.name,
-      amount:      data.amount ?? null,
+      amount:      data.amount ?? 0,
       description: data.description ?? null,
       isActive:    data.isActive,
     };
@@ -60,10 +62,9 @@ export class GradeService {
   }
 
   update(id: number, data: Grade): Observable<void> {
-    const payload: ApiGradePayload = {
-      code:        data.code,
+    const payload: GradePayload = {
       name:        data.name,
-      amount:      data.amount ?? null,
+      amount:      data.amount ?? 0,
       description: data.description ?? null,
       isActive:    data.isActive,
     };

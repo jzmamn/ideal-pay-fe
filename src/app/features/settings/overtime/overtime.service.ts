@@ -13,7 +13,6 @@ interface ApiOvertime {
   description: string | null;
   isActive: boolean;
   formula: string | null;
-  formulaEnabled: boolean;
   liableForEpf: boolean;
   liableForEtf: boolean;
   liableForPaye: boolean;
@@ -29,7 +28,6 @@ interface ApiOvertimePayload {
   description: string | null;
   isActive: boolean;
   formula: string | null;
-  formulaEnabled: boolean;
   liableForEpf: boolean;
   liableForEtf: boolean;
   liableForPaye: boolean;
@@ -76,7 +74,6 @@ export class OvertimeService {
       description:    data.description ?? null,
       isActive:       data.isActive,
       formula:        data.formula ?? null,
-      formulaEnabled: data.formulaEnabled ?? false,
       liableForEpf:   data.liableForEpf  ?? true,
       liableForEtf:   data.liableForEtf  ?? true,
       liableForPaye:  data.liableForPaye  ?? true,
@@ -94,7 +91,6 @@ export class OvertimeService {
       item.description ?? undefined,
       item.isActive,
       item.formula ?? undefined,
-      item.formulaEnabled ?? false,
       item.liableForEpf  ?? true,
       item.liableForEtf  ?? true,
       item.liableForPaye  ?? true,

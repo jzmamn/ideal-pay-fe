@@ -42,7 +42,7 @@ export class Allowances implements OnInit {
       { key: 'name',          label: 'Name' },
       ...(this.allowanceType() === AllowanceType.FIXED
         ? [
-            { key: 'formulaEnabled' as const, label: 'Formula', type: 'icon' as const, icon: 'functions', iconTooltip: 'Formula enabled', sortable: false },
+            { key: 'formula' as const, label: 'Formula', type: 'icon' as const, icon: 'functions', iconTooltip: 'Formula configured', sortable: false },
           ]
         : []),
       { key: 'isActive',      label: 'Active',          type: 'boolean' as const },
@@ -85,10 +85,12 @@ export class Allowances implements OnInit {
   }
 
   private openDialog(row: AllowanceModel | null): void {
+    const allowanceType = this.allowanceType() ?? AllowanceType.FIXED;
     const dialogRef = this.dialog.open(AllowanceDialog, {
       panelClass: 'square-dialog',
-      width: '600px',
-      data: { row, allowanceType: this.allowanceType() ?? AllowanceType.FIXED },
+      width: allowanceType === AllowanceType.FIXED ? '900px' : '600px',
+      maxWidth: '96vw',
+      data: { row, allowanceType },
     });
 
     dialogRef.afterClosed().subscribe((result: AllowanceDialogResult | undefined) => {
@@ -116,7 +118,7 @@ export class Allowances implements OnInit {
             result.data.isActive,
             result.data.liableForEpf, result.data.liableForEtf, result.data.liableForPaye,
             result.data.liableNoPay, type,
-            result.data.formula, result.data.formulaEnabled,
+            result.data.formula,
           );
           this.allAllowances.update(list => list.map(a => a.id === updated.id ? updated : a));
         });

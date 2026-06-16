@@ -24,20 +24,24 @@ interface ApiFixedAllowance {
   liableForPaye: boolean;
   liableNoPay: boolean;
   formula: string | null;
-  formulaEnabled: boolean;
   createdBy: number;
   createdDate: string | null;
   modifiedBy: number;
   modifiedDate: string | null;
-  createdAt: string | null;
-  updatedAt: string | null;
 }
 
-type ApiFixedAllowancePayload = Pick<ApiFixedAllowance,
-  'name' | 'description' | 'isActive' |
-  'liableForEpf' | 'liableForEtf' | 'liableForPaye' | 'liableNoPay' |
-  'formula' | 'formulaEnabled' | 'createdBy' | 'modifiedBy'
->;
+interface ApiFixedAllowancePayload {
+  name: string;
+  description: string | null;
+  isActive: boolean;
+  liableForEpf: boolean;
+  liableForEtf: boolean;
+  liableForPaye: boolean;
+  liableNoPay: boolean;
+  formula: string | null;
+  createdBy: number;
+  modifiedBy: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class FixedAllowanceService {
@@ -57,26 +61,23 @@ export class FixedAllowanceService {
   }
 
   create(data: Omit<AllowanceModel, 'id' | 'type'>): Observable<AllowanceModel> {
-    const payload: ApiFixedAllowancePayload = {
-      name:           data.name,
-      description:    data.description,
-      isActive:       data.isActive,
-      liableForEpf:   data.liableForEpf,
-      liableForEtf:   data.liableForEtf,
-      liableForPaye:  data.liableForPaye,
-      liableNoPay:    data.liableNoPay,
-      formula:        data.formulaEnabled ? (data.formula ?? null) : null,
-      formulaEnabled: data.formulaEnabled,
-      createdBy:      1,
-      modifiedBy:     1,
-    };
+    const payload: ApiFixedAllowancePayload = this.toPayload(data);
     return this.http.post<ApiResponse<ApiFixedAllowance>>(this.baseUrl, payload).pipe(
       map(res => this.toModel(res.data)),
     );
   }
 
   update(id: number, data: Omit<AllowanceModel, 'type'>): Observable<void> {
-    const payload: ApiFixedAllowancePayload = {
+    const payload: ApiFixedAllowancePayload = this.toPayload(data);
+    return this.http.put<void>(`${this.baseUrl}/${id}`, payload);
+  }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
+  private toPayload(data: Omit<AllowanceModel, 'id' | 'type'> | Omit<AllowanceModel, 'type'>): ApiFixedAllowancePayload {
+    return {
       name:           data.name,
       description:    data.description,
       isActive:       data.isActive,
@@ -84,16 +85,10 @@ export class FixedAllowanceService {
       liableForEtf:   data.liableForEtf,
       liableForPaye:  data.liableForPaye,
       liableNoPay:    data.liableNoPay,
-      formula:        data.formulaEnabled ? (data.formula ?? null) : null,
-      formulaEnabled: data.formulaEnabled,
+      formula:        data.formula ?? null,
       createdBy:      1,
       modifiedBy:     1,
     };
-    return this.http.put<void>(`${this.baseUrl}/${id}`, payload);
-  }
-
-  delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
   private toModel(item: ApiFixedAllowance): AllowanceModel {
@@ -109,7 +104,6 @@ export class FixedAllowanceService {
       item.liableNoPay,
       AllowanceType.FIXED,
       item.formula ?? undefined,
-      item.formulaEnabled,
     );
   }
 }

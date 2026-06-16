@@ -22,7 +22,6 @@ interface ApiNopay {
   liableForEtf: boolean;
   liableForPaye: boolean;
   formula: string | null;
-  formulaEnabled: boolean;
   createdById: number;
   createdByCode: string;
   createdByUserName: string;
@@ -41,7 +40,6 @@ type ApiNopayPayload = {
   liableForEtf: boolean;
   liableForPaye: boolean;
   formula: string | null;
-  formulaEnabled: boolean;
   createdBy: number;
   modifiedBy: number;
 };
@@ -87,8 +85,7 @@ export class NopayService {
       liableForEpf:   data.liableForEpf,
       liableForEtf:   data.liableForEtf,
       liableForPaye:  data.liableForPaye,
-      formula:        data.formulaEnabled ? (data.formula ?? null) : null,
-      formulaEnabled: data.formulaEnabled,
+      formula:        data.formula ?? null,
       createdBy:      1,
       modifiedBy:     1,
     };
@@ -105,7 +102,6 @@ export class NopayService {
       item.liableForEtf,
       item.liableForPaye,
       item.formula ?? undefined,
-      item.formulaEnabled,
     );
   }
 }

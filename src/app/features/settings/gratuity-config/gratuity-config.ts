@@ -34,8 +34,8 @@ export class GratuityConfigComponent implements OnInit {
       { key: 'code',           label: 'Code' },
       { key: 'name',           label: 'Name' },
       { key: 'isActive',       label: 'Active',  type: 'boolean' },
-      { key: 'formulaEnabled', label: 'Formula', type: 'icon', icon: 'functions',
-        iconTooltip: 'Custom formula enabled', sortable: false },
+      { key: 'formula', label: 'Formula', type: 'icon', icon: 'functions',
+        iconTooltip: 'Formula configured', sortable: false },
     ],
   }));
 
@@ -51,7 +51,8 @@ export class GratuityConfigComponent implements OnInit {
   private openDialog(row: GratuityConfigModel | null): void {
     this.dialog.open(GratuityConfigDialog, {
       panelClass: 'square-dialog',
-      width:      '640px',
+      width:      '900px',
+      maxWidth:   '96vw',
       data:       row,
     }).afterClosed().subscribe(saved => { if (saved) this.load(); });
   }

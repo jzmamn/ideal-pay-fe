@@ -42,14 +42,13 @@ export class GratuityConfigDialog {
     isActive:    [this.row?.isActive    ?? true],
   });
 
-  readonly formulaExpression = signal(this.row?.formula        ?? '');
-  readonly formulaIsActive   = signal(this.row?.formulaEnabled ?? false);
+  readonly formulaExpression = signal(this.row?.formula ?? '');
   readonly formulaSaving     = signal(false);
   readonly formulaSaveError  = signal<string | null>(null);
 
   private readonly latestFormula = signal<FormulaDefinitionFormValue>({
-    expression: this.row?.formula        ?? '',
-    isActive:   this.row?.formulaEnabled ?? false,
+    expression: this.row?.formula ?? '',
+    isActive:   true,
   });
 
   onFormulaValueChanged(value: FormulaDefinitionFormValue): void {
@@ -59,7 +58,6 @@ export class GratuityConfigDialog {
   onFormulaSaveRequested(value: FormulaDefinitionFormValue): void {
     this.latestFormula.set(value);
     this.formulaExpression.set(value.expression);
-    this.formulaIsActive.set(value.isActive);
   }
 
   save(): void {
@@ -70,7 +68,6 @@ export class GratuityConfigDialog {
       name:           v.name!,
       description:    v.description ?? undefined,
       formula:        fv.expression || undefined,
-      formulaEnabled: fv.isActive,
       isActive:       v.isActive!,
     };
     const req$: Observable<unknown> = this.isEdit

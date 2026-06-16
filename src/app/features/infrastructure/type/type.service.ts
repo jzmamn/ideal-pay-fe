@@ -35,9 +35,7 @@ export class EmployeeTypeService {
       name:        data.name,
       description: data.description ?? '',
       isActive:    data.isActive,
-      endDate: data.dateRange,
-      createdBy:   1,
-      modifiedBy:  1,
+      endDate:     data.dateRange,
     };
     return this.http.post<ApiResponse<TypeResponse>>(this.baseUrl, payload).pipe(
       map(res => this.toModel(res.data)),
@@ -49,9 +47,7 @@ export class EmployeeTypeService {
       name:        data.name,
       description: data.description ?? '',
       isActive:    data.isActive,
-      endDate: data.dateRange,
-      createdBy:   1,
-      modifiedBy:  1,
+      endDate:     data.dateRange,
     };
     return this.http.put<void>(`${this.baseUrl}/${id}`, payload);
   }

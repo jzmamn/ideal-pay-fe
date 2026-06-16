@@ -11,21 +11,23 @@
 <mat-dialog-content>
   <form [formGroup]="form" class="form-grid">
 
-    <mat-form-field appearance="outline">
-      <mat-label>Code</mat-label>
-      <input matInput formControlName="code">
-      @if (form.get('code')?.hasError('required')) {
-        <mat-error>Code is required</mat-error>
-      }
-    </mat-form-field>
+    <div class="form-row-2">
+      <mat-form-field appearance="outline">
+        <mat-label>Code</mat-label>
+        <input matInput formControlName="code" placeholder="Auto-generated">
+        @if (form.get('code')?.hasError('required')) {
+          <mat-error>Code is required</mat-error>
+        }
+      </mat-form-field>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Name</mat-label>
-      <input matInput formControlName="name">
-      @if (form.get('name')?.hasError('required')) {
-        <mat-error>Name is required</mat-error>
-      }
-    </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name">
+        @if (form.get('name')?.hasError('required')) {
+          <mat-error>Name is required</mat-error>
+        }
+      </mat-form-field>
+    </div>
 
     <mat-form-field appearance="outline">
       <mat-label>No Pay Days</mat-label>
@@ -47,18 +49,20 @@
 
   </form>
 
+  <mat-divider />
+
   <app-formula-definition-form
     #formulaForm
     [initialExpression]="formulaExpression()"
-    [initialIsActive]="formulaIsActive()"
+    [showActiveToggle]="false"
     [saving]="formulaSaving()"
     [saveError]="formulaSaveError()"
     (valueChanged)="onFormulaValueChanged($event)"
     (saveRequested)="onFormulaSaveRequested($event)"
   />
   <div class="formula-save-row">
-    <button mat-stroked-button type="button" (click)="formulaForm.save()" aria-label="Save formula">
-      <mat-icon>save</mat-icon> Save Formula
+    <button mat-stroked-button type="button" (click)="formulaForm.save()" aria-label="Apply formula">
+      <mat-icon>calculate</mat-icon> Apply Formula
     </button>
   </div>
 

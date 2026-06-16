@@ -107,7 +107,7 @@ export class EmployeeForm {
     lastName:      ['', Validators.required],
     dateOfBirth:   [null as Date | null],
     nic:           [''],
-    payrollName:   [''],
+    payrollName:   ['', Validators.required],
     email:         ['', Validators.email],
     phone:         [''],
     joinedDate:    [null as Date | null, Validators.required],
@@ -126,6 +126,7 @@ export class EmployeeForm {
     departmentId:  [null as number | null],
     branchId:      [null as number | null, Validators.required],
     gradeId:       [null as number | null, Validators.required],
+    gradeIsActive: [false],
     bankId:        [null as number | null],
     bankBranchId:  [null as number | null],
     accountNo:     [''],
@@ -166,6 +167,14 @@ export class EmployeeForm {
     this.form.controls.statusId.valueChanges,
     { initialValue: this.form.controls.statusId.value },
   );
+
+  private readonly _gradeIsActive = toSignal(
+    this.form.controls.gradeIsActive.valueChanges,
+    { initialValue: this.form.controls.gradeIsActive.value },
+  );
+
+  readonly gradeLookupDisabled = computed(() => !this._gradeIsActive());
+
   onGradeSelected(grade: Grade): void {
     this.form.controls.gradeId.setValue(grade.id);
     if (grade.amount != null) {
@@ -206,6 +215,32 @@ export class EmployeeForm {
       }
     });
 
+    effect(() => {
+      const basicSalaryCtrl = this.form.controls.basicSalary;
+      if (this._gradeIsActive()) {
+        basicSalaryCtrl.disable({ emitEvent: false });
+      } else {
+        basicSalaryCtrl.enable({ emitEvent: false });
+      }
+    });
+
+    // The Grade lookup is disabled while "Grade Active" is off, so the user has no way to
+    // satisfy gradeId's required validator in that state. Fall back to the system DEFAULT
+    // grade sentinel (id = -1) whenever grade selection isn't applicable, and clear the
+    // sentinel back out when the user switches grade selection back on so they're prompted
+    // to pick a real grade. Without this, save() silently no-ops forever for any employee
+    // left in the (default) "Grade Active" off state, since the form never becomes valid.
+    effect(() => {
+      const gradeIdCtrl = this.form.controls.gradeId;
+      if (this._gradeIsActive()) {
+        if (gradeIdCtrl.value === -1) {
+          gradeIdCtrl.setValue(null, { emitEvent: false });
+        }
+      } else if (gradeIdCtrl.value == null) {
+        gradeIdCtrl.setValue(-1, { emitEvent: false });
+      }
+    });
+
     const emp = this.service.selected();
     if (emp) {
       this.form.patchValue({
@@ -232,6 +267,7 @@ export class EmployeeForm {
         departmentId:  emp.departmentId ?? null,
         branchId:      emp.branchId,
         gradeId:       emp.gradeId,
+        gradeIsActive: emp.gradeIsActive ?? false,
         bankId:        emp.bankId ?? null,
         bankBranchId:  emp.bankBranchId ?? null,
         accountNo:     emp.accountNo ?? '',
@@ -277,7 +313,7 @@ export class EmployeeForm {
   private navigateToFirstInvalidTab(): void {
     const tabGroups = [
       ['firstName', 'lastName', 'country'],
-      ['employeeNo', 'joinedDate', 'employeeTypeId', 'nopayDaysId', 'jobCategoryId', 'designationId', 'branchId', 'statusId'],
+      ['employeeNo', 'payrollName', 'joinedDate', 'employeeTypeId', 'nopayDaysId', 'jobCategoryId', 'designationId', 'branchId', 'statusId'],
       ['basicSalary', 'gradeId'],
     ];
     const index = tabGroups.findIndex(keys =>
@@ -318,6 +354,7 @@ export class EmployeeForm {
       departmentId:  v.departmentId ?? undefined,
       branchId:      v.branchId!,
       gradeId:       v.gradeId!,
+      gradeIsActive: v.gradeIsActive ?? false,
       bankId:        v.bankId ?? undefined,
       bankBranchId:  v.bankBranchId ?? undefined,
       accountNo:     orUndef(v.accountNo ?? ''),

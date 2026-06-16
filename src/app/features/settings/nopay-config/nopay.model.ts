@@ -8,7 +8,6 @@ export class NopayModel {
   liableForEtf: boolean;
   liableForPaye: boolean;
   formula: string | undefined;
-  formulaEnabled: boolean;
 
   constructor(
     id: number,
@@ -20,7 +19,6 @@ export class NopayModel {
     liableForEtf: boolean,
     liableForPaye: boolean,
     formula: string | undefined = undefined,
-    formulaEnabled = false,
   ) {
     this.id             = id;
     this.code           = code;
@@ -31,6 +29,5 @@ export class NopayModel {
     this.liableForEtf   = liableForEtf;
     this.liableForPaye  = liableForPaye;
     this.formula        = formula;
-    this.formulaEnabled = formulaEnabled;
   }
 }

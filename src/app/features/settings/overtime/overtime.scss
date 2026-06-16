@@ -13,27 +13,30 @@
   }
 }
 
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.section-label {
+  margin: 8px 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.toggles-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+  padding: 4px 0 8px;
+}
+
 .formula-save-row {
   display: flex;
   justify-content: flex-end;
   padding: 8px 0 4px;
-}
-
-.liability-section {
-  padding: 12px 0 8px;
-}
-
-.liability-label {
-  margin: 0 0 10px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--mat-sys-on-surface-variant);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.liability-toggles {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
 }

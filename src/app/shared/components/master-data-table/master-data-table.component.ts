@@ -58,7 +58,7 @@ export class MasterDataTableComponent<T extends object = Record<string, unknown>
 private readonly decimalPipe = inject(DecimalPipe);
 
   readonly selectedRow = signal<T | null>(null);
-  readonly activeFilter = signal<ActiveFilter>('active');
+  readonly activeFilter = signal<ActiveFilter>('all');
   readonly dataSource = new MatTableDataSource<T>([]);
   readonly displayedColumns = computed(() => this.config().columns.map(c => c.key));
 

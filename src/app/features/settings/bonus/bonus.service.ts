@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { API_BASE_URL } from '../../../api-url.token';
 import { ApiResponse } from '../../../shared/models/api-response.model';
-import { BonusCalculationMethod, BonusModel } from './bonus.model';
+import { BonusModel } from './bonus.model';
 
 // ── API shapes ────────────────────────────────────────────────────────────────
 
@@ -13,14 +13,12 @@ interface ApiBonusResponse {
   code: string;
   name: string;
   description: string | null;
-  calculationMethod: BonusCalculationMethod;
   isActive: boolean;
   liableForEpf: boolean;
   liableForEtf: boolean;
   liableForPaye: boolean;
   liableNoPay: boolean;
   formula: string | null;
-  formulaEnabled: boolean;
   createdById: number;
   createdByCode: string;
   createdByUserName: string;
@@ -32,9 +30,9 @@ interface ApiBonusResponse {
 }
 
 type ApiBonusPayload = Pick<ApiBonusResponse,
-  'name' | 'description' | 'calculationMethod' | 'isActive' |
+  'name' | 'description' | 'isActive' |
   'liableForEpf' | 'liableForEtf' | 'liableForPaye' | 'liableNoPay' |
-  'formula' | 'formulaEnabled'
+  'formula'
 > & { createdBy: number; modifiedBy: number };
 
 export interface BonusCalculateResult {
@@ -97,14 +95,12 @@ export class BonusService {
       item.code,
       item.name,
       item.description,
-      item.calculationMethod,
       item.isActive,
       item.liableForEpf,
       item.liableForEtf,
       item.liableForPaye,
       item.liableNoPay,
       item.formula ?? undefined,
-      item.formulaEnabled,
     );
   }
 
@@ -112,14 +108,12 @@ export class BonusService {
     return {
       name:           data.name!,
       description:    data.description ?? null,
-      calculationMethod: data.calculationMethod!,
       isActive:       data.isActive!,
       liableForEpf:   data.liableForEpf!,
       liableForEtf:   data.liableForEtf!,
       liableForPaye:  data.liableForPaye!,
       liableNoPay:    data.liableNoPay!,
       formula:        data.formula ?? null,
-      formulaEnabled: data.formulaEnabled!,
       createdBy:      1, // TODO: replace with AuthService user id
       modifiedBy:     1, // TODO: replace with AuthService user id
     };

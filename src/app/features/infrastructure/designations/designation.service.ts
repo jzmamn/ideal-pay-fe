@@ -10,16 +10,19 @@ interface ApiDesignation {
   id: number;
   code: string;
   name: string;
+  description: string | null;
   isActive: boolean;
-  createdBy: number;
+  createdById: number;
   createdDate: string | null;
-  modifiedBy: number;
+  modifiedById: number;
   modifiedDate: string | null;
-  createdAt: string | null;
-  updatedAt: string | null;
 }
 
-type ApiDesignationPayload = Pick<ApiDesignation, 'code' | 'name' | 'isActive'>;
+interface DesignationPayload {
+  name: string;
+  description: string;
+  isActive: boolean;
+}
 
 @Injectable({ providedIn: 'root' })
 export class DesignationService {
@@ -45,10 +48,10 @@ export class DesignationService {
   }
 
   create(data: Omit<Designation, 'id'>): Observable<Designation> {
-    const payload: ApiDesignationPayload = {
-      code:     data.code,
-      name:     data.name,
-      isActive: data.isActive,
+    const payload: DesignationPayload = {
+      name:        data.name,
+      description: (data as { description?: string }).description ?? '',
+      isActive:    data.isActive,
     };
     return this.http.post<ApiResponse<ApiDesignation>>(this.baseUrl, payload).pipe(
       map(res => this.toModel(res.data)),
@@ -56,10 +59,10 @@ export class DesignationService {
   }
 
   update(id: number, data: Designation): Observable<void> {
-    const payload: ApiDesignationPayload = {
-      code:     data.code,
-      name:     data.name,
-      isActive: data.isActive,
+    const payload: DesignationPayload = {
+      name:        data.name,
+      description: (data as { description?: string }).description ?? '',
+      isActive:    data.isActive,
     };
     return this.http.put<void>(`${this.baseUrl}/${id}`, payload);
   }

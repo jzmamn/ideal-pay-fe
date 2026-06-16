@@ -4,6 +4,5 @@ export interface GratuityConfigModel {
   name:           string;
   description:    string | undefined;
   formula:        string | undefined;
-  formulaEnabled: boolean;
   isActive:       boolean;
 }

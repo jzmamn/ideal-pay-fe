@@ -21,8 +21,8 @@ export class LateDeductionConfig implements OnInit {
 
   readonly tableConfig: MasterDataTableConfig<LateDeductionConfigModel> = {
     title:            'Late Deduction Configuration',
-    showNewButton:    false,   // single-record table — create is locked
-    showActiveFilter: false,
+    showNewButton:    true,
+    showActiveFilter: true,
     columns: [
       { key: 'id',                 label: 'ID',               sortable: false },
       { key: 'code',               label: 'Code' },
@@ -30,7 +30,7 @@ export class LateDeductionConfig implements OnInit {
       { key: 'workingDays',        label: 'Working Days',     type: 'number'  },
       { key: 'workingHoursPerDay', label: 'Hrs / Day',        type: 'number'  },
       { key: 'isActive',           label: 'Active',           type: 'boolean' },
-      { key: 'formulaEnabled',     label: 'Formula',          type: 'icon', icon: 'functions', iconTooltip: 'Formula enabled', sortable: false },
+      { key: 'formula',            label: 'Formula',          type: 'icon', icon: 'functions', iconTooltip: 'Formula configured', sortable: false },
     ],
   };
 
@@ -53,7 +53,8 @@ export class LateDeductionConfig implements OnInit {
   private openDialog(row: LateDeductionConfigModel | null): void {
     this.dialog.open(LateDeductionConfigDialog, {
       panelClass: 'square-dialog',
-      width:      '640px',
+      width:      '900px',
+      maxWidth:   '96vw',
       data:       row,
     }).afterClosed().subscribe(saved => { if (saved) this.load(); });
   }

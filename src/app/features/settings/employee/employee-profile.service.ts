@@ -6,10 +6,12 @@ import { API_BASE_URL } from '../../../api-url.token';
 import { ApiResponse } from '../../../shared/models/api-response.model';
 import type { EmployeeResponse } from './employee.model';
 import type {
+  EmployeeFixedAllowanceAssignRequest,
   EmployeeFixedAllowanceRequest,
   EmployeeFixedAllowanceResponse,
 } from './employee-fixed-allowance/employee-fixed-allowance.model';
 import type {
+  EmployeeFixedDeductionAssignRequest,
   EmployeeFixedDeductionRequest,
   EmployeeFixedDeductionResponse,
 } from './employee-fixed-deduction/employee-fixed-deduction.model';
@@ -108,6 +110,19 @@ export class EmployeeProfileService {
       .pipe(map(r => r.data));
   }
 
+  /**
+   * Employee → Salary Tab → Fixed Allowance checkbox grid: replaces the employee's Fixed
+   * Allowance assignments for the given payroll month with exactly the selections passed.
+   */
+  assignFixedAllowances(
+    empId: number,
+    payload: EmployeeFixedAllowanceAssignRequest,
+  ): Observable<EmployeeFixedAllowanceResponse[]> {
+    return this.http.put<ApiResponse<EmployeeFixedAllowanceResponse[]>>(
+      `${this.base}/emp-fa/employee/${empId}/assign`, payload)
+      .pipe(map(r => r.data));
+  }
+
   // ── Fixed Deductions ──────────────────────────────────────────────────────
 
   getFixedDeductions(): Observable<EmployeeFixedDeductionResponse[]> {
@@ -132,6 +147,19 @@ export class EmployeeProfileService {
 
   deleteFixedDeduction(id: number): Observable<void> {
     return this.http.delete<ApiResponse<void>>(`${this.base}/emp-fd/${id}`)
+      .pipe(map(r => r.data));
+  }
+
+  /**
+   * Employee → Salary Tab → Fixed Deduction checkbox grid: replaces the employee's Fixed
+   * Deduction assignments for the given payroll month with exactly the selections passed.
+   */
+  assignFixedDeductions(
+    empId: number,
+    payload: EmployeeFixedDeductionAssignRequest,
+  ): Observable<EmployeeFixedDeductionResponse[]> {
+    return this.http.put<ApiResponse<EmployeeFixedDeductionResponse[]>>(
+      `${this.base}/emp-fd/employee/${empId}/assign`, payload)
       .pipe(map(r => r.data));
   }
 

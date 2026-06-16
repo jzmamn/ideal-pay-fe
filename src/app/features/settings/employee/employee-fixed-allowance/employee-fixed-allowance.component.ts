@@ -10,7 +10,8 @@ import {
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -19,15 +20,26 @@ import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { EmployeeProfileService } from '../employee-profile.service';
-import { EmployeeFixedAllowanceResponse, EmployeeFixedAllowanceRequest } from './employee-fixed-allowance.model';
+import { EmployeeFixedAllowanceAssignRequest } from './employee-fixed-allowance.model';
+
+/** One row of the Employee → Salary Tab → Fixed Allowance checkbox grid (local editable state). */
+interface AllowanceRow {
+  faId: number;
+  faCode: string;
+  faName: string;
+  formulaCalculated: boolean;
+  selected: boolean;
+  amount: number;
+}
 
 @Component({
   selector: 'app-employee-allowances',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DecimalPipe,
-    ReactiveFormsModule,
+    FormsModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatDividerModule,
     MatFormFieldModule,
     MatIconModule,
@@ -44,74 +56,89 @@ export class EmployeeAllowances {
 
   readonly empId = input<number | null>(null);
 
-  readonly allowances  = signal<EmployeeFixedAllowanceResponse[]>([]);
-  readonly editingIndex = signal<number | null>(null);
-  readonly saving       = signal(false);
+  readonly rows   = signal<AllowanceRow[]>([]);
+  readonly loading = signal(false);
+  readonly saving  = signal(false);
+
+  /** No payroll-period selector exists on this screen — assignments are read/written against the current calendar month. */
+  private readonly today = new Date();
+  readonly payrollMonth = `${this.today.getFullYear()}-${String(this.today.getMonth() + 1).padStart(2, '0')}`;
+
+  readonly selectedCount = computed(() => this.rows().filter(r => r.selected).length);
 
   readonly totalFixedAllowance = computed(() =>
-    this.allowances().reduce((sum, a) => sum + a.amount, 0)
+    this.rows().filter(r => r.selected).reduce((sum, r) => sum + (r.amount || 0), 0)
   );
-
-  readonly editAmountCtrl = new FormControl<number | null>(null, {
-    validators: [Validators.required, Validators.min(0)],
-  });
 
   constructor() {
     effect(() => {
       const id = this.empId();
       if (id != null) {
-        this.profileSvc.getEmployeeProfileByEmployee(id)
-          .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe(profile => this.allowances.set(profile.fixedAllowances));
+        this.loadRows(id);
       } else {
-        this.allowances.set([]);
+        this.rows.set([]);
       }
     });
   }
 
-  startEdit(index: number): void {
-    this.editAmountCtrl.setValue(this.allowances()[index].amount);
-    this.editAmountCtrl.markAsUntouched();
-    this.editingIndex.set(index);
-  }
-
-  saveEdit(index: number): void {
-    if (this.editAmountCtrl.invalid) {
-      this.editAmountCtrl.markAsTouched();
-      return;
-    }
-    const record = this.allowances()[index];
-    const newAmount = Number(this.editAmountCtrl.value);
-    const payload: EmployeeFixedAllowanceRequest = {
-      empId:        record.empId,
-      faId:         record.faId,
-      amount:       newAmount,
-      payrollMonth: record.payrollMonth,
-      isProcessed:  record.isProcessed,
-      processedDate: record.processedDate,
-      createdBy:    1,
-      modifiedBy:   1,
-    };
-
-    this.saving.set(true);
-    this.profileSvc.updateFixedAllowance(record.id, payload)
+  private loadRows(empId: number): void {
+    this.loading.set(true);
+    this.profileSvc.getEmployeeProfileByEmployee(empId, false, this.payrollMonth)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: updated => {
-          this.allowances.update(list =>
-            list.map((a, i) => i === index ? updated : a)
-          );
-          this.editingIndex.set(null);
-          this.saving.set(false);
+        next: profile => {
+          this.rows.set(profile.fixedAllowances.map(a => ({
+            faId:              a.faId,
+            faCode:            a.faCode,
+            faName:            a.faName,
+            formulaCalculated: a.formulaCalculated,
+            selected:          a.isAssigned,
+            amount:            a.amount ?? 0,
+          })));
+          this.loading.set(false);
         },
-        error: () => {
-          this.snackBar.open('Failed to update allowance.', 'Close', { duration: 3000 });
-          this.saving.set(false);
-        },
+        error: () => this.loading.set(false),
       });
   }
 
-  cancelEdit(): void {
-    this.editingIndex.set(null);
+  toggleSelected(faId: number, selected: boolean): void {
+    this.rows.update(list =>
+      list.map(r => r.faId === faId ? { ...r, selected } : r)
+    );
+  }
+
+  updateAmount(faId: number, value: number | null): void {
+    this.rows.update(list =>
+      list.map(r => r.faId === faId ? { ...r, amount: value ?? 0 } : r)
+    );
+  }
+
+  save(): void {
+    const empId = this.empId();
+    if (empId == null || this.saving()) return;
+
+    const payload: EmployeeFixedAllowanceAssignRequest = {
+      payrollMonth: this.payrollMonth,
+      createdBy:    1,
+      modifiedBy:   1,
+      selections: this.rows()
+        .filter(r => r.selected)
+        .map(r => ({ faId: r.faId, amount: r.amount || 0 })),
+    };
+
+    this.saving.set(true);
+    this.profileSvc.assignFixedAllowances(empId, payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.snackBar.open('Fixed allowances updated.', 'Close', { duration: 2500 });
+          this.loadRows(empId);
+        },
+        error: () => {
+          this.saving.set(false);
+          this.snackBar.open('Failed to update fixed allowances.', 'Close', { duration: 3000 });
+        },
+      });
   }
 }

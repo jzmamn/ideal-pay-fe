@@ -7,7 +7,8 @@ import { MasterDataService } from '../../../shared/services/master-data.service'
 import { Branch, MasterEntity } from '../../../shared/models/master-data.models';
 
 const EXTRA_FIELDS: FieldDef[] = [
-  { key: 'location', label: 'Location', type: 'text' },
+  { key: 'description', label: 'Description', type: 'textarea', optional: true },
+  { key: 'location',    label: 'Location',    type: 'text'     },
 ];
 
 @Component({
@@ -34,11 +35,11 @@ export class Branches {
     showNewButton: true,
     showActiveFilter: true,
     columns: [
-      { key: 'id',       label: 'ID',       sortable: false },
-      { key: 'code',     label: 'Code',     sortable: true  },
-      { key: 'name',     label: 'Name',     sortable: true  },
-      { key: 'location', label: 'Location'                  },
-      { key: 'isActive', label: 'Active',   type: 'boolean' },
+      { key: 'id',          label: 'ID',          sortable: false },
+      { key: 'code',        label: 'Code',         sortable: true  },
+      { key: 'name',        label: 'Name',         sortable: true  },
+      { key: 'location',    label: 'Location'                      },
+      { key: 'isActive',    label: 'Active',       type: 'boolean' },
     ],
   };
 

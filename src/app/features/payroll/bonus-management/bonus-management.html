@@ -63,7 +63,6 @@
                       @for (b of bonusTypes(); track b.id) {
                         <mat-option [value]="b.id">
                           {{ b.code }} — {{ b.name }}
-                          <small> ({{ b.calculationMethod === 'FORMULA_BASED' ? 'formula' : 'fixed' }})</small>
                         </mat-option>
                       }
                     </mat-select>

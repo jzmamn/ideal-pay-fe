@@ -15,7 +15,6 @@ export interface BonusProcessingBatch {
   bonusCode: string;
   bonusName: string;
   calculationMethod: BonusCalculationMethod;
-  formulaEnabled: boolean;
   formula: string | null;
 
   createdById: number | null;

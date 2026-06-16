@@ -10,16 +10,19 @@ interface ApiDepartment {
   id: number;
   code: string;
   name: string;
+  description: string | null;
   isActive: boolean;
-  createdBy: number;
+  createdById: number;
   createdDate: string | null;
-  modifiedBy: number;
+  modifiedById: number;
   modifiedDate: string | null;
-  createdAt: string | null;
-  updatedAt: string | null;
 }
 
-type ApiDepartmentPayload = Pick<ApiDepartment, 'code' | 'name' | 'isActive'>;
+interface DepartmentPayload {
+  name: string;
+  description: string | null;
+  isActive: boolean;
+}
 
 @Injectable({ providedIn: 'root' })
 export class DepartmentService {
@@ -39,10 +42,10 @@ export class DepartmentService {
   }
 
   create(data: Omit<Department, 'id'>): Observable<Department> {
-    const payload: ApiDepartmentPayload = {
-      code:     data.code,
-      name:     data.name,
-      isActive: data.isActive,
+    const payload: DepartmentPayload = {
+      name:        data.name,
+      description: (data as { description?: string }).description ?? null,
+      isActive:    data.isActive,
     };
     return this.http.post<ApiResponse<ApiDepartment>>(this.baseUrl, payload).pipe(
       map(res => this.toModel(res.data)),
@@ -50,10 +53,10 @@ export class DepartmentService {
   }
 
   update(id: number, data: Department): Observable<void> {
-    const payload: ApiDepartmentPayload = {
-      code:     data.code,
-      name:     data.name,
-      isActive: data.isActive,
+    const payload: DepartmentPayload = {
+      name:        data.name,
+      description: (data as { description?: string }).description ?? null,
+      isActive:    data.isActive,
     };
     return this.http.put<void>(`${this.baseUrl}/${id}`, payload);
   }

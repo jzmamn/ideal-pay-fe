@@ -32,15 +32,6 @@
                 placeholder="e.g. Standard gratuity rule for all employees"></textarea>
     </mat-form-field>
 
-    <div class="default-formula-hint">
-      <mat-icon>info</mat-icon>
-      <span>
-        Default formula:
-        <code>basicSalary / 2 * yearsOfService</code>
-        &nbsp;— Available variables: <code>basicSalary</code>, <code>yearsOfService</code>
-      </span>
-    </div>
-
     <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
 
   </form>
@@ -50,7 +41,7 @@
   <app-formula-definition-form
     #formulaForm
     [initialExpression]="formulaExpression()"
-    [initialIsActive]="formulaIsActive()"
+    [showActiveToggle]="false"
     [saving]="formulaSaving()"
     [saveError]="formulaSaveError()"
     (valueChanged)="onFormulaValueChanged($event)"
@@ -67,7 +58,7 @@
 
 <mat-dialog-actions>
   <span class="action-spacer"></span>
-  <button mat-flat-button [disabled]="form.invalid" (click)="save()">
+  <button mat-flat-button [disabled]="form.invalid" class="btn-warn" (click)="save()">
     <mat-icon>save</mat-icon> {{ isEdit ? 'Update' : 'Create' }}
   </button>
   <button mat-flat-button mat-dialog-close class="btn-secondary">

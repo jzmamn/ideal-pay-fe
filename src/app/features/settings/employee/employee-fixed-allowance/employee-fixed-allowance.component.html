@@ -6,102 +6,55 @@
       <mat-icon aria-hidden="true">payments</mat-icon>
       <span id="allowances-heading" class="panel-title">Fixed Allowances</span>
     </div>
+    <span class="selection-count">{{ selectedCount() }} selected</span>
   </div>
 
-  @if (allowances().length > 0) {
+  @if (rows().length > 0) {
     <div class="table-wrapper">
       <table aria-label="Fixed allowances">
         <thead>
           <tr>
+            <th scope="col" class="checkbox-col"></th>
             <th scope="col">Code</th>
             <th scope="col">Name</th>
             <th scope="col" class="amount-col">Amount</th>
-            <th scope="col" class="action-col"></th>
           </tr>
         </thead>
         <tbody>
-          @for (allowance of allowances(); track allowance.id; let i = $index) {
-            <tr [class.editing-row]="editingIndex() === i">
-              <td class="code-cell">{{ allowance.faCode }}</td>
-              <td>{{ allowance.faName }}</td>
+          @for (row of rows(); track row.faId) {
+            <tr [class.selected-row]="row.selected">
+              <td class="checkbox-col">
+                <mat-checkbox
+                  [checked]="row.selected"
+                  (change)="toggleSelected(row.faId, $event.checked)"
+                  [attr.aria-label]="'Assign ' + row.faName + ' to this employee'"
+                />
+              </td>
+              <td class="code-cell">{{ row.faCode }}</td>
+              <td>{{ row.faName }}</td>
               <td class="amount-cell">
-                @if (allowance.formulaCalculated) {
+                @if (row.formulaCalculated) {
                   <!-- Formula-calculated amounts are read-only -->
                   <span class="amount-value formula-amount">
-                    {{ allowance.amount | number:'1.2-2' }}
+                    {{ row.amount | number:'1.2-2' }}
                     <mat-icon
                       class="formula-icon"
                       aria-label="Amount calculated by formula — read-only"
                       matTooltip="Amount calculated by formula at load time. Reload allowances to recalculate."
                     >functions</mat-icon>
                   </span>
-                } @else if (!allowance.formulaEnabled) {
-                  @if (editingIndex() === i) {
-                    <mat-form-field appearance="outline" class="amount-field">
-                      <input
-                        matInput
-                        type="number"
-                        min="0"
-                        [formControl]="editAmountCtrl"
-                        [attr.aria-label]="'Edit amount for ' + allowance.faName"
-                      >
-                      @if (editAmountCtrl.hasError('required') && editAmountCtrl.touched) {
-                        <mat-error>Amount is required</mat-error>
-                      }
-                      @if (editAmountCtrl.hasError('min') && editAmountCtrl.touched) {
-                        <mat-error>Cannot be negative</mat-error>
-                      }
-                    </mat-form-field>
-                  } @else {
-                    <span class="amount-value">{{ allowance.amount | number:'1.2-2' }}</span>
-                  }
-                }
-              </td>
-              <td class="action-col">
-                @if (!allowance.formulaCalculated && !allowance.formulaEnabled) {
-                  @if (editingIndex() === i) {
-                    <button
-                      mat-icon-button
-                      type="button"
-                      color="primary"
-                      (click)="saveEdit(i)"
-                      [disabled]="saving()"
-                      [attr.aria-label]="'Save changes for ' + allowance.faName"
-                      matTooltip="Save"
+                } @else {
+                  <mat-form-field appearance="outline" class="amount-field">
+                    <input
+                      matInput
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      [ngModel]="row.amount"
+                      (ngModelChange)="updateAmount(row.faId, $event)"
+                      [attr.aria-label]="'Amount for ' + row.faName"
                     >
-                      <mat-icon>check</mat-icon>
-                    </button>
-                    <button
-                      mat-icon-button
-                      type="button"
-                      (click)="cancelEdit()"
-                      [disabled]="saving()"
-                      [attr.aria-label]="'Cancel editing ' + allowance.faName"
-                      matTooltip="Cancel"
-                    >
-                      <mat-icon>close</mat-icon>
-                    </button>
-                  } @else {
-                    <button
-                      mat-icon-button
-                      type="button"
-                      class="btn-edit"
-                      [disabled]="editingIndex() !== null"
-                      (click)="startEdit(i)"
-                      [attr.aria-label]="'Edit amount for ' + allowance.faName"
-                      matTooltip="Edit amount"
-                    >
-                      <mat-icon>edit</mat-icon>
-                    </button>
-                  }
-                }
-                @if (allowance.formulaCalculated) {
-                  <!-- Lock icon signals read-only for formula-calculated rows -->
-                  <mat-icon
-                    class="lock-icon"
-                    aria-hidden="true"
-                    matTooltip="Read-only: calculated by formula"
-                  >lock</mat-icon>
+                  </mat-form-field>
                 }
               </td>
             </tr>
@@ -109,15 +62,30 @@
         </tbody>
         <tfoot aria-live="polite" aria-atomic="true">
           <tr class="total-row">
-            <td colspan="2" class="total-label">Total Fixed Allowance</td>
+            <td colspan="3" class="total-label">Total Fixed Allowance</td>
             <td class="total-amount">{{ totalFixedAllowance() | number:'1.2-2' }}</td>
-            <td></td>
           </tr>
         </tfoot>
       </table>
     </div>
-  } @else {
-    <p class="empty-note">No fixed allowances found for this employee.</p>
+
+    <div class="save-bar">
+      <button
+        mat-flat-button
+        type="button"
+        color="primary"
+        [disabled]="saving()"
+        (click)="save()"
+      >
+        @if (saving()) {
+          Saving…
+        } @else {
+          Save Fixed Allowances
+        }
+      </button>
+    </div>
+  } @else if (!loading()) {
+    <p class="empty-note">No active fixed allowances are configured in the system.</p>
   }
 
 </section>

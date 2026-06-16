@@ -7,7 +7,6 @@ export interface LateDeductionConfigModel {
   workingHoursPerDay: number;
   isActive:           boolean;
   formula:            string | undefined;
-  formulaEnabled:     boolean;
   liableForEpf:       boolean;
   liableForEtf:       boolean;
   liableForPaye:      boolean;

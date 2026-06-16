@@ -7,7 +7,7 @@ import { GratuityConfigModel } from './gratuity-config.model';
 
 interface ApiGratuityConfig {
   id: number; code: string; name: string; description: string | null;
-  formula: string | null; formulaEnabled: boolean; isActive: boolean;
+  formula: string | null; isActive: boolean;
 }
 
 type ApiPayload = Omit<ApiGratuityConfig, 'id' | 'code'> & {
@@ -57,7 +57,6 @@ export class GratuityConfigService {
       name:           i.name,
       description:    i.description ?? undefined,
       formula:        i.formula ?? undefined,
-      formulaEnabled: i.formulaEnabled ?? false,
       isActive:       i.isActive,
     };
   }
@@ -67,7 +66,6 @@ export class GratuityConfigService {
       name:           data.name,
       description:    data.description ?? null,
       formula:        data.formula ?? null,
-      formulaEnabled: data.formulaEnabled ?? false,
       isActive:       data.isActive,
       createdBy:      1,
       modifiedBy:     1,

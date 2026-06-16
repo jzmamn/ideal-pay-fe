@@ -12,6 +12,7 @@ export interface JobCategory extends MasterEntity {
 }
 
 export interface Branch extends MasterEntity {
+  description?: string;
   location?: string;
 }
 
@@ -26,9 +27,13 @@ export interface Grade extends MasterEntity {
   description?: string;
 }
 
-export interface Department extends MasterEntity {}
+export interface Department extends MasterEntity {
+  description?: string;
+}
 
-export interface Designation extends MasterEntity {}
+export interface Designation extends MasterEntity {
+  description?: string;
+}
 
 export interface District extends MasterEntity {}
 
@@ -46,7 +51,6 @@ export interface NoPayDays extends MasterEntity {
   description?: string;
   liableNoPay?: boolean;
   formula?: string;
-  formulaEnabled?: boolean;
 }
 
 export interface Company extends MasterEntity {

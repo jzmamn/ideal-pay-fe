@@ -62,25 +62,22 @@ export class NopayDialog {
   });
 
   // ── Formula state ─────────────────────────────────────────────────────────
-  readonly formulaExpression = signal(this.row?.formula        ?? '');
-  readonly formulaIsActive   = signal(this.row?.formulaEnabled ?? false);
+  readonly formulaExpression = signal(this.row?.formula ?? '');
   readonly formulaSaving     = signal(false);
   readonly formulaSaveError  = signal<string | null>(null);
 
   private readonly latestFormula = signal<FormulaDefinitionFormValue>({
-    expression: this.row?.formula        ?? '',
-    isActive:   this.row?.formulaEnabled ?? false,
+    expression: this.row?.formula ?? '',
+    isActive:   true,
   });
 
   onFormulaValueChanged(value: FormulaDefinitionFormValue): void {
     this.latestFormula.set(value);
-    this.formulaIsActive.set(value.isActive);
   }
 
   onFormulaSaveRequested(value: FormulaDefinitionFormValue): void {
     this.latestFormula.set(value);
     this.formulaExpression.set(value.expression);
-    this.formulaIsActive.set(value.isActive);
   }
 
   onSave(): void {
@@ -97,7 +94,6 @@ export class NopayDialog {
       liableForEtf:   raw.liableForEtf!,
       liableForPaye:  raw.liableForPaye!,
       formula:        fv.expression || undefined,
-      formulaEnabled: fv.isActive,
     };
 
     if (this.isEdit) {

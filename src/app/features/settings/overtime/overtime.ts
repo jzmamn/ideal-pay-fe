@@ -28,7 +28,7 @@ export class Overtime implements OnInit {
       { key: 'code',           label: 'Code' },
       { key: 'name',           label: 'Name' },
       { key: 'isActive',       label: 'Active',  type: 'boolean' },
-      { key: 'formulaEnabled', label: 'Formula', type: 'icon', icon: 'functions', iconTooltip: 'Formula enabled', sortable: false },
+      { key: 'formula',        label: 'Formula', type: 'icon', icon: 'functions', iconTooltip: 'Formula configured', sortable: false },
     ],
   };
 
@@ -51,7 +51,8 @@ export class Overtime implements OnInit {
   private openDialog(row: OvertimeModel | null): void {
     this.dialog.open(OvertimeDialog, {
       panelClass: 'square-dialog',
-      width: '600px',
+      width: '900px',
+      maxWidth: '96vw',
       data: row,
     }).afterClosed().subscribe(saved => { if (saved) this.load(); });
   }

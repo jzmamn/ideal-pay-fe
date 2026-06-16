@@ -5,7 +5,6 @@ export class OvertimeModel {
   description: string | undefined;
   isActive: boolean;
   formula: string | undefined;
-  formulaEnabled: boolean;
   liableForEpf: boolean;
   liableForEtf: boolean;
   liableForPaye: boolean;
@@ -18,7 +17,6 @@ export class OvertimeModel {
     description: string | undefined,
     isActive: boolean,
     formula: string | undefined,
-    formulaEnabled: boolean,
     liableForEpf = true,
     liableForEtf = true,
     liableForPaye = true,
@@ -30,7 +28,6 @@ export class OvertimeModel {
     this.description    = description;
     this.isActive       = isActive;
     this.formula        = formula;
-    this.formulaEnabled = formulaEnabled;
     this.liableForEpf   = liableForEpf;
     this.liableForEtf   = liableForEtf;
     this.liableForPaye  = liableForPaye;

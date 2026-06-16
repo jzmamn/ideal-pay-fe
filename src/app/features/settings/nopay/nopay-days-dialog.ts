@@ -48,25 +48,22 @@ export class NopayDaysDialog {
   });
 
   // ── Formula state ──────────────────────────────────────────────────────────
-  readonly formulaExpression = signal(this.item?.formula        ?? '');
-  readonly formulaIsActive   = signal(this.item?.formulaEnabled ?? false);
+  readonly formulaExpression = signal(this.item?.formula ?? '');
   readonly formulaSaving     = signal(false);
   readonly formulaSaveError  = signal<string | null>(null);
 
   private readonly latestFormula = signal<FormulaDefinitionFormValue>({
-    expression: this.item?.formula        ?? '',
-    isActive:   this.item?.formulaEnabled ?? false,
+    expression: this.item?.formula ?? '',
+    isActive:   true,
   });
 
   onFormulaValueChanged(value: FormulaDefinitionFormValue): void {
     this.latestFormula.set(value);
-    this.formulaIsActive.set(value.isActive);
   }
 
   onFormulaSaveRequested(value: FormulaDefinitionFormValue): void {
     this.latestFormula.set(value);
     this.formulaExpression.set(value.expression);
-    this.formulaIsActive.set(value.isActive);
   }
 
   save(): void {
@@ -80,7 +77,6 @@ export class NopayDaysDialog {
       description:    v.description ?? undefined,
       isActive:       v.isActive!,
       formula:        fv.expression || undefined,
-      formulaEnabled: fv.isActive,
     };
     if (this.isEdit) {
       this.masterSvc.updateMaster('nopay', v.id!, dto).subscribe({
