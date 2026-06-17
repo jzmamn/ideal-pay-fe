@@ -12,6 +12,8 @@ export class DeductionModel {
   liableForPaye: boolean;
   liableNoPay: boolean;
   formula: string | undefined;
+  /** Variable Deductions only — whether this deduction reduces taxable income. Unused by Fixed Deductions. */
+  isTaxable: boolean;
 
   constructor(
     id: number,
@@ -25,6 +27,7 @@ export class DeductionModel {
     liableForPaye = false,
     liableNoPay = false,
     formula: string | undefined = undefined,
+    isTaxable = false,
   ) {
     this.id = id;
     this.code = code;
@@ -37,5 +40,6 @@ export class DeductionModel {
     this.liableForPaye = liableForPaye;
     this.liableNoPay = liableNoPay;
     this.formula = formula;
+    this.isTaxable = isTaxable;
   }
 }

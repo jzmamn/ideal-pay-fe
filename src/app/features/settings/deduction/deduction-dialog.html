@@ -35,6 +35,9 @@
     </mat-form-field>
 
     <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
+    @if (!isFixed) {
+      <mat-slide-toggle formControlName="isTaxable">Taxable</mat-slide-toggle>
+    }
 
     <mat-divider />
 

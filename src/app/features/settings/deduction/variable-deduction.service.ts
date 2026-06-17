@@ -19,6 +19,7 @@ interface ApiVariableDeduction {
   name: string;
   description: string | null;
   isActive: boolean;
+  isTaxable: boolean;
   liableForEpf: boolean;
   liableForEtf: boolean;
   liableForPaye: boolean;
@@ -32,7 +33,7 @@ interface ApiVariableDeduction {
 }
 
 type ApiVariableDeductionPayload = Pick<ApiVariableDeduction,
-  'name' | 'description' | 'isActive' |
+  'name' | 'description' | 'isActive' | 'isTaxable' |
   'liableForEpf' | 'liableForEtf' | 'liableForPaye' | 'liableNoPay' |
   'createdBy' | 'modifiedBy'
 >;
@@ -59,6 +60,7 @@ export class VariableDeductionService {
       name:          data.name,
       description:   data.description,
       isActive:      data.isActive,
+      isTaxable:     data.isTaxable,
       liableForEpf:  data.liableForEpf,
       liableForEtf:  data.liableForEtf,
       liableForPaye: data.liableForPaye,
@@ -76,6 +78,7 @@ export class VariableDeductionService {
       name:          data.name,
       description:   data.description,
       isActive:      data.isActive,
+      isTaxable:     data.isTaxable,
       liableForEpf:  data.liableForEpf,
       liableForEtf:  data.liableForEtf,
       liableForPaye: data.liableForPaye,
@@ -102,6 +105,8 @@ export class VariableDeductionService {
       item.liableForEtf,
       item.liableForPaye,
       item.liableNoPay,
+      undefined,
+      item.isTaxable,
     );
   }
 }

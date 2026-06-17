@@ -33,7 +33,7 @@ interface ApiVariableAllowance {
 }
 
 type ApiVariableAllowancePayload = Pick<ApiVariableAllowance,
-  'name' | 'description' | 'isActive' |
+  'name' | 'description' | 'isActive' | 'isTaxable' |
   'liableForEpf' | 'liableForEtf' | 'liableForPaye' | 'liableNoPay' |
   'createdBy' | 'modifiedBy'
 >;
@@ -60,6 +60,7 @@ export class VariableAllowanceService {
       name:          data.name,
       description:   data.description,
       isActive:      data.isActive,
+      isTaxable:     data.isTaxable,
       liableForEpf:  data.liableForEpf,
       liableForEtf:  data.liableForEtf,
       liableForPaye: data.liableForPaye,
@@ -77,6 +78,7 @@ export class VariableAllowanceService {
       name:          data.name,
       description:   data.description,
       isActive:      data.isActive,
+      isTaxable:     data.isTaxable,
       liableForEpf:  data.liableForEpf,
       liableForEtf:  data.liableForEtf,
       liableForPaye: data.liableForPaye,
@@ -103,6 +105,8 @@ export class VariableAllowanceService {
       item.liableForPaye,
       item.liableNoPay,
       AllowanceType.VARIABLE,
+      undefined,
+      item.isTaxable,
     );
   }
 }

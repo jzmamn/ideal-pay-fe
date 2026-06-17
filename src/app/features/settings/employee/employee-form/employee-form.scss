@@ -159,6 +159,12 @@ mat-expansion-panel {
 
 .basic-salary-field {
   width: 220px;
+
+  ::ng-deep .mdc-text-field__input {
+    font-weight: 700;
+    color: #1d4ed8;
+    text-align: right;
+  }
 }
 
 .allowances-section {

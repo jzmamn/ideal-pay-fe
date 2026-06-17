@@ -6,8 +6,7 @@ export interface EmployeeFixedDeductionRequest {
   payrollMonth: string;
   isProcessed?: boolean;
   processedDate?: string;
-  createdBy: number;
-  modifiedBy: number;
+  // createdBy / modifiedBy are resolved server-side from the logged-in user
 }
 
 /** One row in the Employee → Salary Tab → Fixed Deduction checkbox grid selection payload. */
@@ -23,8 +22,7 @@ export interface EmployeeFixedDeductionSelection {
  */
 export interface EmployeeFixedDeductionAssignRequest {
   payrollMonth: string;
-  createdBy: number;
-  modifiedBy: number;
+  // createdBy / modifiedBy are resolved server-side from the logged-in user
   selections: EmployeeFixedDeductionSelection[];
 }
 
@@ -59,4 +57,19 @@ export interface EmployeeFixedDeductionResponse {
   modifiedByCode: string;
   modifiedByUserName: string;
   modifiedDate: string;
+}
+
+/**
+ * Result of evaluating a Fixed Deduction's formula for one employee (zero when no formula is
+ * configured — Fixed Deductions have no static fallback amount). Returned by the
+ * "preview-amount" endpoint, called the instant a checkbox is checked in the
+ * Employee → Salary Tab → Fixed Deduction grid.
+ */
+export interface EmployeeFixedDeductionPreviewResult {
+  expression: string;
+  /** The computed amount. Null when evaluation failed (see technicalError/userFriendlyError). */
+  result: number | null;
+  context: Record<string, unknown>;
+  technicalError?: string;
+  userFriendlyError?: string;
 }

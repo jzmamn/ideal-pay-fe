@@ -10,56 +10,37 @@ import {
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { EmployeeProfileService } from '../employee-profile.service';
 import { EmployeeFixedDeductionAssignRequest } from './employee-fixed-deduction.model';
+import { EmployeeFixedDeductionService } from './employee-fixed-deduction.service';
 
-/** One row of the Employee → Salary Tab → Fixed Deduction checkbox grid (local editable state). */
 interface DeductionRow {
   fdId: number;
   fdCode: string;
   fdName: string;
-  formulaCalculated: boolean;
   selected: boolean;
   amount: number;
 }
 
-/**
- * Employee → Salary Tab → Fixed Deduction checkbox grid.
- *
- * Fixed Deductions are never automatically assigned to an employee — the user must
- * explicitly check a deduction for it to be saved to `emp_fd`. Unchecking a previously
- * assigned deduction and saving removes its `emp_fd` record for this employee/month.
- * Amounts derived from a formula (`formulaCalculated`) remain read-only, matching the
- * existing behaviour for formula-driven amounts.
- */
 @Component({
   selector: 'app-employee-deductions',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DecimalPipe,
-    FormsModule,
-    MatButtonModule,
     MatCheckboxModule,
     MatDividerModule,
-    MatFormFieldModule,
     MatIconModule,
-    MatInputModule,
-    MatTooltipModule,
   ],
   templateUrl: './employee-fixed-deduction.component.html',
   styleUrl: './employee-fixed-deduction.component.scss',
 })
 export class EmployeeDeductions {
   private readonly profileSvc = inject(EmployeeProfileService);
+  private readonly empFdSvc   = inject(EmployeeFixedDeductionService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly snackBar   = inject(MatSnackBar);
 
@@ -69,7 +50,6 @@ export class EmployeeDeductions {
   readonly loading = signal(false);
   readonly saving  = signal(false);
 
-  /** No payroll-period selector exists on this screen — assignments are read/written against the current calendar month. */
   private readonly today = new Date();
   readonly payrollMonth = `${this.today.getFullYear()}-${String(this.today.getMonth() + 1).padStart(2, '0')}`;
 
@@ -97,12 +77,11 @@ export class EmployeeDeductions {
       .subscribe({
         next: profile => {
           this.rows.set(profile.fixedDeductions.map(d => ({
-            fdId:              d.fdId,
-            fdCode:            d.fdCode,
-            fdName:            d.fdName,
-            formulaCalculated: d.formulaCalculated,
-            selected:          d.isAssigned,
-            amount:            d.amount ?? 0,
+            fdId:     d.fdId,
+            fdCode:   d.fdCode,
+            fdName:   d.fdName,
+            selected: d.isAssigned,
+            amount:   d.amount ?? 0,
           })));
           this.loading.set(false);
         },
@@ -111,15 +90,42 @@ export class EmployeeDeductions {
   }
 
   toggleSelected(fdId: number, selected: boolean): void {
+    // Reflect the checkbox state immediately.
     this.rows.update(list =>
       list.map(r => r.fdId === fdId ? { ...r, selected } : r)
     );
-  }
 
-  updateAmount(fdId: number, value: number | null): void {
-    this.rows.update(list =>
-      list.map(r => r.fdId === fdId ? { ...r, amount: value ?? 0 } : r)
-    );
+    if (!selected) {
+      // Unchecked: zero out the amount right away, no formula evaluation needed.
+      this.rows.update(list =>
+        list.map(r => r.fdId === fdId ? { ...r, amount: 0 } : r)
+      );
+      return;
+    }
+
+    // Checked: ask the server to evaluate the deduction's formula for this employee
+    // (zero when no formula is configured), and populate the row's amount with the result.
+    const empId = this.empId();
+    if (empId == null) return;
+
+    this.empFdSvc.previewAmount(empId, fdId, this.payrollMonth)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: preview => {
+          this.rows.update(list =>
+            list.map(r => r.fdId === fdId ? { ...r, amount: preview.result ?? 0 } : r)
+          );
+          if (preview.userFriendlyError) {
+            this.snackBar.open(preview.userFriendlyError, 'Close', { duration: 3500 });
+          }
+        },
+        error: () => {
+          this.rows.update(list =>
+            list.map(r => r.fdId === fdId ? { ...r, amount: 0 } : r)
+          );
+          this.snackBar.open('Could not calculate the deduction amount.', 'Close', { duration: 3000 });
+        },
+      });
   }
 
   save(): void {
@@ -128,8 +134,6 @@ export class EmployeeDeductions {
 
     const payload: EmployeeFixedDeductionAssignRequest = {
       payrollMonth: this.payrollMonth,
-      createdBy:    1,
-      modifiedBy:   1,
       selections: this.rows()
         .filter(r => r.selected)
         .map(r => ({ fdId: r.fdId, amount: r.amount || 0 })),

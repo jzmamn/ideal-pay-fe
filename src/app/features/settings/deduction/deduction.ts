@@ -116,7 +116,7 @@ export class Deduction implements OnInit {
           const updated = new DeductionModel(
             d.id, d.code, d.name, d.description, d.isActive, type,
             d.liableForEpf, d.liableForEtf, d.liableForPaye, d.liableNoPay,
-            d.formula,
+            d.formula, d.isTaxable,
           );
           this.allDeductions.update(list => list.map(x => x.id === updated.id ? updated : x));
         });

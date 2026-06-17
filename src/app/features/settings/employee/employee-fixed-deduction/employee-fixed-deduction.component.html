@@ -33,29 +33,7 @@
               <td class="code-cell">{{ row.fdCode }}</td>
               <td>{{ row.fdName }}</td>
               <td class="amount-cell">
-                @if (row.formulaCalculated) {
-                  <!-- Formula-calculated amounts are read-only -->
-                  <span class="amount-value formula-amount">
-                    {{ row.amount | number:'1.2-2' }}
-                    <mat-icon
-                      class="formula-icon"
-                      aria-label="Amount calculated by formula — read-only"
-                      matTooltip="Amount calculated by formula at load time. Reload deductions to recalculate."
-                    >functions</mat-icon>
-                  </span>
-                } @else {
-                  <mat-form-field appearance="outline" class="amount-field">
-                    <input
-                      matInput
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      [ngModel]="row.amount"
-                      (ngModelChange)="updateAmount(row.fdId, $event)"
-                      [attr.aria-label]="'Amount for ' + row.fdName"
-                    >
-                  </mat-form-field>
-                }
+                <span class="amount-value">{{ row.amount | number:'1.2-2' }}</span>
               </td>
             </tr>
           }
@@ -69,21 +47,6 @@
       </table>
     </div>
 
-    <div class="save-bar">
-      <button
-        mat-flat-button
-        type="button"
-        color="primary"
-        [disabled]="saving()"
-        (click)="save()"
-      >
-        @if (saving()) {
-          Saving…
-        } @else {
-          Save Fixed Deductions
-        }
-      </button>
-    </div>
   } @else if (!loading()) {
     <p class="empty-note">No active fixed deductions are configured in the system.</p>
   }

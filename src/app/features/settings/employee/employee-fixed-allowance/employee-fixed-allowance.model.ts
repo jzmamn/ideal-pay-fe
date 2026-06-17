@@ -6,8 +6,7 @@ export interface EmployeeFixedAllowanceRequest {
   payrollMonth: string;
   isProcessed?: boolean;
   processedDate?: string;
-  createdBy: number;
-  modifiedBy: number;
+  // createdBy / modifiedBy are resolved server-side from the logged-in user
 }
 
 /** One row in the Employee → Salary Tab → Fixed Allowance checkbox grid selection payload. */
@@ -23,8 +22,7 @@ export interface EmployeeFixedAllowanceSelection {
  */
 export interface EmployeeFixedAllowanceAssignRequest {
   payrollMonth: string;
-  createdBy: number;
-  modifiedBy: number;
+  // createdBy / modifiedBy are resolved server-side from the logged-in user
   selections: EmployeeFixedAllowanceSelection[];
 }
 
@@ -58,4 +56,18 @@ export interface EmployeeFixedAllowanceResponse {
 
   /** Set when the row was created via file import; null for manually entered rows. */
   importLogId: number | null;
+}
+
+/**
+ * Result of evaluating a Fixed Allowance's formula (or its static fallback amount) for one
+ * employee. Returned by the "preview-amount" endpoint, called the instant a checkbox is checked
+ * in the Employee → Salary Tab → Fixed Allowance grid.
+ */
+export interface EmployeeFixedAllowancePreviewResult {
+  expression: string;
+  /** The computed amount. Null when evaluation failed (see technicalError/userFriendlyError). */
+  result: number | null;
+  context: Record<string, unknown>;
+  technicalError?: string;
+  userFriendlyError?: string;
 }

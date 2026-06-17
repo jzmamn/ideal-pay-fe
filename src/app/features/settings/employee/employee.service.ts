@@ -45,8 +45,10 @@ export class EmployeeService {
     );
   }
 
-  update(id: number, data: EmployeeRequest): Observable<void> {
-    return this.http.put<void>(`${this.baseUrl}/${id}`, data);
+  update(id: number, data: EmployeeRequest): Observable<EmployeeResponse> {
+    return this.http.put<ApiResponse<EmployeeResponse>>(`${this.baseUrl}/${id}`, data).pipe(
+      map(res => res.data),
+    );
   }
 
   delete(id: number): Observable<void> {

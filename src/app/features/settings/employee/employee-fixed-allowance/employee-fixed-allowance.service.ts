@@ -1,10 +1,14 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, Subject, catchError, map, of, switchMap } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { API_BASE_URL } from '../../../../api-url.token';
 import { ApiResponse } from '../../../../shared/models/api-response.model';
-import { EmployeeFixedAllowanceRequest, EmployeeFixedAllowanceResponse } from './employee-fixed-allowance.model';
+import {
+  EmployeeFixedAllowancePreviewResult,
+  EmployeeFixedAllowanceRequest,
+  EmployeeFixedAllowanceResponse,
+} from './employee-fixed-allowance.model';
 
 @Injectable({ providedIn: 'root' })
 export class EmployeeFixedAllowanceService {
@@ -63,5 +67,18 @@ export class EmployeeFixedAllowanceService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
+  /**
+   * Employee → Salary Tab → Fixed Allowance checkbox grid: computes the amount this employee
+   * would receive for the given Fixed Allowance (formula evaluated server-side against the
+   * employee's basicSalary + the payroll month's working days, or the static fallback amount).
+   * Called the instant a row's checkbox is checked.
+   */
+  previewAmount(empId: number, faId: number, payrollMonth: string): Observable<EmployeeFixedAllowancePreviewResult> {
+    const params = new HttpParams().set('faId', faId).set('payrollMonth', payrollMonth);
+    return this.http
+      .get<ApiResponse<EmployeeFixedAllowancePreviewResult>>(`${this.baseUrl}/employee/${empId}/preview-amount`, { params })
+      .pipe(map(res => res.data));
   }
 }

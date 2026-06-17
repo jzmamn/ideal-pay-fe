@@ -12,6 +12,8 @@ export class AllowanceModel {
   liableNoPay: boolean;
   type: AllowanceType;
   formula: string | undefined;
+  /** Variable Allowances only — whether this allowance is taxable income. Unused by Fixed Allowances. */
+  isTaxable: boolean;
 
   constructor(
     id: number,
@@ -25,6 +27,7 @@ export class AllowanceModel {
     liableNoPay: boolean,
     type = AllowanceType.FIXED,
     formula: string | undefined = undefined,
+    isTaxable = false,
   ) {
     this.id = id;
     this.code = code;
@@ -37,5 +40,6 @@ export class AllowanceModel {
     this.liableNoPay = liableNoPay;
     this.type = type;
     this.formula = formula;
+    this.isTaxable = isTaxable;
   }
 }

@@ -1,7 +1,7 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, BehaviorSubject, throwError } from 'rxjs';
+import { Observable, BehaviorSubject, throwError, of } from 'rxjs';
 import { tap, catchError, map } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { API_BASE_URL } from '../api-url.token';
@@ -51,7 +51,7 @@ export class AuthService {
         map(res => res.success),
         catchError(() => {
           this.isLoggedIn$.next(false);
-          return throwError(() => new Error('Invalid credentials'));
+          return of(false);
         }),
       );
   }

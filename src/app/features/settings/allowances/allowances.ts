@@ -118,7 +118,7 @@ export class Allowances implements OnInit {
             result.data.isActive,
             result.data.liableForEpf, result.data.liableForEtf, result.data.liableForPaye,
             result.data.liableNoPay, type,
-            result.data.formula,
+            result.data.formula, result.data.isTaxable,
           );
           this.allAllowances.update(list => list.map(a => a.id === updated.id ? updated : a));
         });

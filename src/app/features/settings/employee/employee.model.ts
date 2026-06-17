@@ -37,8 +37,7 @@ export interface EmployeeRequest {
   contactPerson?: string;
   cpAddress?: string;
   cpContactNumber?: string;
-  createdBy: number;
-  modifiedBy: number;
+  // createdBy / modifiedBy are resolved server-side from the logged-in user
 }
 
 export interface EmployeeResponse {

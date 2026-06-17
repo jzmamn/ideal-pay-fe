@@ -1,10 +1,14 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, Subject, catchError, map, of, switchMap } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { API_BASE_URL } from '../../../../api-url.token';
 import { ApiResponse } from '../../../../shared/models/api-response.model';
-import { EmployeeFixedDeductionRequest, EmployeeFixedDeductionResponse } from './employee-fixed-deduction.model';
+import {
+  EmployeeFixedDeductionPreviewResult,
+  EmployeeFixedDeductionRequest,
+  EmployeeFixedDeductionResponse,
+} from './employee-fixed-deduction.model';
 
 @Injectable({ providedIn: 'root' })
 export class EmployeeFixedDeductionService {
@@ -63,5 +67,18 @@ export class EmployeeFixedDeductionService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
+  /**
+   * Employee → Salary Tab → Fixed Deduction checkbox grid: computes the amount this employee
+   * would owe for the given Fixed Deduction (formula evaluated server-side against the
+   * employee's basicSalary + the payroll month's working days; zero when no formula is
+   * configured). Called the instant a row's checkbox is checked.
+   */
+  previewAmount(empId: number, fdId: number, payrollMonth: string): Observable<EmployeeFixedDeductionPreviewResult> {
+    const params = new HttpParams().set('fdId', fdId).set('payrollMonth', payrollMonth);
+    return this.http
+      .get<ApiResponse<EmployeeFixedDeductionPreviewResult>>(`${this.baseUrl}/employee/${empId}/preview-amount`, { params })
+      .pipe(map(res => res.data));
   }
 }

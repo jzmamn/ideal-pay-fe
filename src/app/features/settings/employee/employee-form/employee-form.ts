@@ -6,6 +6,7 @@ import {
   effect,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -31,6 +32,7 @@ import { SearchableDropdown } from '../../../../shared/components/searchable-dro
 import { CountrySelect } from '../../../../shared/components/country-select/country-select';
 import { EmployeeAllowances } from '../employee-fixed-allowance/employee-fixed-allowance.component';
 import { EmployeeDeductions } from '../employee-fixed-deduction/employee-fixed-deduction.component';
+import { NumericFormatDirective } from '../../../../shared/directives/numeric-format.directive';
 
 const DATE_FORMATS: MatDateFormats = {
   parse: { dateInput: { year: 'numeric', month: 'numeric', day: 'numeric' } },
@@ -83,6 +85,7 @@ function orUndef(s: string): string | undefined {
     CountrySelect,
     EmployeeAllowances,
     EmployeeDeductions,
+    NumericFormatDirective,
   ],
   templateUrl: './employee-form.html',
   styleUrl: './employee-form.scss',
@@ -95,6 +98,9 @@ export class EmployeeForm {
   readonly service          = inject(EmployeeService);
   readonly masterSvc        = inject(MasterDataService);
   private readonly bankBranchSvc = inject(BankBranchService);
+
+  private readonly allowancesComp = viewChild(EmployeeAllowances);
+  private readonly deductionsComp = viewChild(EmployeeDeductions);
 
   readonly isEditMode           = computed(() => !!this.service.selected());
   readonly empId                = computed(() => this.service.selected()?.id ?? null);
@@ -323,6 +329,11 @@ export class EmployeeForm {
   }
 
   save(): void {
+    if (this.empId() != null) {
+      this.allowancesComp()?.save();
+      this.deductionsComp()?.save();
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.navigateToFirstInvalidTab();
@@ -372,14 +383,12 @@ export class EmployeeForm {
       contactPerson:   orUndef(v.contactPerson ?? ''),
       cpAddress:       orUndef(v.cpAddress ?? ''),
       cpContactNumber: orUndef(v.cpContactNumber ?? ''),
-
-      createdBy:  1,
-      modifiedBy: 1,
     };
 
     if (existing) {
       this.service.update(existing.id, payload).subscribe({
-        next: () => {
+        next: (updated: EmployeeResponse) => {
+          this.service.select(updated);
           this.service.reload();
           this.router.navigate(['/employee/info']);
         },

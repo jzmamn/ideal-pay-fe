@@ -254,9 +254,9 @@
         <div class="tab-content salary-section">
 
           <div class="form-grid">
-            <mat-form-field appearance="outline">
+            <mat-form-field appearance="outline" class="basic-salary-field">
               <mat-label>Basic Salary</mat-label>
-              <input matInput formControlName="basicSalary" type="number" min="0">
+              <input matInput formControlName="basicSalary" numericFormat>
               @if (form.get('basicSalary')?.hasError('required') && form.get('basicSalary')?.touched) {
                 <mat-error>Required</mat-error>
               }
@@ -283,6 +283,7 @@
             [selectedIndex]="selectedSalaryTabIndex()"
             (selectedIndexChange)="selectedSalaryTabIndex.set($event)"
             animationDuration="200ms"
+            preserveContent
           >
 
             <!-- Sub-tab: Fixed Allowances -->
