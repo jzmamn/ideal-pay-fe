@@ -69,6 +69,13 @@
   --mat-form-field-container-vertical-padding: 6px;
 }
 
+.ot-type-filter {
+  width: 180px;
+  --mdc-outlined-text-field-container-height: 32px;
+  --mat-form-field-container-height: 32px;
+  --mat-form-field-container-vertical-padding: 4px;
+}
+
 // ── Loading bar ───────────────────────────────────────────────────────────
 .loading-bar {
   display: flex; align-items: center; gap: 8px;
@@ -107,6 +114,26 @@ $toolbar-h: 40px;
   overflow: auto;
   max-height: calc(100vh - 300px);
   min-height: 200px;
+}
+
+// ── Pivot tab wrapper (Variable Allowance / Variable Deduction) ──────────
+.pivot-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+// ── Per-tab draft-save footer ──────────────────────────────────────────────
+.section-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 10px 20px;
+  border-top: 1px solid #e2e8f0;
+  background: #fff;
+  flex-shrink: 0;
+
+  .status-banner { margin-right: auto; }
 }
 
 // ── Toolbar ───────────────────────────────────────────────────────────────

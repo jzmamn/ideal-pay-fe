@@ -127,13 +127,44 @@
 
     <!-- ── Variable Allowances ────────────────────────────────────────── -->
     <mat-tab label="Variable Allowance">
-      <app-pivot
-        [codes]="namesFor('varAlw')"
-        [rows]="pivotRows()"
-        [amounts]="matrices()['varAlw']"
-        label="Variable Allowance"
-        (amountChange)="onAmountChange('varAlw', $event)">
-      </app-pivot>
+      <div class="pivot-wrapper">
+        <app-pivot
+          [codes]="namesFor('varAlw')"
+          [rows]="pivotRows()"
+          [amounts]="matrices()['varAlw']"
+          label="Variable Allowance"
+          (amountChange)="onAmountChange('varAlw', $event)">
+        </app-pivot>
+
+        <div class="section-footer">
+          @if (sectionSaved('varAlw')) {
+            <div class="status-banner status-banner--success" role="status" aria-live="polite">
+              <mat-icon>check_circle</mat-icon>
+              <span>Variable Allowance saved as draft.</span>
+            </div>
+          }
+          @if (sectionError('varAlw')) {
+            <div class="status-banner status-banner--error" role="alert">
+              <mat-icon>error_outline</mat-icon>
+              <span>{{ sectionError('varAlw') }}</span>
+            </div>
+          }
+          <button mat-flat-button
+                  [disabled]="isSectionSaving('varAlw') || periodForm.invalid"
+                  (click)="saveVarAlwDraft()"
+                  aria-label="Save Variable Allowance as draft">
+            <span class="btn-content">
+              @if (isSectionSaving('varAlw')) {
+                <mat-spinner diameter="16" />
+                <span>Saving…</span>
+              } @else {
+                <mat-icon>save</mat-icon>
+                <span>Save</span>
+              }
+            </span>
+          </button>
+        </div>
+      </div>
     </mat-tab>
 
     <!-- ── Overtime (flat: rate read-only, hours editable, amount auto) ─ -->
@@ -142,6 +173,17 @@
         <div class="table-toolbar">
           <div class="table-toolbar-left">
             <span class="table-label">Overtime</span>
+            <div class="toolbar-sep" aria-hidden="true"></div>
+            <mat-form-field appearance="outline" class="ot-type-filter" subscriptSizing="dynamic">
+              <mat-select [value]="otTypeFilter()"
+                          (selectionChange)="otTypeFilter.set($event.value)"
+                          aria-label="Filter by overtime type">
+                <mat-option value="">All Types</mat-option>
+                @for (ot of otTypeOptions(); track ot.id) {
+                  <mat-option [value]="ot.code">{{ ot.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
             <div class="toolbar-sep" aria-hidden="true"></div>
             <div class="search-field">
               <mat-icon class="search-icon">search</mat-icon>
@@ -157,7 +199,7 @@
               }
             </div>
             <span class="filter-count" aria-live="polite">
-              @if (otFilter()) { {{ filteredOtRows().length }} / {{ otRowsCount() }} }
+              @if (otFilter() || otTypeFilter()) { {{ filteredOtRows().length }} / {{ otRowsCount() }} }
             </span>
           </div>
           <div class="table-toolbar-right">
@@ -230,6 +272,35 @@
             </tr>
           </tfoot>
         </table>
+
+        <div class="section-footer">
+          @if (sectionSaved('OT')) {
+            <div class="status-banner status-banner--success" role="status" aria-live="polite">
+              <mat-icon>check_circle</mat-icon>
+              <span>Overtime saved as draft.</span>
+            </div>
+          }
+          @if (sectionError('OT')) {
+            <div class="status-banner status-banner--error" role="alert">
+              <mat-icon>error_outline</mat-icon>
+              <span>{{ sectionError('OT') }}</span>
+            </div>
+          }
+          <button mat-flat-button
+                  [disabled]="isSectionSaving('OT') || periodForm.invalid"
+                  (click)="saveOtDraft()"
+                  aria-label="Save Overtime as draft">
+            <span class="btn-content">
+              @if (isSectionSaving('OT')) {
+                <mat-spinner diameter="16" />
+                <span>Saving…</span>
+              } @else {
+                <mat-icon>save</mat-icon>
+                <span>Save</span>
+              }
+            </span>
+          </button>
+        </div>
       </div>
     </mat-tab>
 
@@ -247,13 +318,44 @@
 
     <!-- ── Variable Deductions ────────────────────────────────────────── -->
     <mat-tab label="Variable Deduction">
-      <app-pivot
-        [codes]="namesFor('varDed')"
-        [rows]="pivotRows()"
-        [amounts]="matrices()['varDed']"
-        label="Variable Deduction"
-        (amountChange)="onAmountChange('varDed', $event)">
-      </app-pivot>
+      <div class="pivot-wrapper">
+        <app-pivot
+          [codes]="namesFor('varDed')"
+          [rows]="pivotRows()"
+          [amounts]="matrices()['varDed']"
+          label="Variable Deduction"
+          (amountChange)="onAmountChange('varDed', $event)">
+        </app-pivot>
+
+        <div class="section-footer">
+          @if (sectionSaved('varDed')) {
+            <div class="status-banner status-banner--success" role="status" aria-live="polite">
+              <mat-icon>check_circle</mat-icon>
+              <span>Variable Deduction saved as draft.</span>
+            </div>
+          }
+          @if (sectionError('varDed')) {
+            <div class="status-banner status-banner--error" role="alert">
+              <mat-icon>error_outline</mat-icon>
+              <span>{{ sectionError('varDed') }}</span>
+            </div>
+          }
+          <button mat-flat-button
+                  [disabled]="isSectionSaving('varDed') || periodForm.invalid"
+                  (click)="saveVarDedDraft()"
+                  aria-label="Save Variable Deduction as draft">
+            <span class="btn-content">
+              @if (isSectionSaving('varDed')) {
+                <mat-spinner diameter="16" />
+                <span>Saving…</span>
+              } @else {
+                <mat-icon>save</mat-icon>
+                <span>Save</span>
+              }
+            </span>
+          </button>
+        </div>
+      </div>
     </mat-tab>
 
     <!-- ── NoPay (rate read-only, days editable, amount auto-computed) ── -->
@@ -350,6 +452,35 @@
             </tr>
           </tfoot>
         </table>
+
+        <div class="section-footer">
+          @if (sectionSaved('NOPAY')) {
+            <div class="status-banner status-banner--success" role="status" aria-live="polite">
+              <mat-icon>check_circle</mat-icon>
+              <span>NoPay saved as draft.</span>
+            </div>
+          }
+          @if (sectionError('NOPAY')) {
+            <div class="status-banner status-banner--error" role="alert">
+              <mat-icon>error_outline</mat-icon>
+              <span>{{ sectionError('NOPAY') }}</span>
+            </div>
+          }
+          <button mat-flat-button
+                  [disabled]="isSectionSaving('NOPAY') || periodForm.invalid"
+                  (click)="saveNopayDraft()"
+                  aria-label="Save NoPay as draft">
+            <span class="btn-content">
+              @if (isSectionSaving('NOPAY')) {
+                <mat-spinner diameter="16" />
+                <span>Saving…</span>
+              } @else {
+                <mat-icon>save</mat-icon>
+                <span>Save</span>
+              }
+            </span>
+          </button>
+        </div>
       </div>
     </mat-tab>
 
@@ -453,6 +584,35 @@
             </tr>
           </tfoot>
         </table>
+
+        <div class="section-footer">
+          @if (sectionSaved('LATE')) {
+            <div class="status-banner status-banner--success" role="status" aria-live="polite">
+              <mat-icon>check_circle</mat-icon>
+              <span>Late Deduction saved as draft.</span>
+            </div>
+          }
+          @if (sectionError('LATE')) {
+            <div class="status-banner status-banner--error" role="alert">
+              <mat-icon>error_outline</mat-icon>
+              <span>{{ sectionError('LATE') }}</span>
+            </div>
+          }
+          <button mat-flat-button
+                  [disabled]="isSectionSaving('LATE') || periodForm.invalid"
+                  (click)="saveLateDraft()"
+                  aria-label="Save Late Deduction as draft">
+            <span class="btn-content">
+              @if (isSectionSaving('LATE')) {
+                <mat-spinner diameter="16" />
+                <span>Saving…</span>
+              } @else {
+                <mat-icon>save</mat-icon>
+                <span>Save</span>
+              }
+            </span>
+          </button>
+        </div>
       </div>
     </mat-tab>
 

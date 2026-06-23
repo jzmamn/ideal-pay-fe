@@ -20,6 +20,8 @@ import { PivotComponent, PivotAmountChange } from '../../../shared/components/pi
 import { PayrollRunService } from '../shared/payroll-run.service';
 import { PayrollRunSummary } from '../shared/payroll-run.model';
 import { PayrollDraftViewComponent } from '../shared/payroll-draft-view/payroll-draft-view';
+import { OvertimeService } from '../../settings/overtime/overtime.service';
+import { OvertimeModel } from '../../settings/overtime/overtime.model';
 
 // ── Constants ─────────────────────────────────────────────────────────────
 
@@ -166,10 +168,18 @@ function buildCodePivotFlatRows(
     const payrollName = String(row['payroll_name'] || `${row['first_name'] ?? ''} ${row['last_name'] ?? ''}`.trim());
 
     for (const code of codes) {
-      const rate   = Number(row[`${code}_rate`]   ?? 0);
-      const qty    = Number(row[`${code}${qtyKey}`] ?? 0);
-      const amount = Number(row[`${code}_amount`] ?? 0);
-      const label  = String(row[`${code}_label`]  ?? code);
+      // `row` has already been lowercased by normalisedRow(); component codes
+      // (e.g. "OT001", "OT_12") are backend-generated and frequently contain
+      // uppercase letters, so the lookup key must be lowercased too — otherwise
+      // every `{code}_rate` / `{code}${qtyKey}` / `{code}_amount` lookup silently
+      // misses and falls back to 0 (rate is hit hardest since it's the only
+      // read-only/system value here; hours and amount get masked because the
+      // user re-enters them anyway).
+      const lookupCode = code.toLowerCase();
+      const rate   = Number(row[`${lookupCode}_rate`]   ?? 0);
+      const qty    = Number(row[`${lookupCode}${qtyKey}`] ?? 0);
+      const amount = Number(row[`${lookupCode}_amount`] ?? 0);
+      const label  = String(row[`${lookupCode}_label`]  ?? code);
       result.push({ empId, employeeNo, payrollName, code, label, rate, qty, amount });
     }
   }
@@ -257,6 +267,7 @@ export class BatchComponent {
   private readonly fb            = inject(FormBuilder);
   private readonly batchSvc      = inject(BatchService);
   private readonly payrollRunSvc = inject(PayrollRunService);
+  private readonly overtimeSvc   = inject(OvertimeService);
   private readonly destroyRef    = inject(DestroyRef);
 
   readonly SUB_STEPS = SECTION_CONFIG;
@@ -300,6 +311,11 @@ export class BatchComponent {
   readonly draftReadOnly = signal(false);
   readonly draftRuns     = signal<PayrollRunSummary[]>([]);
 
+  // Per-tab draft save state, keyed by section: 'varAlw' | 'varDed' | 'OT' | 'NOPAY' | 'LATE'
+  readonly sectionSaving      = signal<Record<string, boolean>>({});
+  readonly sectionSaveError   = signal<Record<string, string | null>>({});
+  readonly sectionSaveSuccess = signal<Record<string, boolean>>({});
+
   private readonly _employees   = signal<BatchEmployee[]>([]);
   private readonly _matrices    = signal<Record<string, AmountMatrix>>({});
   private readonly _labelToCode = signal<Record<string, Record<string, string>>>({});
@@ -308,6 +324,10 @@ export class BatchComponent {
   // ── OT table state ─────────────────────────────────────────────────────
   private readonly _otRows   = signal<OtFlatRow[]>([]);
   readonly otFilter          = signal('');
+  /** Selected overtime type code to filter the table by. Empty = all types. */
+  readonly otTypeFilter      = signal('');
+  /** Active overtime types only — populates the OT type filter dropdown. */
+  readonly otTypeOptions     = signal<OvertimeModel[]>([]);
   readonly otEditCtrl        = this.fb.nonNullable.control(0);
   private readonly _otEditCell = signal<{ idx: number } | null>(null);
 
@@ -348,10 +368,14 @@ export class BatchComponent {
   readonly matrices = computed(() => this._matrices());
 
   readonly filteredOtRows = computed(() => {
-    const f = this.otFilter().toLowerCase().trim();
+    const f      = this.otFilter().toLowerCase().trim();
+    const otType = this.otTypeFilter();
     return this._otRows()
       .map((row, idx) => ({ row, idx }))
-      .filter(({ row }) => !f || row.payrollName.toLowerCase().includes(f) || row.employeeNo.toLowerCase().includes(f));
+      .filter(({ row }) =>
+        (!otType || row.otCode === otType) &&
+        (!f || row.payrollName.toLowerCase().includes(f) || row.employeeNo.toLowerCase().includes(f))
+      );
   });
   readonly otRowsCount   = computed(() => this._otRows().length);
   readonly otHoursTotal  = computed(() => this._otRows().reduce((s, r) => s + r.hours, 0));
@@ -434,6 +458,7 @@ export class BatchComponent {
 
   constructor() {
     this._loadValues();
+    this._loadOvertimeTypes();
   }
 
   // ── Event handlers — pivot tabs ────────────────────────────────────────
@@ -622,6 +647,7 @@ export class BatchComponent {
     this._salIncrRows.set([]);
     this._lateRows.set([]);
     this.otFilter.set('');
+    this.otTypeFilter.set('');
     this.nopayFilter.set('');
     this.salAdvFilter.set('');
     this.loanFilter.set('');
@@ -634,6 +660,9 @@ export class BatchComponent {
     this._lateEditCell.set(null);
     this.loadComponentsError.set(null);
     this.loadComponentsInfo.set(null);
+    this.sectionSaving.set({});
+    this.sectionSaveError.set({});
+    this.sectionSaveSuccess.set({});
 
     this._loadValues();
   }
@@ -652,50 +681,18 @@ export class BatchComponent {
     this.saveSuccess.set(false);
 
     const { month, year } = this.periodForm.getRawValue();
-    const emps        = this._employees();
-    const mats        = this._matrices();
-    const labelToCode = this._labelToCode();
     const entries: BatchSaveEntry[] = [];
 
     // ── Pivot sections (FA, FD, VA, VD) ───────────────────────────────
     for (const cfg of SECTION_CONFIG) {
-      const names   = this._names()[cfg.uiKey] ?? [];
-      const codeMap = labelToCode[cfg.uiKey] ?? {};
-
-      for (const name of names) {
-        const code = codeMap[name];
-        if (!code) continue;
-        for (let i = 0; i < emps.length; i++) {
-          if (emps[i].id <= 0) continue;
-          const amount = mats[cfg.uiKey]?.[name]?.[i] ?? 0;
-          entries.push({ componentCode: code, componentType: cfg.type, employeeId: emps[i].id, amount });
-        }
-      }
+      entries.push(...this._pivotEntries(cfg));
     }
 
     // ── OT flat rows ───────────────────────────────────────────────────
-    for (const row of this._otRows()) {
-      if (row.empId <= 0 || !row.otCode) continue;
-      entries.push({
-        componentCode: row.otCode,
-        componentType: 'OT',
-        employeeId:    row.empId,
-        amount:        row.amount,
-        hours:         row.hours,
-      });
-    }
+    entries.push(...this._otEntries());
 
     // ── Flat nopay rows ────────────────────────────────────────────────
-    for (const row of this._nopayRows()) {
-      if (!row.npCode || row.empId <= 0) continue;
-      entries.push({
-        componentCode: row.npCode,
-        componentType: 'NOPAY',
-        employeeId:    row.empId,
-        amount:        row.amount,
-        days:          row.days,
-      });
-    }
+    entries.push(...this._nopayEntries());
 
     // ── Salary advance rows ────────────────────────────────────────────
     for (const row of this._salAdvRows()) {
@@ -710,16 +707,7 @@ export class BatchComponent {
     }
 
     // ── Late deduction rows ────────────────────────────────────────────
-    for (const row of this._lateRows()) {
-      if (row.isProcessed || row.empId <= 0 || row.hours <= 0) continue;
-      entries.push({
-        componentCode: 'LATE',
-        componentType: 'LATE',
-        employeeId:    row.empId,
-        amount:        row.amount,
-        hours:         row.hours,
-      });
-    }
+    entries.push(...this._lateEntries());
 
     const modifiedBy = 1; // TODO: replace with AuthService user id
 
@@ -809,6 +797,74 @@ export class BatchComponent {
     this.saveSuccess.set(false);
   }
 
+  // ── Per-tab draft save (Variable Allowance / Variable Deduction /
+  //    Overtime / NoPay / Late Deduction) ───────────────────────────────
+  //
+  // Each of these tabs gets its own Save button so the entered values for
+  // just that section can be persisted to the component tables without
+  // running the full "Process" step (which locks the period into a payroll
+  // run). This is a draft save: it upserts via the same batch-allowance
+  // endpoint used by Process, but never calls processBatch().
+
+  isSectionSaving(key: string): boolean   { return this.sectionSaving()[key] ?? false; }
+  sectionError(key: string): string | null { return this.sectionSaveError()[key] ?? null; }
+  sectionSaved(key: string): boolean      { return this.sectionSaveSuccess()[key] ?? false; }
+
+  saveVarAlwDraft(): void {
+    const cfg = SECTION_CONFIG.find(c => c.uiKey === 'varAlw')!;
+    this._saveSection('varAlw', () => this._pivotEntries(cfg));
+  }
+
+  saveVarDedDraft(): void {
+    const cfg = SECTION_CONFIG.find(c => c.uiKey === 'varDed')!;
+    this._saveSection('varDed', () => this._pivotEntries(cfg));
+  }
+
+  saveOtDraft(): void {
+    this.saveOtEdit(); // commit any in-progress cell edit first
+    this._saveSection('OT', () => this._otEntries());
+  }
+
+  saveNopayDraft(): void {
+    this.saveNopayEdit();
+    this._saveSection('NOPAY', () => this._nopayEntries());
+  }
+
+  saveLateDraft(): void {
+    this.saveLateEdit();
+    this._saveSection('LATE', () => this._lateEntries());
+  }
+
+  private _saveSection(key: string, buildEntries: () => BatchSaveEntry[]): void {
+    if (this.isSectionSaving(key) || this.periodForm.invalid) return;
+
+    const entries = buildEntries();
+    if (!entries.length) {
+      this._setSectionState(key, { error: 'Nothing to save. Use Load to initialise this section first.', success: false });
+      return;
+    }
+
+    this._setSectionState(key, { saving: true, error: null, success: false });
+
+    const { month, year } = this.periodForm.getRawValue();
+    const modifiedBy = 1; // TODO: replace with AuthService user id
+
+    this.batchSvc
+      .save({ periodMonth: month, periodYear: year, entries } satisfies BatchSavePayload, modifiedBy)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => this._setSectionState(key, { saving: false, success: true }),
+        error: (err: unknown) =>
+          this._setSectionState(key, { saving: false, error: this.extractError(err, 'Save failed. Please try again.') }),
+      });
+  }
+
+  private _setSectionState(key: string, patch: { saving?: boolean; error?: string | null; success?: boolean }): void {
+    if (patch.saving  !== undefined) this.sectionSaving.update(s => ({ ...s, [key]: patch.saving! }));
+    if (patch.error   !== undefined) { const error = patch.error; this.sectionSaveError.update(s => ({ ...s, [key]: error })); }
+    if (patch.success !== undefined) this.sectionSaveSuccess.update(s => ({ ...s, [key]: patch.success! }));
+  }
+
   // ── Helpers ────────────────────────────────────────────────────────────
 
   private extractError(err: unknown, fallback: string): string {
@@ -821,6 +877,69 @@ export class BatchComponent {
   }
 
   // ── Private ────────────────────────────────────────────────────────────
+
+  /** Loads active overtime types only, for the OT type filter dropdown. */
+  private _loadOvertimeTypes(): void {
+    this.overtimeSvc.getAll('true')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: types => this.otTypeOptions.set(types) });
+  }
+
+  /** Builds save entries for one pivot section (FA, FD, VA, or VD). */
+  private _pivotEntries(cfg: typeof SECTION_CONFIG[number]): BatchSaveEntry[] {
+    const emps        = this._employees();
+    const mats        = this._matrices();
+    const names       = this._names()[cfg.uiKey] ?? [];
+    const codeMap     = this._labelToCode()[cfg.uiKey] ?? {};
+    const entries: BatchSaveEntry[] = [];
+
+    for (const name of names) {
+      const code = codeMap[name];
+      if (!code) continue;
+      for (let i = 0; i < emps.length; i++) {
+        if (emps[i].id <= 0) continue;
+        const amount = mats[cfg.uiKey]?.[name]?.[i] ?? 0;
+        entries.push({ componentCode: code, componentType: cfg.type, employeeId: emps[i].id, amount });
+      }
+    }
+    return entries;
+  }
+
+  private _otEntries(): BatchSaveEntry[] {
+    return this._otRows()
+      .filter(row => row.empId > 0 && !!row.otCode)
+      .map(row => ({
+        componentCode: row.otCode,
+        componentType: 'OT',
+        employeeId:    row.empId,
+        amount:        row.amount,
+        hours:         row.hours,
+      }));
+  }
+
+  private _nopayEntries(): BatchSaveEntry[] {
+    return this._nopayRows()
+      .filter(row => row.empId > 0 && !!row.npCode)
+      .map(row => ({
+        componentCode: row.npCode,
+        componentType: 'NOPAY',
+        employeeId:    row.empId,
+        amount:        row.amount,
+        days:          row.days,
+      }));
+  }
+
+  private _lateEntries(): BatchSaveEntry[] {
+    return this._lateRows()
+      .filter(row => !row.isProcessed && row.empId > 0 && row.hours > 0)
+      .map(row => ({
+        componentCode: 'LATE',
+        componentType: 'LATE',
+        employeeId:    row.empId,
+        amount:        row.amount,
+        hours:         row.hours,
+      }));
+  }
 
   private _loadValues(): void {
     const { month, year } = this.periodForm.getRawValue();

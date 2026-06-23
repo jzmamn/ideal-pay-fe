@@ -41,8 +41,8 @@ export class OvertimeService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${inject(API_BASE_URL)}/overtime`;
 
-  getAll(): Observable<OvertimeModel[]> {
-    return this.http.get<ApiResponse<ApiOvertime[]>>(this.baseUrl).pipe(
+  getAll(isActive: string = 'all'): Observable<OvertimeModel[]> {
+    return this.http.get<ApiResponse<ApiOvertime[]>>(this.baseUrl, { params: { isActive } }).pipe(
       map(res => res.data.map(item => this.toModel(item))),
     );
   }
