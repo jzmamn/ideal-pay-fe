@@ -1,6 +1,46 @@
-<app-master-data-table
-  [config]="tableConfig"
-  [data]="configs()"
-  (rowSelected)="onRowSelected($event)"
-  (newClicked)="onNewClicked()">
-</app-master-data-table>
+<div class="config-page">
+  <div class="config-header">
+    <h2 class="config-title">Late Deduction Configuration</h2>
+    <button mat-flat-button (click)="openEdit()" aria-label="Edit late deduction configuration">
+      <mat-icon>{{ config() ? 'edit' : 'settings' }}</mat-icon>
+      {{ config() ? 'Edit' : 'Set Up' }}
+    </button>
+  </div>
+
+  @if (config(); as cfg) {
+    <div class="config-card">
+      <div class="config-row">
+        <span class="config-label">Working Days / Month</span>
+        <span class="config-value">{{ cfg.workingDays }}</span>
+      </div>
+      <div class="config-row">
+        <span class="config-label">Working Hours / Day</span>
+        <span class="config-value">{{ cfg.workingHoursPerDay }}</span>
+      </div>
+      <div class="config-row">
+        <span class="config-label">Formula</span>
+        <span class="config-value formula-value">
+          {{ cfg.formula || 'Default — salary ÷ (working days × working hours) × late hours' }}
+        </span>
+      </div>
+      <div class="config-row">
+        <span class="config-label">Active</span>
+        <span class="config-value">{{ cfg.isActive ? 'Yes' : 'No' }}</span>
+      </div>
+      <div class="config-row">
+        <span class="config-label">Statutory Liabilities</span>
+        <span class="config-value">
+          <span class="liability-badge" [class.inactive]="!cfg.liableForEpf">EPF</span>
+          <span class="liability-badge" [class.inactive]="!cfg.liableForEtf">ETF</span>
+          <span class="liability-badge" [class.inactive]="!cfg.liableForPaye">PAYE</span>
+          <span class="liability-badge" [class.inactive]="!cfg.liableForNopay">No Pay</span>
+        </span>
+      </div>
+    </div>
+  } @else {
+    <div class="not-configured">
+      <mat-icon>info</mat-icon>
+      <p>No late deduction rule configured yet. Click <strong>Set Up</strong> to create one.</p>
+    </div>
+  }
+</div>

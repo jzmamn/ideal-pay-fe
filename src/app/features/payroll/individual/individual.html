@@ -146,16 +146,11 @@
                             {{ selectedEmployee() ? 'No variable allowances assigned.' : 'Select an employee to load components.' }}
                           </td></tr>
                         } @else {
-                          @for (row of variableAllowances(); track $index; let i = $index) {
+                          @for (row of variableAllowances(); track $index) {
                             <tr>
                               <td class="col-code">{{ row.vaCode }}</td>
                               <td class="col-name">{{ row.vaName }}</td>
-                              <td class="col-amount">
-                                <input class="comp-input" type="number" min="0" step="0.01"
-                                       [value]="row.amount"
-                                       (change)="updateVariableAllowance(i, { amount: +$any($event.target).value })"
-                                       aria-label="Amount for {{ row.vaName }}" />
-                              </td>
+                              <td class="col-amount comp-readonly">{{ row.amount | number:'1.2-2' }}</td>
                               <td class="col-month">{{ row.payrollMonth }}</td>
                             </tr>
                           }
@@ -183,17 +178,12 @@
                             {{ selectedEmployee() ? 'Click Load Components to assign overtime rates.' : 'Select an employee to load components.' }}
                           </td></tr>
                         } @else {
-                          @for (row of overtimes(); track $index; let i = $index) {
+                          @for (row of overtimes(); track $index) {
                             <tr>
                               <td class="col-code">{{ row.overtimeCode }}</td>
                               <td class="col-name">{{ row.overtimeName }}</td>
                               <td class="col-rate comp-readonly">{{ (row.rate ?? 0) | number:'1.4-4' }}</td>
-                              <td class="col-hours">
-                                <input class="comp-input" type="number" min="0" step="0.5"
-                                       [value]="row.hours"
-                                       (change)="updateOvertime(i, { hours: +$any($event.target).value })"
-                                       aria-label="Hours for {{ row.overtimeName }}" />
-                              </td>
+                              <td class="col-hours comp-readonly">{{ row.hours }}</td>
                               <td class="col-amount comp-readonly">{{ row.amount | number:'1.2-2' }}</td>
                               <td class="col-month">{{ row.payrollMonth }}</td>
                             </tr>
@@ -250,16 +240,11 @@
                             {{ selectedEmployee() ? 'No variable deductions assigned.' : 'Select an employee to load components.' }}
                           </td></tr>
                         } @else {
-                          @for (row of variableDeductions(); track $index; let i = $index) {
+                          @for (row of variableDeductions(); track $index) {
                             <tr>
                               <td class="col-code">{{ row.vdCode }}</td>
                               <td class="col-name">{{ row.vdName }}</td>
-                              <td class="col-amount">
-                                <input class="comp-input" type="number" min="0" step="0.01"
-                                       [value]="row.amount"
-                                       (change)="updateVariableDeduction(i, { amount: +$any($event.target).value })"
-                                       aria-label="Amount for {{ row.vdName }}" />
-                              </td>
+                              <td class="col-amount comp-readonly">{{ row.amount | number:'1.2-2' }}</td>
                               <td class="col-month">{{ row.payrollMonth }}</td>
                             </tr>
                           }
@@ -287,17 +272,12 @@
                             {{ selectedEmployee() ? 'Click Load Components to assign no-pay rates.' : 'Select an employee to load components.' }}
                           </td></tr>
                         } @else {
-                          @for (row of nopays(); track $index; let i = $index) {
+                          @for (row of nopays(); track $index) {
                             <tr>
                               <td class="col-code">{{ row.nopayCode }}</td>
                               <td class="col-name">{{ row.nopayName }}</td>
                               <td class="col-rate comp-readonly">{{ (row.rate ?? 0) | number:'1.4-4' }}</td>
-                              <td class="col-days">
-                                <input class="comp-input" type="number" min="0" step="0.5"
-                                       [value]="row.days"
-                                       (change)="updateNopay(i, { days: +$any($event.target).value })"
-                                       aria-label="NoPay days for {{ row.nopayName }}" />
-                              </td>
+                              <td class="col-days comp-readonly">{{ row.days }}</td>
                               <td class="col-amount comp-readonly">{{ row.amount | number:'1.2-2' }}</td>
                               <td class="col-month">{{ row.payrollMonth }}</td>
                             </tr>
@@ -328,7 +308,7 @@
                             Select an employee to load components.
                           </td></tr>
                         } @else {
-                          @for (row of lates(); track $index; let i = $index) {
+                          @for (row of lates(); track $index) {
                             <tr>
                               <td class="col-name comp-readonly">
                                 {{ selectedEmployee()?.firstName }} {{ selectedEmployee()?.lastName }}
@@ -336,12 +316,7 @@
                               <td class="col-amount comp-readonly">
                                 {{ (row.rate ?? lateHourlyRate()) | number:'1.4-4' }}
                               </td>
-                              <td class="col-hours">
-                                <input class="comp-input" type="number" min="0" step="0.5"
-                                       [value]="row.hours"
-                                       (change)="updateLate(i, { hours: +$any($event.target).value })"
-                                       aria-label="Late hours" />
-                              </td>
+                              <td class="col-hours comp-readonly">{{ row.hours }}</td>
                               <td class="col-amount comp-readonly late-amount">
                                 {{ row.amount | number:'1.2-2' }}
                               </td>
@@ -565,14 +540,6 @@
 
       </div>
 
-      <footer class="action-bar">
-        <button mat-flat-button
-                [disabled]="submitting() || !selectedEmployee()"
-                (click)="submitForReview()">
-          @if (submitting()) { Processing… } @else { Process }
-          <mat-icon iconPositionEnd>arrow_forward</mat-icon>
-        </button>
-      </footer>
     }
 
     <!-- ══ Draft ═════════════════════════════════════════════════════════ -->
@@ -587,7 +554,6 @@
         <app-payroll-draft-view
           [run]="draftRun()"
           [periodLabel]="periodLabel()"
-          (reprocess)="reprocessIndividual()"
           (locked)="onRunLocked($event)"
         />
       </div>
@@ -628,7 +594,6 @@
       </div>
       <footer class="action-bar">
         <button mat-stroked-button (click)="workflowStep.set('prepare')"><mat-icon>arrow_back</mat-icon> Back</button>
-        <button mat-flat-button (click)="confirmReview()">Submit for Approval <mat-icon iconPositionEnd>send</mat-icon></button>
       </footer>
     }
 
@@ -650,25 +615,20 @@
               <div class="approve-row net"><span>Net Pay</span><strong>LKR {{ netPay() | number:'1.2-2' }}</strong></div>
             </div>
           </div>
-          <div class="approve-form-wrap" [formGroup]="approveForm">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Approved By</mat-label>
-              <mat-icon matPrefix>badge</mat-icon>
-              <input matInput formControlName="approvedBy" placeholder="Full name of approver" />
-              @if (approveForm.controls.approvedBy.invalid && approveForm.controls.approvedBy.touched) {
-                <mat-error>Approver name is required</mat-error>
-              }
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Remarks</mat-label>
-              <textarea matInput formControlName="remarks" rows="3" placeholder="Optional approval notes…"></textarea>
-            </mat-form-field>
+          <div class="approve-form-wrap">
+            <div class="review-row">
+              <span class="review-label">Approved By</span>
+              <span>{{ approveForm.value.approvedBy }}</span>
+            </div>
+            <div class="review-row">
+              <span class="review-label">Remarks</span>
+              <span>{{ approveForm.value.remarks }}</span>
+            </div>
           </div>
         </div>
       </div>
       <footer class="action-bar">
         <button mat-stroked-button (click)="workflowStep.set('review')"><mat-icon>arrow_back</mat-icon> Back</button>
-        <button mat-flat-button (click)="approvePayroll()"><mat-icon>verified</mat-icon> Approve Payroll</button>
       </footer>
     }
 
@@ -705,9 +665,6 @@
       <footer class="action-bar">
         @if (!isDisbursed()) {
           <button mat-stroked-button (click)="workflowStep.set('approve')"><mat-icon>arrow_back</mat-icon> Back</button>
-          <button mat-flat-button class="btn-disburse" (click)="disburse()"><mat-icon>payments</mat-icon> Disburse</button>
-        } @else {
-          <button mat-stroked-button (click)="resetWorkflow()"><mat-icon>refresh</mat-icon> Start New Entry</button>
         }
       </footer>
     }

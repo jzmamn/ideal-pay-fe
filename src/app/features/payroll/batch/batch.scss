@@ -404,10 +404,10 @@ $toolbar-h: 40px;
 
 // ── Status banners ────────────────────────────────────────────────────────
 .status-banner {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: flex-start; gap: 8px;
   padding: 8px 14px; border-radius: 6px;
   font-size: 13px; font-weight: 500;
-  mat-icon { font-size: 18px; width: 18px; height: 18px; flex-shrink: 0; }
+  mat-icon { font-size: 18px; width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
 
   &--success {
     background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d;
@@ -417,6 +417,11 @@ $toolbar-h: 40px;
     background: #fef2f2; border: 1px solid #fecaca; color: #dc2626;
     mat-icon { color: #dc2626; }
   }
+}
+
+.load-error-list {
+  margin: 0; padding: 0 0 0 4px; list-style: none;
+  li + li { margin-top: 3px; }
 }
 
 .btn-content {

@@ -13,15 +13,24 @@
 
     <div class="form-row-2">
       <mat-form-field appearance="outline">
-        <mat-label>Code</mat-label>
-        <input matInput formControlName="code" placeholder="Auto-generated">
+        <mat-label>Working Days / Month</mat-label>
+        <input matInput type="number" formControlName="workingDays">
+        @if (form.get('workingDays')?.hasError('required')) {
+          <mat-error>Working days is required</mat-error>
+        }
+        @if (form.get('workingDays')?.hasError('min') || form.get('workingDays')?.hasError('max')) {
+          <mat-error>Must be between 1 and 31</mat-error>
+        }
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Name</mat-label>
-        <input matInput formControlName="name">
-        @if (form.get('name')?.hasError('required')) {
-          <mat-error>Name is required</mat-error>
+        <mat-label>Working Hours / Day</mat-label>
+        <input matInput type="number" formControlName="workingHoursPerDay">
+        @if (form.get('workingHoursPerDay')?.hasError('required')) {
+          <mat-error>Working hours is required</mat-error>
+        }
+        @if (form.get('workingHoursPerDay')?.hasError('min') || form.get('workingHoursPerDay')?.hasError('max')) {
+          <mat-error>Must be between 1 and 24</mat-error>
         }
       </mat-form-field>
     </div>
@@ -68,8 +77,8 @@
 
 <mat-dialog-actions>
   <span class="action-spacer"></span>
-  <button mat-flat-button [disabled]="form.invalid" class="btn-warn" (click)="save()">
-    <mat-icon>save</mat-icon> Update
+  <button mat-flat-button [disabled]="form.invalid" (click)="save()">
+    <mat-icon>save</mat-icon> Save
   </button>
   <button mat-flat-button mat-dialog-close class="btn-secondary">
     <mat-icon>close</mat-icon> Cancel

@@ -194,10 +194,12 @@ function buildOtFlatRows(rows: PivotRow[]): OtFlatRow[] {
 }
 
 function buildNopayFlatRows(rows: PivotRow[]): NopayFlatRow[] {
-  return buildCodePivotFlatRows(rows, '_days').map(r => ({
-    empId: r.empId, employeeNo: r.employeeNo, payrollName: r.payrollName,
-    npCode: r.code, npLabel: r.label, rate: r.rate, days: r.qty, amount: r.amount,
-  }));
+  return buildCodePivotFlatRows(rows, '_days')
+    .filter(r => r.rate > 0 || r.qty > 0 || r.amount > 0)
+    .map(r => ({
+      empId: r.empId, employeeNo: r.employeeNo, payrollName: r.payrollName,
+      npCode: r.code, npLabel: r.label, rate: r.rate, days: r.qty, amount: r.amount,
+    }));
 }
 
 function buildSalAdvFlatRows(rows: PivotRow[]): SalAdvFlatRow[] {
@@ -296,13 +298,14 @@ export class BatchComponent {
   });
 
   // ── State ──────────────────────────────────────────────────────────────
-  readonly saving               = signal(false);
-  readonly saveError            = signal<string | null>(null);
-  readonly saveSuccess          = signal(false);
-  readonly loading              = signal(false);
-  readonly loadingComponents    = signal(false);
-  readonly loadComponentsError  = signal<string | null>(null);
-  readonly loadComponentsInfo   = signal<string | null>(null);
+  readonly saving                   = signal(false);
+  readonly saveError                = signal<string | null>(null);
+  readonly saveSuccess              = signal(false);
+  readonly loading                  = signal(false);
+  readonly loadingComponents        = signal(false);
+  readonly loadComponentsError      = signal<string | null>(null);
+  readonly loadComponentsInfo       = signal<string | null>(null);
+  readonly loadComponentsWarnings   = signal<string[]>([]);
   readonly selectedSubStep      = signal(0);
 
   // Draft view state
@@ -611,6 +614,7 @@ export class BatchComponent {
     this.loadingComponents.set(true);
     this.loadComponentsError.set(null);
     this.loadComponentsInfo.set(null);
+    this.loadComponentsWarnings.set([]);
 
     const { month, year } = this.periodForm.getRawValue();
     const userId = 1; // TODO: replace with AuthService user id
@@ -623,6 +627,7 @@ export class BatchComponent {
           this.loadComponentsInfo.set(
             `Loaded — ${summary.employeesProcessed} employees, ${summary.recordsUpserted} records updated${errs}.`
           );
+          this.loadComponentsWarnings.set(summary.errors ?? []);
           this.loadingComponents.set(false);
           this._loadValues(); // refresh pivot
         },
@@ -660,6 +665,7 @@ export class BatchComponent {
     this._lateEditCell.set(null);
     this.loadComponentsError.set(null);
     this.loadComponentsInfo.set(null);
+    this.loadComponentsWarnings.set([]);
     this.sectionSaving.set({});
     this.sectionSaveError.set({});
     this.sectionSaveSuccess.set({});

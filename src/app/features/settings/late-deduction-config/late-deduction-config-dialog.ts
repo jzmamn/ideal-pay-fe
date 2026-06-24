@@ -7,7 +7,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { Observable } from 'rxjs';
 import { FormulaDefinitionForm } from '../../../shared/components/formula-definition/formula-definition-form/formula-definition-form';
 import { FormulaDefinitionFormValue } from '../../../shared/components/formula-definition/formula-definition.models';
 import { LateDeductionConfigModel } from './late-deduction-config.model';
@@ -32,17 +31,13 @@ import { LateDeductionConfigService } from './late-deduction-config.service';
   styleUrl:    './late-deduction-config.scss',
 })
 export class LateDeductionConfigDialog {
-  readonly row    = inject<LateDeductionConfigModel | null>(MAT_DIALOG_DATA);
-  readonly isEdit = this.row != null;
+  readonly row = inject<LateDeductionConfigModel | null>(MAT_DIALOG_DATA);
 
-  private readonly fb         = inject(FormBuilder);
-  private readonly dialogRef  = inject(MatDialogRef<LateDeductionConfigDialog>);
-  private readonly configSvc  = inject(LateDeductionConfigService);
+  private readonly fb        = inject(FormBuilder);
+  private readonly dialogRef = inject(MatDialogRef<LateDeductionConfigDialog>);
+  private readonly configSvc = inject(LateDeductionConfigService);
 
   readonly form = this.fb.group({
-    id:                 [{ value: this.row?.id   ?? null, disabled: true }],
-    code:               [{ value: this.row?.code ?? '',   disabled: true }],
-    name:               [this.row?.name               ?? '',  Validators.required],
     description:        [this.row?.description        ?? null as string | null],
     workingDays:        [this.row?.workingDays         ?? 26,
                           [Validators.required, Validators.min(1), Validators.max(31)]],
@@ -81,7 +76,7 @@ export class LateDeductionConfigDialog {
     const v  = this.form.getRawValue();
     const fv = this.latestFormula();
     const dto = {
-      name:               v.name!,
+      name:               this.row?.name ?? 'Late Deduction',
       description:        v.description ?? undefined,
       workingDays:        v.workingDays!,
       workingHoursPerDay: v.workingHoursPerDay!,
@@ -92,18 +87,7 @@ export class LateDeductionConfigDialog {
       liableForPaye:      v.liableForPaye ?? true,
       liableForNopay:     v.liableForNopay ?? false,
     };
-    const req$: Observable<unknown> = this.isEdit
-      ? this.configSvc.update(this.row!.id, dto)
-      : this.configSvc.create(dto);
-    req$.subscribe({
-      next:  () => this.dialogRef.close(true),
-      error: () => this.dialogRef.close(false),
-    });
-  }
-
-  delete(): void {
-    if (this.row?.id == null) return;
-    this.configSvc.delete(this.row.id).subscribe({
+    this.configSvc.save(dto).subscribe({
       next:  () => this.dialogRef.close(true),
       error: () => this.dialogRef.close(false),
     });

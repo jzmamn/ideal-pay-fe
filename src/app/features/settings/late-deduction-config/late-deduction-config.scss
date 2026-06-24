@@ -1,3 +1,5 @@
+// ── Dialog styles ─────────────────────────────────────────────────────────────
+
 .action-spacer { flex: 1; }
 
 .form-grid {
@@ -63,4 +65,91 @@
   grid-template-columns: 1fr 1fr;
   gap: 10px 16px;
   padding: 4px 0 8px;
+}
+
+// ── Page styles ───────────────────────────────────────────────────────────────
+
+.config-page {
+  padding: 24px;
+  max-width: 680px;
+}
+
+.config-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.config-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.config-card {
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.config-row {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+
+  &:last-child { border-bottom: none; }
+}
+
+.config-label {
+  flex: 0 0 200px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.config-value {
+  flex: 1;
+  font-size: 14px;
+  color: var(--mat-sys-on-surface);
+
+  &.formula-value {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    word-break: break-all;
+  }
+}
+
+.liability-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  margin-right: 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+
+  &.inactive {
+    background: var(--mat-sys-surface-variant);
+    color: var(--mat-sys-on-surface-variant);
+    text-decoration: line-through;
+    opacity: 0.6;
+  }
+}
+
+.not-configured {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  border: 1px dashed var(--mat-sys-outline-variant);
+  border-radius: 8px;
+  color: var(--mat-sys-on-surface-variant);
+
+  mat-icon { opacity: 0.5; }
+
+  p { margin: 0; font-size: 14px; }
 }

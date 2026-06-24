@@ -22,7 +22,6 @@ interface ApiLateDeductionConfig {
 }
 
 type ApiPayload = Omit<ApiLateDeductionConfig, 'id' | 'code'> & {
-  createdBy:  number;
   modifiedBy: number;
 };
 
@@ -31,28 +30,22 @@ export class LateDeductionConfigService {
   private readonly http    = inject(HttpClient);
   private readonly baseUrl = `${inject(API_BASE_URL)}/late-deduction-config`;
 
-  getAll(): Observable<LateDeductionConfigModel[]> {
-    return this.http.get<ApiResponse<ApiLateDeductionConfig[]>>(this.baseUrl)
-      .pipe(map(r => r.data.map(item => this.toModel(item))));
+  /** Returns the singleton config, or null if never set up. */
+  get(): Observable<LateDeductionConfigModel | null> {
+    return this.http.get<ApiResponse<ApiLateDeductionConfig | null>>(this.baseUrl)
+      .pipe(map(r => r.data ? this.toModel(r.data) : null));
   }
 
-  create(data: Omit<LateDeductionConfigModel, 'id' | 'code'>): Observable<LateDeductionConfigModel> {
-    return this.http.post<ApiResponse<ApiLateDeductionConfig>>(this.baseUrl, this.toPayload(data))
+  /** Upsert — creates on first call, updates on subsequent calls. */
+  save(data: Omit<LateDeductionConfigModel, 'id' | 'code'>): Observable<LateDeductionConfigModel> {
+    return this.http.put<ApiResponse<ApiLateDeductionConfig>>(this.baseUrl, this.toPayload(data))
       .pipe(map(r => this.toModel(r.data)));
   }
 
-  update(id: number, data: Omit<LateDeductionConfigModel, 'id' | 'code'>): Observable<void> {
-    return this.http.put<void>(`${this.baseUrl}/${id}`, this.toPayload(data));
-  }
-
-  delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`);
-  }
-
-  /** Test the formula with sample values. */
-  calculate(id: number, basicSalary: number, lateHours: number): Observable<{ result: number; expression: string }> {
+  /** Test the formula with sample values (no id needed). */
+  calculate(basicSalary: number, lateHours: number): Observable<{ result: number; expression: string }> {
     return this.http.post<ApiResponse<{ result: number; expression: string }>>(
-      `${this.baseUrl}/${id}/calculate`,
+      `${this.baseUrl}/calculate`,
       { basicSalary, lateHours }
     ).pipe(map(r => r.data));
   }
@@ -86,8 +79,7 @@ export class LateDeductionConfigService {
       liableForEtf:       data.liableForEtf  ?? true,
       liableForPaye:      data.liableForPaye ?? true,
       liableForNopay:     data.liableForNopay ?? false,
-      createdBy:          1, // TODO: replace with auth user id
-      modifiedBy:         1,
+      modifiedBy:         1, // TODO: replace with auth user id
     };
   }
 }
